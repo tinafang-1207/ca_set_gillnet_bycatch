@@ -10,11 +10,10 @@ rm(list = ls())
 library(tidyverse)
 
 # Directories
-plotdir <- "/Users/cfree/Dropbox/Chris/UCSB/projects/ca_gillnet_bycatch_chris/figures"
-datadir <- "/Users/cfree/Dropbox/Chris/UCSB/projects/ca_gillnet_bycatch_chris/data"
+
 
 # Read data
-data_orig <- readRDS("/Users/cfree/Dropbox/Chris/UCSB/projects/california/cdfw_data/data/confidential/gillnet_logbooks_2023/processed/CDFW_1981_2020_gillnet_logbook_data.Rds")
+data_orig <- readRDS("data/confidential/processed/CDFW_1980_2022_gillnet_logbook_new.Rds")
 
 
 # Build data
@@ -27,11 +26,12 @@ table(data_orig$net_type)
 data <- data_orig %>% 
   # Reduce to set fishery
   filter(net_type=="Set" & year!=2022) %>% 
+  filter(mesh_size_in > 3.5) %>%
   # Add vessel days
   mutate(vessel_day=paste(vessel_id_use, date, sep="-"),
          set_id=paste(date, vessel_id_use, block_id, net_type, 
-                      depth_fa_num, net_length_fa_num, mesh_size_in_num, 
-                      buoy_line_depth_ft_num, soak_hr_num, target_spp, sep="-")) %>% 
+                      haul_depth_fa, net_length_ft, mesh_size_in, 
+                      buoy_line_depth_fa, soak_hour, target_spp, sep="-")) %>% 
   # Summarize by year
   group_by(year) %>% 
   summarize(n_logbook_rows=n(),
