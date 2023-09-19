@@ -1,0 +1,547 @@
+---
+title: "1980 Bycatch Location Map"
+output: html_document
+date: "2022-10-22"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+### Clean Environment
+
+rm(list = ls())
+
+### Load in packages
+
+library(tidyverse)
+library(sf)
+library(rnaturalearth)
+library(quantreg)
+```
+
+
+```{r}
+
+### Read in data
+
+# Spatial data
+
+boundary <- read_sf("original data/geographical_data/StateWaterJurisdiction/MAN_CA_StateWaterLine.shp") %>%
+  st_transform(crs = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0") %>%
+  filter(STATE == "California")
+
+usa <- rnaturalearth::ne_states(country = "United States of America", returnclass = "sf")
+
+usa_ca <- usa %>% filter(name == "California")
+
+mexico <- rnaturalearth::ne_countries(country="Mexico", returnclass = "sf")
+
+wc_port <- wcfish::ports
+
+blocks <- wcfish::blocks
+
+# Read in attribute data
+
+CDFW_trip_orig <- readRDS("original data/CDFW_1983_1989_gillnet_observer_set_info.Rds")
+
+CDFW_observer_orig <- readRDS("original data/CDFW_1983_1989_gillnet_observer_data.Rds")
+
+```
+
+
+```{r}
+
+# Map of set gillnet locations (without colored by BPUE)
+
+wc_port_ca <- wc_port %>%
+  filter(port %in% c("Oceanside", "San Diego", "Mission Bay", "San Pedro", "Newport Beach", "Los Angeles", "Dana Point", "Long Beach", "Ventura", "Oxnard", "Santa Barbara"))
+
+my_theme <-  theme(axis.text=element_text(size=6),
+                   axis.text.y = element_text(angle = 90, hjust = 0.5),
+                   axis.title=element_blank(),
+                   legend.text=element_text(size=7),
+                   legend.title=element_text(size=8),
+                   plot.tag=element_text(size=8),
+                   # Gridlines
+                   panel.grid.major = element_blank(), 
+                   panel.grid.minor = element_blank(),
+                   panel.background = element_blank(), 
+                   axis.line = element_line(colour = "black"),
+                   # Legend
+                   legend.key.size = unit(0.4, "cm"),
+                   legend.key = element_rect(fill = NA), 
+                   legend.background = element_rect(fill=alpha('blue', 0)))
+
+
+Figure <- ggplot() +
+  # Plot blocks
+  geom_sf(data=blocks, color="grey60", fill=NA, lwd=0.1) +
+  # Plot land
+  geom_sf(data=mexico, fill="grey80", color="white", lwd=0.3) +
+  geom_sf(data=usa, fill="grey80", color="white", lwd=0.3) +
+  # Plot points
+  geom_point(data=CDFW_trip_orig, mapping=aes(x=long_dd, y=lat_dd),
+             color = "grey30", pch=21, size=0.8, alpha=0.3) +
+  # Plot State Water Boundary
+  geom_sf(data = boundary, color = "red", fill = NA, lwd = 0.2, linetype = "dashed") +
+  # Plot Ports
+ geom_point(data = wc_port_ca,
+             mapping = aes(x = long_dd, y = lat_dd), pch = 8, color = "red") +
+  #Add label to ports
+  ggrepel::geom_text_repel(wc_port_ca, mapping=aes(x = long_dd, y = lat_dd, label = port), size = 3, show.legend = F) +
+  # Labels
+  labs(x="", y="") +
+  # Axes
+  # scale_y_continuous(breaks=32:42) +
+  # Crop
+  coord_sf(xlim = c(-120.5, -117), ylim = c(32.3, 34.5)) +
+  # Theme
+  theme_bw() + my_theme +
+  theme(legend.position = "none")
+
+Figure
+
+### Export figure above
+ggsave(Figure, filename= file.path("Figures", "map_boundary_fishing_locations_1983-1989.png"),
+       width = 5, height = 4, units = "in", dpi = 600)
+
+```
+
+```{r}
+### Format bycatch data
+
+CDFW_observer_bycatch <- CDFW_observer_orig %>%
+  group_by(set_id) %>%
+  summarize(n_caught_set = sum(n_caught), n_kept_set = sum(n_kept), n_kept_sublegal_set = sum(n_kept_sublegal), n_sold_set = sum(n_sold)) %>%
+  mutate(n_bycatch_set = n_caught_set - (n_kept_set + n_kept_sublegal_set + n_sold_set)) %>%
+  mutate(n_retained_set = n_kept_set + n_kept_sublegal_set + n_sold_set)
+
+CDFW_bycatch_location <- merge(CDFW_trip_orig, CDFW_observer_bycatch, by = "set_id") %>%
+  separate("duration", c("hours", "minutes", "seconds"), sep = " ") %>%
+  mutate(hours = gsub("H", "", hours)) %>%
+  mutate(minutes = gsub("M", "", minutes)) %>%
+  select(-seconds) %>%
+  mutate(hours = as.numeric(hours)) %>%
+  mutate(minutes = as.numeric(minutes)) %>%
+  mutate(minutes = minutes/60) %>%
+  mutate(hours = hours + minutes) %>%
+  select(-minutes) %>%
+  mutate_if(is.numeric, round, digits = 4) %>%
+  rename(soak_hr = hours) %>%
+  mutate(net_length_ft = net_length_fa *6) %>%
+  mutate(BPUE = n_bycatch_set/(soak_hr * (net_length_ft/1300))) %>%
+  mutate(CPUE = n_retained_set/(soak_hr * (net_length_ft/1300))) %>%
+  filter(BPUE <= 100)
+  
+  
+```
+
+```{r}
+
+# set up projection to utm11
+
+utm11 <- "+proj=utm +zone=11 +datum=NAD83"
+
+# Convert fishing location data to sp
+CDFW_xy_sp <- CDFW_bycatch_location %>%
+  #Convert to sf
+  st_as_sf(coords = c("long_dd", "lat_dd"), crs = st_crs(usa_ca), remove = F) %>%
+  #Convert to SP
+  as_Spatial()
+
+CDFW_xy_sp_utm <- CDFW_xy_sp %>%
+  sp::spTransform(utm11)
+
+# Convert usa_ca to sp
+usa_ca_sp <- usa_ca %>%
+  st_transform(crs = utm11) %>%
+  as_Spatial()
+
+# Calculate distance of each point to ca shapefile
+dist_mat <- rgeos::gDistance(CDFW_xy_sp_utm, usa_ca_sp, byid = T)
+
+#format distance matrix
+dist_df <- dist_mat %>%
+  as.data.frame() %>%
+  gather(key = "row_id", value = "dist_m", 1:ncol(.)) %>%
+  mutate(set_id = CDFW_xy_sp_utm$set_id) %>%
+  select(-row_id) %>%
+  select(set_id, dist_m)
+
+# Add distance matrix back to dataframe
+CDFW_bycatch_location_dist <- merge(CDFW_bycatch_location, dist_df, by = "set_id") %>%
+  mutate(dist_km = dist_m/1000)
+
+# Save dataframe
+write.table(CDFW_bycatch_location_dist, file = "processed data/CDFW_bycatch_distance_from_shore.csv", row.names = F, sep = ",")
+```
+
+
+```{r}
+### Pull block information ###
+
+### convert to sf and sp
+
+CDFW_bycatch_location_dist_sp <- CDFW_bycatch_location_dist %>%
+  st_as_sf(coords = c("long_dd", "lat_dd"), crs = st_crs(blocks), remove = F) %>%
+  as_Spatial()
+
+blocks_sp <- blocks %>%
+  as_Spatial()
+
+### Intersect with blocks
+CDFW_bycatch_block_ids <- sp::over(CDFW_bycatch_location_dist_sp, blocks_sp) %>%
+  pull(block_id)
+
+CDFW_bycatch_dist_block <- CDFW_bycatch_location_dist %>%
+  mutate(block_id = CDFW_bycatch_block_ids) %>%
+  filter(!is.na(block_id)) %>%
+  mutate(block_id = as.character(block_id)) %>%
+  mutate(region = ifelse(block_id %in% c("689", "688", "687", "686", "685", "684", "707", "708", "709", "710","711", "712"), "Channel Islands", "Mainland"))
+
+### Mapping the fishing locations by region (check)
+
+Figure_1 <- ggplot() +
+  # Plot blocks
+  geom_sf(data=blocks, color="grey60", fill=NA, lwd=0.1) +
+  # Plot land
+  geom_sf(data=mexico, fill="grey80", color="white", lwd=0.3) +
+  geom_sf(data=usa, fill="grey80", color="white", lwd=0.3) +
+  # Plot points
+  geom_point(data=CDFW_bycatch_dist_block, mapping=aes(x=long_dd, y=lat_dd, color = region),
+             pch=21, size=0.8, alpha=0.3) +
+  # Plot State Water Boundary
+  geom_sf(data = boundary, color = "red", fill = NA, lwd = 0.2, linetype = "dashed") +
+  # Plot Ports
+ geom_point(data = wc_port_ca,
+             mapping = aes(x = long_dd, y = lat_dd), pch = 8, color = "red") +
+  #Add label to ports
+  ggrepel::geom_text_repel(wc_port_ca, mapping=aes(x = long_dd, y = lat_dd, label = port), size = 3, show.legend = F) +
+  # Labels
+  labs(x="", y="") +
+  # Axes
+  # scale_y_continuous(breaks=32:42) +
+  # Crop
+  coord_sf(xlim = c(-120.5, -117), ylim = c(32.3, 34.5)) +
+  # Theme
+  theme_bw() + my_theme +
+  theme(legend.position = "none")
+
+Figure_1
+
+  
+```
+
+```{r}
+
+### Filter dataset for fitting BPUE models
+CDFW_bycatch_model <- CDFW_bycatch_dist_block %>%
+  filter(region != "Channel Islands") %>%
+  filter(dist_km <= 15)
+  #filter(BPUE <= 20) %>%
+  
+# Make scatter plot above (without model fitting)
+my_theme <-  theme(axis.text=element_text(size=6),
+                   axis.title=element_text(size=8),
+                   strip.text=element_text(size=7),
+                   plot.title=element_blank(),
+                   # Gridlines
+                   panel.grid.major = element_blank(), 
+                   panel.grid.minor = element_blank(),
+                   panel.background = element_blank(), 
+                   axis.line = element_line(colour = "black"),
+                   # Legend
+                   legend.background = element_rect(fill=alpha('blue', 0)))
+
+ggplot(CDFW_bycatch_model, aes(x=dist_km, y=BPUE)) +
+  geom_point(pch=21, color="grey50", alpha=0.5) +
+  # Labels
+  labs(x="Distance to Coastal Line (km)", y="BPUE") +
+  # Theme
+  theme_bw() + my_theme
+```
+
+```{r}
+### Modeling for BPUE
+
+# Fit linear regression
+fit_all_lm <- lm(formula = log(BPUE+1)~dist_km, data = CDFW_bycatch_model)
+
+summary(fit_all_lm)
+
+#plot(fit_all_lm)
+
+# Fit to 0.25 quantile
+fit_all_0.25 <- rq(formula = log(BPUE +1)~dist_km, tau = 0.25, data = CDFW_bycatch_model)
+
+summary(fit_all_0.25, se = "nid")
+
+# Fit to 0.5 quantile
+
+fit_all_0.5 <- rq(formula = log(BPUE+1)~dist_km, tau = 0.5, data = CDFW_bycatch_model)
+
+summary(fit_all_0.5, se = "nid")
+
+# Fit to 0.75 quantile
+fit_all_0.75 <- rq(formula = log(BPUE+1)~dist_km, tau = 0.75, data = CDFW_bycatch_model)
+
+summary(fit_all_0.75, se = "nid")
+
+#  Fit to 0.9 quantile
+
+fit_all_0.9 <- rq(formula = log(BPUE+1)~dist_km, tau = 0.9, data = CDFW_bycatch_model)
+
+summary(fit_all_0.9, se = "nid")
+
+# Fit to 0.95 quantile
+
+fit_all_0.95 <- rq(formula = log(BPUE+1)~dist_km, tau = 0.95, data = CDFW_bycatch_model)
+
+summary(fit_all_0.95, se = "nid")
+
+```
+
+
+```{r}
+# Ploting Modeling Result
+
+# Coefs for linear regression 
+coefs <- coef(fit_all_lm)
+a <- exp(coefs[1])
+b <- coefs[2]
+x <- seq(0, 15, 0.1)
+y <- a*exp(b*x)
+
+#Coefs for 25% quantile regression
+coefs_25 <- coef(fit_all_0.25)
+a_25 <- exp(coefs_25[1])
+b_25 <- coefs_25[2]
+y_25 <- a_25*exp(b_25*x)
+
+#Coefs for 50% quantile regression
+coefs_50 <- coef(fit_all_0.5)
+a_50 <- exp(coefs_50[1])
+b_50 <- coefs_50[2]
+y_50 <- a_50*exp(b_50*x)
+
+#Coefs for 75% quantile regression
+coefs_75 <- coef(fit_all_0.75)
+a_75 <- exp(coefs_75[1])
+b_75 <- coefs_75[2]
+y_75 <- a_75*exp(b_75*x)
+
+# Coefs for 90% quantile regression
+coefs_90 <- coef(fit_all_0.9)
+a_90 <- exp(coefs_90[1])
+b_90 <- coefs_90[2]
+y_90 <- a_90*exp(b_90*x)
+
+# Coefs for 95% quantile regression
+coefs_95 <- coef(fit_all_0.95)
+a_95 <- exp(coefs_95[1])
+b_95 <- coefs_95[2]
+y_95 <- a_95*exp(b_95*x)
+
+
+# Build prediction dataframe
+pred_df <- tibble(dist_km=x,
+                  BPUE=y,
+                  BPUE_95=y_95,
+                  BPUE_90 = y_90, 
+                  BPUE_75 = y_75,
+                  BPUE_50 = y_50,
+                  BPUE_25 = y_25)
+
+my_theme <-  theme(axis.text=element_text(size=6),
+                   axis.title=element_text(size=8),
+                   strip.text=element_text(size=7),
+                   plot.title=element_blank(),
+                   # Gridlines
+                   panel.grid.major = element_blank(), 
+                   panel.grid.minor = element_blank(),
+                   panel.background = element_blank(), 
+                   axis.line = element_line(colour = "black"),
+                   # Legend
+                   legend.background = element_rect(fill=alpha('blue', 0)))
+
+Figure_2 <- ggplot(CDFW_bycatch_model, aes(x=dist_km, y=BPUE)) +
+  geom_point(pch=21, color="grey50", alpha=0.5) +
+  geom_line(data=pred_df, mapping = aes(x = dist_km, y = BPUE), linetype = "dashed") +
+  geom_line(data=pred_df, mapping=aes(x=dist_km, y=BPUE_95), color="red") +
+  geom_line(data = pred_df, mapping = aes(x = dist_km, y = BPUE_90), color = "blue") +
+  geom_line(data = pred_df, mapping = aes(x = dist_km, y = BPUE_75), color = "orange") +
+  geom_line(data = pred_df, mapping = aes(x = dist_km, y = BPUE_50), color = "green") +
+  geom_line(data = pred_df, mapping = aes(x = dist_km, y = BPUE_25), color = "purple") +
+  scale_y_continuous(lim=c(0,20)) +
+  # Labels
+  labs(x="Distance to Coastline (km)", y="BPUE") +
+  # Theme
+  theme_bw() + my_theme
+
+Figure_2
+
+```
+
+```{r}
+ggsave(Figure_2, filename= file.path("Figures", "modeling_fitting_1983-1989.png"),
+       width = 7, height = 4, units = "in", dpi = 600)
+```
+
+
+```{r}
+
+### Modeling for CPUE
+
+### filter dataset for fitting CPUE models
+
+CDFW_retained_model <- CDFW_bycatch_dist_block %>%
+  filter(region != "Channel Islands") %>%
+  filter(dist_km <= 15) %>%
+  filter(CPUE <= 50)
+
+# Make scatter plot above (without model fitting)
+my_theme <-  theme(axis.text=element_text(size=6),
+                   axis.title=element_text(size=8),
+                   strip.text=element_text(size=7),
+                   plot.title=element_blank(),
+                   # Gridlines
+                   panel.grid.major = element_blank(), 
+                   panel.grid.minor = element_blank(),
+                   panel.background = element_blank(), 
+                   axis.line = element_line(colour = "black"),
+                   # Legend
+                   legend.background = element_rect(fill=alpha('blue', 0)))
+
+ggplot(CDFW_retained_model, aes(x=dist_km, y=CPUE)) +
+  geom_point(pch=21, color="grey50", alpha=0.5) +
+  # Labels
+  labs(x="Distance to Coastal Line (km)", y="CPUE") +
+  # Theme
+  theme_bw() + my_theme
+
+```
+
+```{r}
+### Modeling for CPUE
+
+# Fit linear regression
+fit_all_cpue_lm <- lm(formula = log(CPUE+1)~dist_km, data = CDFW_retained_model)
+
+summary(fit_all_cpue_lm)
+
+# Fit to 0.25 quantile
+fit_all_cpue_0.25 <- rq(formula = log(CPUE+1)~dist_km, tau = 0.25, data = CDFW_retained_model)
+
+summary(fit_all_cpue_0.25, se = "nid")
+
+# Fit to 0.5 quantile
+
+fit_all_cpue_0.5 <- rq(formula = log(CPUE+1)~dist_km, tau = 0.5, data = CDFW_retained_model)
+
+summary(fit_all_cpue_0.5, se = "nid")
+
+# Fit to 0.75 quantile
+fit_all_cpue_0.75 <- rq(formula = log(CPUE+1)~dist_km, tau = 0.75, data = CDFW_retained_model)
+
+summary(fit_all_cpue_0.75, se = "nid")
+
+#  Fit to 0.9 quantile
+
+fit_all_cpue_0.9 <- rq(formula = log(CPUE+1)~dist_km, tau = 0.9, data = CDFW_retained_model)
+
+summary(fit_all_cpue_0.9, se = "nid")
+
+# Fit to 0.95 quantile
+
+fit_all_cpue_0.95 <- rq(formula = log(CPUE+1)~dist_km, tau = 0.95, data = CDFW_retained_model)
+
+summary(fit_all_cpue_0.95, se = "nid")
+
+```
+
+```{r}
+# Ploting Modeling Result
+
+# Coefs for linear regression 
+coefs <- coef(fit_all_cpue_lm)
+a <- exp(coefs[1])
+b <- coefs[2]
+x <- seq(0, 20, 0.1)
+y <- a*exp(b*x)
+
+#Coefs for 25% quantile regression
+coefs_25 <- coef(fit_all_cpue_0.25)
+a_25 <- exp(coefs_25[1])
+b_25 <- coefs_25[2]
+y_25 <- a_25*exp(b_25*x)
+
+#Coefs for 50% quantile regression
+coefs_50 <- coef(fit_all_cpue_0.5)
+a_50 <- exp(coefs_50[1])
+b_50 <- coefs_50[2]
+y_50 <- a_50*exp(b_50*x)
+
+#Coefs for 75% quantile regression
+coefs_75 <- coef(fit_all_cpue_0.75)
+a_75 <- exp(coefs_75[1])
+b_75 <- coefs_75[2]
+y_75 <- a_75*exp(b_75*x)
+
+# Coefs for 90% quantile regression
+coefs_90 <- coef(fit_all_cpue_0.9)
+a_90 <- exp(coefs_90[1])
+b_90 <- coefs_90[2]
+y_90 <- a_90*exp(b_90*x)
+
+# Coefs for 95% quantile regression
+coefs_95 <- coef(fit_all_cpue_0.95)
+a_95 <- exp(coefs_95[1])
+b_95 <- coefs_95[2]
+y_95 <- a_95*exp(b_95*x)
+
+
+# Build prediction dataframe
+pred_df_cpue <- tibble(dist_km=x,
+                  CPUE=y,
+                  CPUE_95=y_95,
+                  CPUE_90 = y_90, 
+                  CPUE_75 = y_75,
+                  CPUE_50 = y_50,
+                  CPUE_25 = y_25)
+
+my_theme <-  theme(axis.text=element_text(size=6),
+                   axis.title=element_text(size=8),
+                   strip.text=element_text(size=7),
+                   plot.title=element_blank(),
+                   # Gridlines
+                   panel.grid.major = element_blank(), 
+                   panel.grid.minor = element_blank(),
+                   panel.background = element_blank(), 
+                   axis.line = element_line(colour = "black"),
+                   # Legend
+                   legend.background = element_rect(fill=alpha('blue', 0)))
+
+Figure_3 <- ggplot(CDFW_retained_model, aes(x=dist_km, y=CPUE)) +
+  geom_point(pch=21, color="grey50", alpha=0.5) +
+  geom_line(data=pred_df_cpue, mapping = aes(x = dist_km, y = CPUE), linetype = "dashed") +
+  geom_line(data=pred_df_cpue, mapping=aes(x=dist_km, y=CPUE_95), color="red") +
+  geom_line(data = pred_df_cpue, mapping = aes(x = dist_km, y = CPUE_90), color = "blue") +
+  geom_line(data = pred_df_cpue, mapping = aes(x = dist_km, y = CPUE_75), color = "orange") +
+  geom_line(data = pred_df_cpue, mapping = aes(x = dist_km, y = CPUE_50), color = "green") +
+  geom_line(data = pred_df_cpue, mapping = aes(x = dist_km, y = CPUE_25), color = "purple") +
+  scale_y_continuous(lim=c(0,100)) +
+  # Labels
+  labs(x="Distance to Coastline (km)", y="CPUE") +
+  # Theme
+  theme_bw() + my_theme
+
+Figure_3
+
+
+```
+
+```{r}
+ggsave(Figure_3, filename= file.path("Figures", "modeling_fitting_CPUE_1983-1989.png"),
+       width = 7, height = 4, units = "in", dpi = 600)
+```
+

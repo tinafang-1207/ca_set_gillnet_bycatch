@@ -1,0 +1,298 @@
+---
+title: "sw_distance_BPUE_and_CPUE_modeling"
+output: html_document
+date: "2022-10-11"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+### Clean working environment
+
+rm(list = ls())
+
+### Load in packages
+
+library(tidyverse)
+library(quantreg)
+```
+
+```{r}
+### Read in data
+
+# Read in spatial data
+blocks <- wcfish::blocks
+
+# Read in attribute data
+SWFSC_trip_orig <- readRDS ("original data/SWFSC_1990_2017_set_net_observer_trips.Rds")
+
+distance_bycatch_state_water <- read.csv("processed data/distance_bycatch_state_water.csv") %>%
+  select(distance, set_id)
+
+SWFSC_observer_orig <- readRDS("original data/SWFSC_set_net_observer_data.Rds")
+
+
+
+
+```
+
+
+```{r}
+### Format bycatch data
+
+SWFSC_bycatch_set <- SWFSC_observer_orig %>%
+  # For protected species, they won't write down n_caught instead of assigning condition_code, each condition_code corresponding to 1 bycatch
+  mutate(n_caught = ifelse(!is.na(condition_code), 1, n_caught)) %>%
+  # Then filter out NA n_caught for unknown species 
+  filter(!is.na(n_caught)) %>%
+  # For protected species, they won't write down n_kept but fishermen won't kept protected species, so n_kept will actually be 0
+  mutate(n_kept = ifelse(is.na(n_kept), 0, n_kept)) %>%
+  # Now ready to calculate bycatch, defined as n_caught - n_kept
+  mutate(bycatch = n_caught - n_kept) %>%
+  group_by(set_id) %>%
+  # capture per set defined as the sum of n_kept
+  summarize(bycatch_set = sum(bycatch), capture_set = sum(n_kept))
+
+```
+
+
+```{r}
+SWFSC_trip_net_info <- SWFSC_trip_orig %>%
+  separate("date_haul1", c("year", "month", "day"), sep = "-") %>%
+  filter(year >= 2000) %>%
+  filter(!is.na(haul_lat_dd)) %>%
+  filter(!is.na(net_mesh_panel_length_fathoms))
+
+### merge with distance
+
+SWFSC_trip_net_distance <- merge(SWFSC_trip_net_info, distance_bycatch_state_water, by = "set_id")
+
+### merge with bycatch 
+
+SWFSC_trip_net_bycatch <- merge(SWFSC_trip_net_distance, SWFSC_bycatch_set, by = "set_id") %>%
+  select(set_id, year,month, day, soak_hr, haul_lat_dd, haul_long_dd, net_mesh_size_in, net_mesh_panel_length_fathoms, distance, bycatch_set, capture_set ) %>%
+  # Filter out few observations that have NA in soak hr
+  filter(!is.na(soak_hr)) %>%
+  mutate(net_panel_length_ft = net_mesh_panel_length_fathoms*6) %>%
+  # Filter out few observations that have 0 documented for net_panel_length
+  filter(net_panel_length_ft != 0) %>%
+  # calculate BPUE per 1600 ft panel length per soaking hr, 1600 used as the mean panel_length_ft for all observations is 1600
+  mutate(BPUE = bycatch_set/(soak_hr*(net_panel_length_ft/1600))) %>%
+  # calculate CPUE per 1600 ft panel length per soaking hr, 1600 used as the mean panel_length_ft for all observations is 1600
+  mutate(CPUE = capture_set/(soak_hr*(net_panel_length_ft/1600))) %>%
+  # round BPUE and CPUE
+  mutate_if(is.numeric, round, digits = 4) %>%
+  filter(!is.na(net_mesh_size_in)) %>%
+  # Make mesh size as character to show mesh size category
+  mutate(net_mesh_size_in = as.character(net_mesh_size_in)) %>%
+  mutate(distance_km = distance/1000) %>%
+  # Make distance category
+  mutate(dist_catg = cut(distance_km, breaks = seq(0, 75,0.5), 
+                         label = seq(0, 74.5, 0.5), right = F) %>% as.character())
+
+
+```
+
+
+```{r}
+### Format SWFSC_trip_net_bycatch_2 with hotspot regions
+
+### Convert to sf and sp
+SWFSC_trip_net_bycatch_sp <- SWFSC_trip_net_bycatch %>%
+  st_as_sf(coords = c("haul_long_dd", "haul_lat_dd"), crs = st_crs(blocks), remove = F ) %>%
+  as_Spatial()
+
+blocks_sp <- blocks %>% 
+  as_Spatial()
+
+### Insert with blocks
+distance_bycatch_block_ids <- sp::over(SWFSC_trip_net_bycatch_sp, blocks_sp) %>%
+  pull(block_id)
+
+### Add block id back to SWFSC_trip_net_bycatch
+
+distance_BPUE_block <-  SWFSC_trip_net_bycatch%>%
+  mutate(block_id = distance_bycatch_block_ids) %>%
+  filter(!is.na(block_id)) %>%
+  mutate(block_id = as.character(block_id)) %>%
+  mutate(region = case_when(block_id %in% c("685", "708")~ "Santa Cruz Island",
+                            block_id %in% c("653", "652", "666", "665", "684", "664", "683")~ "Santa Barbara",
+                            block_id %in% c("702")~"Los Angeles",
+                            block_id %in% c("719","718", "740", "739", "738")~"Long Beach",
+                            block_id %in% c("756", "802", "801")~"Oceanside", 
+                            block_id %in% c("878") ~"San Diego"))
+
+
+
+```
+
+```{r}
+# save the bycatch data with hotspot block_id above
+
+write.table(distance_BPUE_block, file = "processed data/distance_BPUE_block.csv", row.names = F, sep = ",")
+
+
+```
+
+
+```{r}
+### ANOVA?
+
+distance_BPUE_block_anova <- distance_BPUE_block %>%
+  mutate(dist_catg = as.character(dist_catg)) %>%
+  mutate(category = ifelse(dist_catg %in% c("0", "0.5","1", "1.5", "2", "2.5", "3", "3.5", "4"), "less than 4", "greater than 4")) %>%
+  filter(!is.na(region)) %>%
+  filter(region != "Santa Cruz Island")
+
+one_way_BPUE <- aov(BPUE~category, data = distance_BPUE_block_anova)
+
+summary(one_way_BPUE)
+
+one_way_CPUE <- aov(CPUE~category, data = distance_BPUE_block_anova)
+
+summary(one_way_CPUE)
+```
+
+
+```{r}
+### Quantile regression?
+
+### For all data
+
+# Read in data
+distance_BPUE_block <- read.csv("processed data/distance_BPUE_block.csv") %>%
+  filter(!is.na(region)) %>%
+  filter(region != "Santa Cruz Island") %>%
+  filter(BPUE != 0)
+
+# Fit linear regression (p value = 0.00192)
+fit_all_lm <- lm(formula = log(BPUE)~distance_km, data = distance_BPUE_block)
+
+summary(fit_all_lm)
+
+# Fit to 0.25 quantile (p value = 0.01208)
+fit_all_0.25 <- rq(formula = log(BPUE)~distance_km, tau = 0.25, data = distance_BPUE_block)
+
+summary(fit_all_0.25, se = "nid")
+
+# Fit to 0.5 quantile (p value = 0.000409)
+fit_all_0.5 <- rq(formula = log(BPUE)~distance_km, tau = 0.5, data = distance_BPUE_block)
+
+summary(fit_all_0.5, se = "nid")
+
+# Fit to 0.75 quantile (p = 0.000502)
+fit_all_0.75 <- rq(formula = log(BPUE)~distance_km, tau = 0.75, data = distance_BPUE_block)
+
+summary(fit_all_0.75, se = "nid")
+
+#  Fit to 0.9 quantile (p = 0.00709)
+fit_all_0.9 <- rq(formula = log(BPUE)~distance_km, tau = 0.9, data = distance_BPUE_block)
+
+summary(fit_all_0.9, se = "nid")
+
+# Fit to 0.95 quantile (p = 0.000000)
+fit_all_0.95 <- rq(formula = log(BPUE)~distance_km, tau = 0.95, data = distance_BPUE_block)
+
+summary(fit_all_0.95, se = "nid")
+
+
+
+```
+
+```{r}
+### Ploting the modeling result
+
+# Coefs for linear regression 
+coefs <- coef(fit_all_lm)
+a <- exp(coefs[1])
+b <- coefs[2]
+x <- seq(0, 10, 0.1)
+y <- a*exp(b*x)
+
+#Coefs for 25% quantile regression
+coefs_25 <- coef(fit_all_0.25)
+a_25 <- exp(coefs_25[1])
+b_25 <- coefs_25[2]
+y_25 <- a_25*exp(b_25*x)
+
+#Coefs for 50% quantile regression
+coefs_50 <- coef(fit_all_0.5)
+a_50 <- exp(coefs_50[1])
+b_50 <- coefs_50[2]
+y_50 <- a_50*exp(b_50*x)
+
+#Coefs for 75% quantile regression
+coefs_75 <- coef(fit_all_0.75)
+a_75 <- exp(coefs_75[1])
+b_75 <- coefs_75[2]
+y_75 <- a_75*exp(b_75*x)
+
+# Coefs for 90% quantile regression
+coefs_90 <- coef(fit_all_0.9)
+a_90 <- exp(coefs_90[1])
+b_90 <- coefs_90[2]
+y_90 <- a_90*exp(b_90*x)
+
+# Coefs for 95% quantile regression
+coefs_95 <- coef(fit_all_0.95)
+a_95 <- exp(coefs_95[1])
+b_95 <- coefs_95[2]
+y_95 <- a_95*exp(b_95*x)
+
+
+# Build prediction dataframe
+pred_df <- tibble(distance_km=x,
+                  BPUE=y,
+                  BPUE_95=y_95,
+                  BPUE_90 = y_90, 
+                  BPUE_75 = y_75,
+                  BPUE_50 = y_50,
+                  BPUE_25 = y_25)
+
+my_theme <-  theme(axis.text=element_text(size=6),
+                   axis.title=element_text(size=8),
+                   strip.text=element_text(size=7),
+                   plot.title=element_blank(),
+                   # Gridlines
+                   panel.grid.major = element_blank(), 
+                   panel.grid.minor = element_blank(),
+                   panel.background = element_blank(), 
+                   axis.line = element_line(colour = "black"),
+                   # Legend
+                   legend.background = element_rect(fill=alpha('blue', 0)))
+
+Figure <- ggplot(distance_BPUE_block %>% filter(distance_km <= 10) %>% filter(!is.na(region)) %>% filter(region != "Santa Cruz Island"), aes(x=distance_km, y=BPUE)) +
+  geom_point(pch=21, color="grey50", alpha=0.5) +
+  geom_line(data=pred_df, mapping = aes(x = distance_km, y = BPUE), linetype = "dashed") +
+  geom_line(data=pred_df, mapping=aes(x=distance_km, y=BPUE_95), color="red") +
+  geom_line(data = pred_df, mapping = aes(x = distance_km, y = BPUE_90), color = "blue") +
+  geom_line(data = pred_df, mapping = aes(x = distance_km, y = BPUE_75), color = "orange") +
+  geom_line(data = pred_df, mapping = aes(x = distance_km, y = BPUE_50), color = "green") +
+  geom_line(data = pred_df, mapping = aes(x = distance_km, y = BPUE_25), color = "purple") +
+  scale_y_continuous(lim=c(0,2.5)) +
+  # Labels
+  labs(x="Distance to State Water Boundary (km)", y="BPUE") +
+  # Theme
+  theme_bw() + my_theme
+
+Figure
+```
+
+
+```{r}
+ggsave(Figure, filename= file.path("Figures", "modeling_fitting_2006-2017.png"),
+       width = 7, height = 4, units = "in", dpi = 600)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+

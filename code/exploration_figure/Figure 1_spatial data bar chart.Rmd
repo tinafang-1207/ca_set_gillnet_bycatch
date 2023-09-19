@@ -1,0 +1,90 @@
+---
+title: "Figure 1_spatial data bar chart"
+output: html_document
+date: "2022-09-08"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+### Clean environment
+rm(list = ls())
+
+
+### Load packages
+
+library(tidyverse)
+
+```
+
+
+```{r}
+### Read in data
+
+SWFSC_trip_orig <- readRDS ("original data/SWFSC_1990_2017_set_net_observer_trips.Rds")
+
+CDFW_trip_orig <- readRDS("original data/CDFW_1983_1989_gillnet_observer_set_info.Rds")
+
+```
+
+```{r}
+### Build up data
+
+CDFW_spatial <- CDFW_trip_orig %>%
+  select(date, lat_dd, long_dd) %>%
+  rename(haul_lat_dd = lat_dd, haul_long_dd = long_dd) %>%
+  separate("date", c("year", "month", "day"), sep = "-")
+
+SWFSC_spatial <- SWFSC_trip_orig %>%
+  select(date_haul1, haul_lat_dd, haul_long_dd) %>%
+  separate("date_haul1", c("year", "month", "day"), sep = "-")
+
+### merge data
+
+all_spatial_count <- rbind(CDFW_spatial, SWFSC_spatial) %>%
+  mutate(class = ifelse(!is.na(haul_lat_dd), "Lat/long reported", "No lat/long reported")) %>%
+  group_by(year) %>%
+  count(class) %>%
+  mutate(year = as.numeric(year))
+```
+
+```{r}
+### plot data
+
+## Build up Theme
+base_theme <- theme(axis.text=element_text(size=6),
+                    axis.title=element_text(size=8),
+                    axis.title.x=element_blank(),
+                    legend.text=element_text(size=6),
+                    legend.title=element_text(size=8),
+                    strip.text=element_text(size=8),
+                    # Gridlines
+                    panel.grid.major = element_blank(), 
+                    panel.grid.minor = element_blank(),
+                    panel.background = element_blank(), 
+                    axis.line = element_line(colour = "black"))
+
+
+## Make plot
+
+Figure_1 <- ggplot(data = all_spatial_count, aes(x = year, y = n, fill = class)) +
+  geom_bar(stat = "identity", color = "grey30", lwd = 0.1) +
+  labs(x = "Year", y = "Number of observations", title = "Number of Observations with Spatial Information Reporting Status by Year") +
+  scale_x_continuous(breaks = seq(1980, 2020, 10)) +
+  scale_fill_discrete(name = "Reporting status") +
+  geom_vline(xintercept = 1990, linetype = "dashed", color = "grey30") +
+  theme_bw() + base_theme +
+  theme(legend.position = c(0.12, 0.8),
+        legend.key.size = unit(0.3, "cm"),
+        legend.background = element_rect(fill=alpha('blue', 0)))
+
+Figure_1
+```
+
+
+```{r}
+### Export plot
+ggsave(Figure_1, filename= file.path("Figures", "Fig1_spatial_data_bar_chart.png"),
+       width = 7, height = 3.5, units = "in", dpi = 600)
+```
+

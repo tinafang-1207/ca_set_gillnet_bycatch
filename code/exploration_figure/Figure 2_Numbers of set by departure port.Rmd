@@ -1,0 +1,87 @@
+---
+title: "Figure 2_Numbers of set by departure port"
+output: html_document
+date: "2022-09-09"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+###Clean Envrionment
+
+rm(list = ls())
+
+### Load packages
+
+library(tidyverse)
+library(sf)
+
+```
+
+
+```{r}
+### Read in data
+
+SWFSC_trip_orig <- readRDS ("original data/SWFSC_1990_2017_set_net_observer_trips.Rds")
+wc_port <- wcfish::ports
+
+```
+
+
+```{r}
+### Build data
+
+depart_port <- wc_port %>%
+  filter(port %in% c("Oceanside", "San Diego", "Mission Bay", "San Pedro", "Newport Beach", "Los Angeles", "Dana Point", "Long Beach", "Ventura", "Oxnard", "Santa Barbara", "Avila/Port San Luis", "Morro Bay", "Moss Landing", "Santa Cruz", "Monterey")) %>%
+  mutate(port = ifelse(port == "Avila/Port San Luis", "Port San Luis", port)) %>%
+  select(port_complex1, port, lat_dd, long_dd) %>%
+  rename(port_depart = port)
+
+SWFSC_port_depart <- SWFSC_trip_orig %>%
+  select(set_id, port_depart, date_haul1) %>%
+  separate("date_haul1", c("year", "month", "day"), sep = "-") %>%
+  select(-day, -month) %>%
+  mutate(port_depart = ifelse(port_depart == "Newport", "Newport Beach", port_depart)) %>%
+  group_by(year, port_depart) %>%
+  summarize(set_id = n()) %>%
+  rename(n_set = set_id)
+
+SWFSC_port_complex <- left_join(SWFSC_port_depart, depart_port, by = "port_depart") %>%
+  mutate(year = as.numeric(year))
+
+
+```
+
+
+```{r}
+### Make plot
+
+# Theme
+my_theme <-  theme(axis.text=element_text(size=6),
+                   strip.text=element_text(size=6),
+                   # Gridlines
+                   panel.grid.major.x = element_blank(), 
+                   panel.grid.minor.x = element_blank(),
+                   panel.background = element_blank(), 
+                   axis.line = element_line(colour = "black"))
+
+figure_2 <- ggplot() +
+  geom_tile(SWFSC_port_complex, mapping = aes(x = year, y = fct_reorder(port_depart, lat_dd), fill = n_set)) +
+  scale_fill_gradientn(name = "Counts of observed set", 
+                       colors = RColorBrewer::brewer.pal(9, "Reds")) +
+  scale_x_continuous(breaks = seq(1990, 2020, 5)) +
+  labs(x = "Year", y = "Departure port complex", title = "Counts of Gillnet Set by CA Departure Port Complex" ) +
+  facet_wrap(port_complex1~., scales = "free_y") +
+  theme_bw() + my_theme
+
+figure_2
+  
+```
+
+
+```{r}
+### Export Figure
+
+ggsave(figure_2, filename = file.path("Figures", "Fig2_Numbers_of_set_by_departure_port.png"), width = 8, height = 3.5, units = "in", dpi = 600)
+```
+

@@ -1,0 +1,9 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+#confidential
+figures
+data/confidential
+data/gis_data

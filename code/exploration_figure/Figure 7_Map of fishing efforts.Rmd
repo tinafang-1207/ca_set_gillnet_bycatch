@@ -1,0 +1,99 @@
+---
+title: "Figure 7_Map of fishing efforts"
+output: html_document
+date: "2022-10-08"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+### Clean working Environment
+rm(list = ls())
+
+### Load in packages
+
+library(tidyverse)
+library(sf)
+library(rnaturalearth)
+
+```
+
+
+```{r}
+### Read in data (observer data from 2000-2017, those with block_id)
+
+SWFSC_trip_block <- read.csv("processed data/gillnet_coord_all.csv")
+
+### Read in spatial data
+usa <- rnaturalearth::ne_states(country = "United States of America", returnclass = "sf")
+
+mexico <- rnaturalearth::ne_countries(country="Mexico", returnclass = "sf")
+
+wc_port <- wcfish::ports
+
+wc_blocks <- wcfish::blocks
+```
+
+
+```{r}
+### Format data
+
+SWFSC_fishing_effort <- SWFSC_trip_block %>%
+  select(soak_hr, block_id) %>%
+  filter(!is.na(soak_hr)) %>%
+  group_by(block_id) %>%
+  summarize(soak_hr_total = sum(soak_hr))
+
+### Format spatial data
+
+wc_port_ca <- wc_port %>%
+  filter(port %in% c("Oceanside", "San Diego", "Mission Bay", "San Pedro", "Newport Beach", "Los Angeles", "Dana Point", "Long Beach", "Ventura", "Oxnard", "Santa Barbara", "Avila/Port San Luis", "Morro Bay", "Moss Landing", "Santa Cruz", "Monterey"))
+
+fishing_block_selected <- wc_blocks %>%
+  filter(block_state == "California")
+
+### Combine with spatial data
+
+SWFSC_block_fishing_effort <- merge(fishing_block_selected, SWFSC_fishing_effort, by = "block_id")
+```
+
+
+```{r}
+#### Make plot ####
+
+### Set up basic theme
+
+base_theme <- theme(axis.text=element_text(size=7),
+                    axis.title=element_blank(),
+                    legend.text=element_text(size=8),
+                    legend.title=element_text(size=9),
+                    plot.title=element_blank(),
+                    # Gridlines
+                    panel.grid.major = element_blank(), 
+                    panel.grid.minor = element_blank(),
+                    panel.background = element_blank(), 
+                    axis.line = element_line(colour = "black"),
+                    axis.text.y = element_text(angle = 90, hjust = 0.5))
+
+### Make plot
+
+Figure_7 <- ggplot() +
+  geom_sf(data = SWFSC_block_fishing_effort, mapping = aes(fill = soak_hr_total), color = "grey60", lwd = 0.1) +
+  geom_sf(data = usa, fill = "grey85", col = "white", size = 0.2) +
+  geom_sf(data=mexico, fill="grey85", col="white", size=0.2) +
+  geom_point(data = wc_port_ca,
+             mapping = aes(x = long_dd, y = lat_dd), pch = 8, color = "grey30") +
+  ggrepel::geom_text_repel(wc_port_ca, mapping=aes(x = long_dd, y = lat_dd, label = port), size = 1.5, show.legend = F) +
+  scale_fill_gradientn(name = "Cumulative Soaking Hours", colors = RColorBrewer::brewer.pal(9, "YlOrRd")) +
+  coord_sf(xlim = c(-122.5, -117), ylim = c(32.3, 37))+
+  theme_bw() + base_theme
+
+Figure_7
+```
+
+```{r}
+### save plot above
+ggsave(Figure_7, filename= file.path("Figures", "Fig7_map_fishing_efforts.png"),
+       width = 7, height = 4, units = "in", dpi = 600)
+```
+
