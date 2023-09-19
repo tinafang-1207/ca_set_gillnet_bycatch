@@ -1,0 +1,242 @@
+comm_name,type
+Brandt's cormorant,bird
+Common loon,bird
+Double-crested cormorant,bird
+Pacific loon,bird
+Pelagic cormorant,bird
+Unidentified cormorant,bird
+Unidentified grebe,bird
+Unidentified loon,bird
+Western grebe,bird
+Common murre,bird
+Pigeon guillemot,bird
+Unidentified alcid,bird
+Unidentified bird,bird
+Unidentified gull,bird
+Black oystercatcher,bird
+Bank rockfish,finfish
+Black and yellow rockfish,finfish
+Blue rockfish,finfish
+Bocaccio rockfish,finfish
+Bronzespotted rockfish,finfish
+Brown rockfish,finfish
+Canary rockfish,finfish
+Chilipepper rockfish,finfish
+Copper rockfish,finfish
+Cowcod rockfish,finfish
+Flag rockfish,finfish
+Gopher rockfish,finfish
+Grass rockfish,finfish
+Kelp rockfish,finfish
+Olive rockfish,finfish
+Other identified rockfish,finfish
+Pink rockfish,finfish
+Rosy rockfish,finfish
+Speckled rockfish,finfish
+Treefish rockfish,finfish
+Unidentified rockfish,finfish
+Vermillion rockfish,finfish
+Yellowtail rockfish,finfish
+Bigmouth sole,finfish
+Butter sole,finfish
+C-o turbot,finfish
+Curlfin turbot,finfish
+Diamond turbot,finfish
+Dover sole,finfish
+English sole,finfish
+Fantail sole,finfish
+Hornyhead turbot,finfish
+Petrale sole,finfish
+Rex sole,finfish
+Rock sole,finfish
+Sand sole,finfish
+Slender sole,finfish
+Spotted turbot,finfish
+American shad,finfish
+Barred sand bass,finfish
+Barred surfperch,finfish
+Bay pipefish,finfish
+Black croaker,finfish
+Black surfperch,finfish
+Blacksmith,finfish
+Bluefin tuna,finfish
+Bullet mackerel,finfish
+Cabezon,finfish
+California barracuda,finfish
+California corbina,finfish
+California flyingfish,finfish
+California halibut,finfish
+California lizardfish,finfish
+California needlefish,finfish
+California scorpionfish,finfish
+California sheephead,finfish
+California tonguefish,finfish
+Common mola,finfish
+Finescale triggerfish,finfish
+Garibaldi,finfish
+Giant kelpfish,finfish
+Giant sea bass,finfish
+Green sturgeon,finfish
+Halfmoon,finfish
+Jack mackerel,finfish
+Jacksmelt,finfish
+Kelp bass,finfish
+King salmon,finfish
+Lingcod,finfish
+Longfin sanddab,finfish
+Lumptail searobin,finfish
+Northern anchovy,finfish
+Ocean whitefish,finfish
+Onespot fringehead,finfish
+Opaleye,finfish
+Other identified fish,finfish
+Other identified flatfish,finfish
+Other identified salmon,finfish
+Pacific bonito,finfish
+Pacific butterfish,finfish
+Pacific cod,finfish
+Pacific hagfish,finfish
+Pacific hake,finfish
+Pacific halibut,finfish
+Pacific herring,finfish
+Pacific mackerel,finfish
+Pacific sanddab,finfish
+Pacific sardine,finfish
+Painted greenling,finfish
+Pile surfperch,finfish
+Pink surfperch,finfish
+Plainfin midshipman,finfish
+Queenfish,finfish
+Rainbow surfperch,finfish
+Reef surfperch,finfish
+Rock wrasse,finfish
+Round herring,finfish
+Rubberlip surfperch,finfish
+Sablefish,finfish
+Sarcastic fringehead,finfish
+Sargo,finfish
+Senorita,finfish
+Shiner surfperch,finfish
+Silver surfperch,finfish
+Smooth stargazer,finfish
+Speckled sanddab,finfish
+Specklefin midshipman,finfish
+Spotfin croaker,finfish
+Spotted sand bass,finfish
+Starry flounder,finfish
+Striped bass,finfish
+Striped mullet,finfish
+Striped surfperch,finfish
+Surf smelt,finfish
+Surfperch Other Identified,finfish
+Topsmelt,finfish
+Unidentified fish,finfish
+Unidentified flatfish,finfish
+Unidentified mackerel,finfish
+Unidentified sanddab,finfish
+Unidentified sculpin,finfish
+Unidentified sturgeon,finfish
+Unidentified surfperch,finfish
+Unidentified triggerfish,finfish
+Walleye surfperch,finfish
+White croaker,finfish
+White seabass,finfish
+White sturgeon,finfish
+White surfperch,finfish
+Yellowfin croaker,finfish
+Yellowfin tuna,finfish
+Yellowtail,finfish
+Zebraperch,finfish
+California king crab,invertebrate
+California spiny lobster,invertebrate
+Decorator crab,invertebrate
+Dungeness crab,invertebrate
+Hermit crab,invertebrate
+Mantis shrimp,invertebrate
+Marble crab,invertebrate
+Northern kelp crab,invertebrate
+Opossum crab,invertebrate
+Parasol crab,invertebrate
+Pelagic red crab,invertebrate
+Pointer crab,invertebrate
+Red rock crab,invertebrate
+Rock crab,invertebrate
+Sand crab,invertebrate
+Southern kelp crab,invertebrate
+Spider crab,invertebrate
+Spot shrimp,invertebrate
+Tuberculate pelagic octopus,invertebrate
+Unidentified crab,invertebrate
+Unidentified octopus,invertebrate
+Unidentified shrimp,invertebrate
+Yellow crab,invertebrate
+Jumbo (humboldt) squid,invertebrate
+Market squid,invertebrate
+Moon snail,invertebrate
+Pelagic tunicates,invertebrate
+Red abalone,invertebrate
+Sea Cucumber,invertebrate
+Sea hare,invertebrate
+Sea Star,invertebrate
+Sea Urchin,invertebrate
+Unidentified crustacean,invertebrate
+Unidentified echinoderm,invertebrate
+Unidentified invertebrate,invertebrate
+Unidentified mollusk,invertebrate
+Unidentified scallop,invertebrate
+Unidentified snail,invertebrate
+Whelk,invertebrate
+California sea lion,mammal
+Harbor seal,mammal
+Northern elephant seal,mammal
+Sea Otter,mammal
+Unidentified sea lion,mammal
+Harbor porpoise,mammal
+Long-beaked common dolphin,mammal
+Pacific white-sided dolphin,mammal
+Short-beaked common dolphin,mammal
+Unidentified common dolphin,mammal
+Unidentified dolphin,mammal
+Unidentified cetacean,mammal
+Unidentified pinniped,mammal
+Banded guitarfish,shark/ray
+Basking shark,shark/ray
+Bat ray,shark/ray
+Big skate,shark/ray
+Blue shark,shark/ray
+Brown smoothhound shark,shark/ray
+California butterfly ray,shark/ray
+California skate,shark/ray
+Common thresher shark,shark/ray
+Dusky shark,shark/ray
+Gray smoothhound shark,shark/ray
+Horn shark,shark/ray
+Leopard shark,shark/ray
+Longnose skate,shark/ray
+Other identified shark,shark/ray
+Other identified skate,shark/ray
+Pacific angel shark,shark/ray
+Pacific electric ray,shark/ray
+Pelagic stingray,shark/ray
+Prickly shark,shark/ray
+Round stingray,shark/ray
+Sevengill shark,shark/ray
+Shortfin mako shark,shark/ray
+Shovelnose guitarfish,shark/ray
+Sixgill shark,shark/ray
+Smooth hammerhead shark,shark/ray
+Soupfin shark,shark/ray
+Spiny dogfish shark,shark/ray
+Starry skate,shark/ray
+Swell shark,shark/ray
+Unidentified ray,shark/ray
+Unidentified shark,shark/ray
+Unidentified skate,shark/ray
+White shark,shark/ray
+Spotted ratfish,shark/ray
+Thornback,shark/ray
+Green/black turtle,turtle
+Leatherback turtle,turtle
+Loggerhead turtle,turtle
+Unidentified turtle,turtle
+Unknown Species,unknown
