@@ -9,12 +9,14 @@ rm(list = ls())
 # Packages
 library(tidyverse)
 
+
 # Directories
 
 
 # Read data
 data_orig <- readRDS("data/confidential/processed/CDFW_1980_2022_gillnet_logbook_new.Rds")
 
+block <- wcfish::blocks
 
 # Build data
 ################################################################################
@@ -25,13 +27,14 @@ table(data_orig$net_type)
 # Build data
 data <- data_orig %>% 
   # Reduce to set fishery
-  filter(net_type=="Set" & year!=2022) %>% 
-  filter(mesh_size_in > 3.5) %>%
+  filter(net_type=="Set" & year!=2022) %>%
   # Add vessel days
   mutate(vessel_day=paste(vessel_id_use, date, sep="-"),
          set_id=paste(date, vessel_id_use, block_id, net_type, 
                       haul_depth_fa, net_length_ft, mesh_size_in, 
-                      buoy_line_depth_fa, soak_hour, target_spp, sep="-")) %>% 
+                      buoy_line_depth_fa, soak_hour, target_spp, sep="-"))
+
+  
   # Summarize by year
   group_by(year) %>% 
   summarize(n_logbook_rows=n(),
@@ -42,6 +45,36 @@ data <- data_orig %>%
 
 # Export data
 write.csv(data, file=file.path(datadir, "1981_2022_ca_set_gillnet_effort.csv"), row.names=F)
+
+
+# Plot for stratified region in Central & Southern California
+
+block_key <- read.csv("data/block_stratified_key.csv")
+
+block_format <- block %>%
+  filter(block_state == "California") %>%
+  left_join(block_key, by = "block_id") %>%
+  filter(block_type %in% c("Inshore", "Midshore"))
+
+usa <- rnaturalearth::ne_states(country = "United States of America", returnclass = "sf")
+
+mexico <- rnaturalearth::ne_countries(country="Mexico", returnclass = "sf")
+
+
+g_region <- ggplot() +
+  geom_sf(data = block_format, aes(fill = stratified_region)) +
+  geom_sf(data = usa, fill = "grey85", col = "white", size = 0.2) +
+  geom_sf(data=mexico, fill="grey85", col="white", size=0.2) +
+  scale_fill_discrete(name = "Stratified Region") +
+  coord_sf(xlim = c(-122, -117), ylim = c(32, 37)) +
+  my_theme
+
+g_region
+
+# Plot for number of vessel days by stratified region from 1981 - 2022
+  # mesh size >= 8.5 inches
+
+
 
 
 # Build data
