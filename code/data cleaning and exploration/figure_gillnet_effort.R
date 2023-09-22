@@ -67,15 +67,59 @@ g_region <- ggplot() +
   geom_sf(data=mexico, fill="grey85", col="white", size=0.2) +
   scale_fill_discrete(name = "Stratified Region") +
   coord_sf(xlim = c(-122, -117), ylim = c(32, 37)) +
-  my_theme
+  my_theme + theme(legend.position = "none")
 
 g_region
 
 # Plot for number of vessel days by stratified region from 1981 - 2022
   # mesh size >= 8.5 inches
 
+mesh_size_key <- readRDS("data/confidential/processed/logbook_new_pre_model_final.Rds") %>%
+  select(set_id, mesh_size_in) %>%
+  rename(mesh_size_correct = mesh_size_in)
 
 
+# correct mesh size
+data <- data_orig %>%
+  filter(net_type == "Set") %>%
+  mutate(set_id = paste(vessel_name, "-", vessel_id_use, "-", permit_num, "-", date, "-", block_id, "-", haul_depth_fa, "-", net_length_ft, "-", mesh_size_in, "-", soak_hour)) %>%
+  group_by(set_id) %>%
+  left_join(mesh_size_key, by = "set_id") %>%
+  ungroup() %>%
+  select(-mesh_size_in)
+
+# calculate data
+data_effort <- data %>%
+  filter(mesh_size_correct >= 3.5) %>%
+  mutate(block_id = as.integer(block_id)) %>%
+  left_join(block_key, by = "block_id") %>%
+  mutate(vessel_day=paste(vessel_id_use, date, sep="-"),
+         set_id=paste(vessel_name, "-", vessel_id_use, "-", permit_num, "-", date, "-", block_id, "-", haul_depth_fa, "-", net_length_ft, "-", mesh_size_correct, "-", soak_hour)) %>%
+# Summarize by year & stratified region
+  group_by(year, stratified_region) %>% 
+  summarize(n_logbook_rows=n(),
+            n_vessels=n_distinct(vessel_id_use),
+            n_vessel_days=n_distinct(vessel_day),
+            n_sets=n_distinct(set_id)) %>% 
+  ungroup() %>%
+  filter(!is.na(stratified_region))
+
+g_effort <- ggplot(data = data_effort) +
+  geom_bar(aes(x = year, y = n_vessel_days, fill = stratified_region), stat = "identity") +
+  scale_x_continuous(breaks = seq(1981, 2022, 5)) +
+  scale_fill_discrete(name = "Ratio estimator regions") +
+  labs(y = "Number of fishing days") +
+  my_theme
+
+g_effort
+
+
+g<- gridExtra::grid.arrange(g_region, g_effort, nrow = 1)
+
+
+
+################# Chris Plot Code below #########################
+################################################################
 
 # Build data
 ################################################################################
