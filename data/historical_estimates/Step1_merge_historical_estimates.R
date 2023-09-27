@@ -13,6 +13,7 @@ library(tidyverse)
 # Directories
 indir <- "data/historical_estimates/raw"
 outdir <- "data/historical_estimates/processed"
+plotdir <- "data/historical_estimates/figures"
 
 # Read data
 jb_orig <- readxl::read_excel(file.path(indir, "Julian_Beeson_1995_Tables4_5.xlsx"))
@@ -28,7 +29,7 @@ car12_orig <- readxl::read_excel(file.path(indir, "Carretta_2012.xlsx"))
 # Format data
 ################################################################################
 
-# Format
+# Format Julian & Beeson 1995
 jb <- jb_orig %>% 
   # Gather
   gather(key="metric_year", value="value", 5:ncol(.)) %>% 
@@ -57,7 +58,15 @@ cam00 <- cam00_orig %>%
   filter(species!="Harbor Porpoise, excluding unidentified cetacean")
 
 # Format Carretta 2001
-car01 <- car01_orig
+car01 <- car01_orig %>% 
+  # Merge regions
+  group_by(reference, species, year) %>% 
+  summarise(mort_sum=sum(mort),
+            mort_cv=weighted.mean(mort_cv, w=mort)) %>% 
+  ungroup() %>% 
+  rename(mort=mort_sum) %>% 
+  # Add table
+  mutate(table="Tables 1&2")
 
 # Format Carretta 2003
 car03 <- car03_orig
@@ -106,7 +115,7 @@ data <- data_merge %>%
   mutate(mort_lo=pmax(0, mort-mort_se_calc*1.96),
          mort_hi=mort+mort_se_calc*1.96) %>% 
   # Arrange
-  select(reference:species, region, year, obs, 
+  select(reference:species, year, obs, 
          kill_day, kill_day_se, kill_100sets, kill_100sets_se,
          mort, mort_var, mort_se, mort_cv, everything())
   
@@ -121,27 +130,27 @@ sort(unique(data$species))
 saveRDS(data, file=file.path(outdir, "ca_set_gillnet_bycatch_estimates_historical.Rds"))
 
 
-# Plot data
+# Plot all data
 ################################################################################
 
 # Stats
 stats <- data %>% 
   group_by(species) %>% 
-  summarize(mort=sum(mort, na.rm=T)) %>% 
+  summarize(mort=sum(mort, na.rm=T),
+            ymax=max(mort_hi)) %>% 
   ungroup() %>% 
-  arrange(desc(mort))
+  arrange(desc(mort)) %>% 
+  mutate(species=factor(species, species))
 
 # Order data
 data_ordered <- data %>% 
   mutate(species=factor(species, levels=stats$species))
 
 # Theme
-my_theme <-  theme(axis.text=element_text(size=6),
-                   axis.title=element_text(size=8),
-                   legend.text=element_text(size=6),
-                   legend.title=element_text(size=8),
+my_theme <-  theme(axis.text=element_text(size=8),
+                   axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+                   axis.title=element_text(size=10),
                    strip.text=element_text(size=8),
-                   plot.title=element_text(size=10),
                    # Gridlines
                    panel.grid.major = element_blank(), 
                    panel.grid.minor = element_blank(),
@@ -153,15 +162,67 @@ my_theme <-  theme(axis.text=element_text(size=6),
 # Plot data
 g <- ggplot(data_ordered, aes(x=year, y=mort)) +
   # Facet
-  facet_wrap(~species, scales="free_y") +
+  facet_wrap(~species, scales="free_y", ncol=5) +
   # Data
   geom_bar(stat="identity", fill="grey70") +
   geom_errorbar(mapping=aes(ymin=mort_lo, ymax=mort_hi), width=0) +
+  # Labels
+  geom_text(data=stats, mapping=aes(y=ymax, label=mort), x=2012, 
+            size=2.4, hjust=1) +
   # Labels
   labs(x="Year", y="Bycatch estimate") +
   # Theme
   theme_bw() + my_theme
 g
+
+# Export plot
+ggsave(g, filename=file.path(plotdir, "historical_estimates_all.pdf"), 
+       width=8.5, height=11.5, units="in", dpi=600)
+
+
+# Plot some data
+################################################################################
+
+# Reduce data
+data_select <- data_ordered %>% 
+  filter(species %in% c("Common murre", "California sea lion", "Harbor seal",
+                        "Brandt's cormorant", "Northern elephant seal", "Harbor porpoise"))
+stats_select <- stats %>% 
+  filter(species %in% c("Common murre", "California sea lion", "Harbor seal",
+                        "Brandt's cormorant", "Northern elephant seal", "Harbor porpoise"))
+
+# Theme
+my_theme2 <-  theme(axis.text=element_text(size=8),
+                   axis.title=element_text(size=10),
+                   strip.text=element_text(size=8),
+                   # Gridlines
+                   panel.grid.major = element_blank(), 
+                   panel.grid.minor = element_blank(),
+                   panel.background = element_blank(), 
+                   axis.line = element_line(colour = "black"),
+                   # Legend
+                   legend.background = element_rect(fill=alpha('blue', 0)))
+
+# Plot data
+g <- ggplot(data_select, aes(x=year, y=mort)) +
+  # Facet
+  facet_wrap(~species, scales="free_y", ncol=3) +
+  # Data
+  geom_bar(stat="identity", fill="grey70") +
+  geom_errorbar(mapping=aes(ymin=mort_lo, ymax=mort_hi), width=0) +
+  # Labels
+  geom_text(data=stats_select, mapping=aes(y=ymax, label=mort), x=2012, 
+            size=2.4, hjust=1) +
+  # Labels
+  labs(x="Year", y="Bycatch estimate") +
+  # Theme
+  theme_bw() + my_theme2
+g
+
+# Export plot
+ggsave(g, filename=file.path(plotdir, "historical_estimates_select.png"), 
+       width=6.5, height=4, units="in", dpi=600)
+
 
 
 
