@@ -145,6 +145,11 @@ augment(rf_final_fit, new_data = model_test) %>%
 augment(rf_final_fit, new_data = model_test) %>%
   kap(truth = sl_response, estimate = .pred_class)
 
+#variable importance plot
+rf_final_fit %>%
+  extract_fit_parsnip() %>%
+  vip(num_features = 7)
+
 #marginal plot
 
 explainer_rf <- explain_tidymodels(
