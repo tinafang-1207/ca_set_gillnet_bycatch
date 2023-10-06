@@ -10,11 +10,11 @@ rm(list = ls())
 library(tidyverse)
 
 # Directories
-plotdir <- "/Users/cfree/Dropbox/Chris/UCSB/projects/ca_gillnet_bycatch_chris/figures"
-datadir <- "/Users/cfree/Dropbox/Chris/UCSB/projects/ca_gillnet_bycatch_chris/data"
+plotdir <- "figures"
+outputdir <- "~/Desktop"
 
 # Read data
-data_orig <- readRDS("/Users/cfree/Dropbox/Chris/UCSB/projects/california/cdfw_data/data/confidential/gillnet_logbooks_2023/processed/CDFW_1981_2020_gillnet_logbook_data.Rds")
+data_orig <- readRDS("california/cdfw_data/data/confidential/gillnet_logbooks_2023/processed/CDFW_1981_2020_gillnet_logbook_data.Rds")
 
 
 # Build data
@@ -40,8 +40,11 @@ data <- data_orig %>%
             n_sets=n_distinct(set_id)) %>% 
   ungroup()
 
+# Do any years violate the rule of three?
+sum(data$n_vessels<3)
+
 # Export data
-write.csv(data, file=file.path(datadir, "1981_2022_ca_set_gillnet_effort.csv"), row.names=F)
+write.csv(data, file=file.path(outputdir, "1981_2022_ca_set_gillnet_effort.csv"), row.names=F)
 
 
 # Build data
@@ -68,6 +71,7 @@ g1 <- ggplot(data, aes(x=year, y=n_logbook_rows)) +
   geom_line() +
   # Labels
   labs(x="Year", y="Number of logbook rows", tag="A") +
+  lims(y=c(0, NA)) +
   # Theme
   theme_bw() + my_theme
 g1
@@ -77,6 +81,7 @@ g2 <- ggplot(data, aes(x=year, y=n_vessels)) +
   geom_line() +
   # Labels
   labs(x="Year", y="Number of vessels", tag="B") +
+  lims(y=c(0, NA)) +
   # Theme
   theme_bw() + my_theme
 g2
@@ -86,6 +91,7 @@ g3 <- ggplot(data, aes(x=year, y=n_vessel_days)) +
   geom_line() +
   # Labels
   labs(x="Year", y="Number of vessel days", tag="C") +
+  lims(y=c(0, NA)) +
   # Theme
   theme_bw() + my_theme
 g3
@@ -95,6 +101,7 @@ g4 <- ggplot(data, aes(x=year, y=n_sets)) +
   geom_line() +
   # Labels
   labs(x="Year", y="Number of sets", tag="D") +
+  lims(y=c(0, NA)) +
   # Theme
   theme_bw() + my_theme
 g4
