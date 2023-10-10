@@ -47,15 +47,7 @@ data_mesh_size_key <- data_orig %>%
   group_by(vessel_id_use, target_spp) %>%
   summarize(mesh_size_mode = find_mode(mesh_size_in))
 
-# create mesh size key based on vessel_id and target species
-data_mesh_size_target_key <- data_orig %>%
-  # join target_spp
-  left_join(data_orig_lb_target, by = "set_id") %>%
-  select(-date, -dist_m) %>%
-  mutate(mesh_size_in = as.numeric(mesh_size_in)) %>%
-  mutate(mesh_size_in = ifelse(mesh_size_in == 0|mesh_size_in >20, NA, mesh_size_in)) %>%
-  group_by(target_spp) %>%
-  summarize(mesh_size_mode_target_spp = find_mode(mesh_size_in))
+
 
 # Assign mesh size
 data_mesh_size_format <- data_orig %>%
