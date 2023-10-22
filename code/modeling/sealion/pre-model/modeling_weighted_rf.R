@@ -50,8 +50,8 @@ model_data <- left_join(response_pre_join, predictor_pre_join, by = "set_id") %>
 
 # predictors: 
 
-# block_id_latitude
-# block_id_longitude
+# haul_latitude
+# haul_longitude
 # haul_depth_fa(haul depth in fathoms)
 # soak_hr(soak hours)
 # net_mesh_size_in(net mesh size inches)
