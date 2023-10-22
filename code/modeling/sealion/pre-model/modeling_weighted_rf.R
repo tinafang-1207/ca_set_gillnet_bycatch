@@ -18,7 +18,7 @@ library(workflows)
 #### read in data
 ######################################################################
 
-model_data_orig <- read.csv("data/confidential/processed/fig2_total_merge_final_block.csv")
+model_data_orig <- read_csv("data/confidential/processed/fig2_total_merge_final.csv")
 
 #### Format model data: California Sealion
 ######################################################################
@@ -34,7 +34,7 @@ response_pre_join <- model_data_orig %>%
 predictor_pre_join <- model_data_orig %>%
   filter(data_source != "SWFSC(1990-1994)") %>%
   separate("date", c("year", "month", "day"), sep = "-") %>%
-  select(set_id, block_long_dd, block_lat_dd, haul_depth_fa, soak_hr, net_mesh_size_in, dist_km, julian_day, sst) %>%
+  select(set_id, haul_long_dd, haul_lat_dd, haul_depth_fa, soak_hr, net_mesh_size_in, dist_km, julian_day, sst) %>%
   filter(!duplicated(set_id))
 
 
@@ -63,7 +63,7 @@ model_data <- left_join(response_pre_join, predictor_pre_join, by = "set_id") %>
 ######################################################################
 
 set.seed(1207)
-model_split <- initial_split(model_data, strata = sl_response)
+model_split <- initial_split(model_data, prop = 4/5, strata = sl_response)
 
 model_train <- training(model_split) %>%
   select(-set_id) %>%
@@ -164,8 +164,8 @@ pdp_rf <- model_profile(explainer_rf,
                         variables = c("net_mesh_size_in",
                                       "sst",
                                       "julian_day",
-                                      "block_long_dd",
-                                      "block_lat_dd",
+                                      "haul_long_dd",
+                                      "haul_lat_dd",
                                       "soak_hr",
                                       "dist_km",
                                       "haul_depth_fa"), 
@@ -182,7 +182,7 @@ ggplot(data = pdp_rf_df, aes(x = predictor, y = prob_prediction)) +
   facet_wrap(.~variable_name, scales = "free_x")
 
 # save model result
-saveRDS(rf_res, file.path("model_result/weighted_rf_weight100.Rds"))
+saveRDS(rf_res, file.path("model_result/weighted_rf_weight75.Rds"))
 
 
 
