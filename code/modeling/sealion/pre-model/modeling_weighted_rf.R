@@ -14,11 +14,14 @@ library(DALEXtra)
 library(themis)
 library(workflows)
 
+# Directories
+plotdir <- "figures"
+confdatadir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential" # chris
 
 #### read in data
 ######################################################################
 
-model_data_orig <- read_csv("data/confidential/processed/fig2_total_merge_final.csv")
+model_data_orig <- read_csv(file.path(confdatadir, "processed/fig2_total_merge_final.csv"))
 
 #### Format model data: California Sealion
 ######################################################################
@@ -183,6 +186,100 @@ ggplot(data = pdp_rf_df, aes(x = predictor, y = prob_prediction)) +
 
 # save model result
 saveRDS(rf_res, file.path("model_result/weighted_rf_weight75.Rds"))
+save(rf_final_fit,
+     model_train,
+     model_test,
+     pdp_rf, 
+     pdp_rf_df,
+     file=file.path(file.path("model_result/weighted_rf_weight75.Rdata")))
 
+
+# Chris' work on marginal effects figure
+######################################################################
+
+# Compute and quickly plot variable importance 
+var_imp <- rf_final_fit %>%
+  extract_fit_parsnip() %>%
+  vip()
+
+# Extract and format importance values
+var_imp_df <- var_imp$data %>% 
+  # Rename
+  janitor::clean_names("snake") %>% 
+  # Format variables
+  mutate(variable=recode(variable, 
+                         "haul_long_dd"="Longitude (°W)",     
+                         "julian_day"="Julian day",      
+                         "sst"="Temperature (°C)",             
+                         "haul_lat_dd"="Latitude (°N)",
+                         "net_mesh_size_in"="Mesh size (cm)",
+                         "dist_km"="Shore distance (km)",
+                         "haul_depth_fa"="Depth (fathoms)",    
+                         "soak_hr"="Soak time (hr)"))
+
+# Format marginal effects
+marg_effect <- pdp_rf_df %>% 
+  # Rename
+  rename(variable=variable_name,
+         value=predictor,
+         prob=prob_prediction) %>% 
+  # Format variables
+  mutate(variable=recode_factor(variable, 
+                         "haul_long_dd"="Longitude (°W)",     
+                         "julian_day"="Julian day",      
+                         "sst"="Temperature (°C)",             
+                         "haul_lat_dd"="Latitude (°N)",
+                         "net_mesh_size_in"="Mesh size (cm)",
+                         "dist_km"="Shore distance (km)",
+                         "haul_depth_fa"="Depth (fathoms)",    
+                         "soak_hr"="Soak time (hr)")) %>% 
+  # Remove outlier values (BUT WE SHOULD DO THIS RIGHT SOMEWHERE)
+  filter(!(variable=="Depth (fathoms)" & value>100)) %>% 
+  filter(!(variable=="Shore distance (km)" & value>20)) %>% 
+  filter(!(variable=="Soak time (hr)" & value>96))
+
+  
+
+# Theme
+my_theme <-  theme(axis.text=element_text(size=6),
+                   axis.title=element_text(size=7),
+                   strip.text=element_text(size=7),
+                   plot.tag=element_text(size=8),
+                   # Gridlines
+                   panel.grid.major = element_blank(), 
+                   panel.grid.minor = element_blank(),
+                   panel.background = element_blank(), 
+                   axis.line = element_line(colour = "black"),
+                   # Legend
+                   legend.background = element_rect(fill=alpha('blue', 0)))
+
+
+# Plot variable importance
+g1 <- ggplot(var_imp_df, aes(x=importance, y=reorder(variable, importance))) +
+  geom_bar(stat="identity") +
+  # Labels
+  labs(x="Variable importance", y="", tag="A") +
+  # Theme
+  theme_bw() + my_theme
+g1
+
+# Plot marginal effects
+g2 <- ggplot(marg_effect, aes(x=value, y=prob)) +
+  facet_wrap(~variable, nrow=2, scales="free_x") +
+  geom_line() +
+  # Labels
+  labs(x="Value", y="Bycatch risk", tag="B") +
+  lims(y=c(0, NA)) +
+  # Theme
+  theme_bw() + my_theme
+g2
+
+# Merge
+g <- gridExtra::grid.arrange(g1, g2, nrow=1, widths=c(0.25, 0.75))
+g
+
+# Export
+ggsave(g, filename=file.path(plotdir, "sea_lion_marg_effects.png"), 
+       width=8.5, height=3.5, units="in", dpi=600)
 
 
