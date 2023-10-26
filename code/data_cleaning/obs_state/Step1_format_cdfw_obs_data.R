@@ -10,18 +10,18 @@ rm(list = ls())
 library(tidyverse)
 
 # Directories
-indir <- "data/cdfw_obs/raw"
-outdir <- "data/cdfw_obs/processed"
-plotdir <- "data/cdfw_obs/figures"
+indir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_state/raw"
+outdir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_state/processed"
+plotdir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_state/figures"
+keydir <- "data/keys"
 
 # Read data
 data_orig <- read.csv(file.path(indir, "GNC8389.csv"), as.is=T, na.strings="")
 
-# Read species key
-spp_key <- readRDS("data/cdfw_keys/processed/CDFW_species_key.Rds")
-spp_key2 <- readRDS("data/swfsc_obs/processed/SWFSC_observer_program_spp_key.Rds")
-port_key <- readRDS("data/cdfw_keys/processed/CDFW_port_key.Rds")
-
+# Read keys
+port_key <- readRDS(file.path(keydir, "CDFW_port_key.Rds"))
+spp_key <- readRDS(file.path(keydir, "CDFW_species_key.Rds"))
+spp_key2 <- readRDS("/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_federal/processed/SWFSC_observer_program_spp_key.Rds")
 
 # Format data
 ################################################################################
@@ -55,7 +55,7 @@ data <- data_orig %>%
   mutate(spp_code_chr=recode(spp_code_chr,
                              "PPn"="pPN",
                              "aV"="aVE")) %>%
-  left_join(spp_key2 %>% select(code, comm_name), by=c("spp_code_chr"="code")) %>%
+  left_join(spp_key2 %>% select(spp_code, comm_name), by=c("spp_code_chr"="spp_code")) %>%
   # Fill in missing common name
   mutate(comm_name=case_when(spp_code_chr=="152" ~ "Spiny dogfish shark",
                              TRUE ~ comm_name)) %>%
@@ -70,7 +70,6 @@ data <- data_orig %>%
   arrange(date, vessel_id, set_num, set_id, comm_name)
 
 
-# Inspect data
 ################################################################################
 
 # Inspect

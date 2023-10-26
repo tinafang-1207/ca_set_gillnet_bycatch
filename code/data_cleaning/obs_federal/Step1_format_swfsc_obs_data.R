@@ -134,7 +134,7 @@ data2 <- data_orig2 %>%
   # Remove useless columns
   select(-c(measurement_units, condition)) %>%
   # Arrange
-  select(trip_id, set_num, set_id, everything()) %>%
+  select(trip_id, set_num, set_id, spp_code, everything()) %>%
   arrange(trip_id, set_num, set_id, spp_code)
 
 # Inspect
@@ -147,7 +147,7 @@ freeR::complete(data2)
 sort(unique(data2$disposition))
 
 # Inspect species key
-spp_key <- data2 %>%
+spp_key_check2 <- data2 %>%
   select(spp_code, comm_name) %>%
   unique()
 
@@ -201,6 +201,9 @@ data3 <- data_orig3 %>%
   # Format dates
   mutate(date_haul1=lubridate::dmy(date_haul1),
          date_haul2=lubridate::dmy(date_haul2)) %>%
+  # Format target species
+  mutate(target1_spp=wcfish::reverse_names(target1_spp),
+         target2_spp=wcfish::reverse_names(target2_spp)) %>% 
   # Label net type
   rowwise() %>%
   mutate(sn_vals_n=sum(!is.na(set_net_percent_described),
@@ -233,24 +236,24 @@ data3 <- data_orig3 %>%
                        !is.na(float_net_net_mat_strength_unit_code))) %>%
   ungroup() %>%
   mutate(net_type=ifelse(fn_vals_n>0 & sn_vals_n>0, "both",
-                         ifelse(fn_vals_n==0 & sn_vals_n>0, "set net",
-                                ifelse(sn_vals_n==0 & fn_vals_n>0, "float net",
+                         ifelse(fn_vals_n==0 & sn_vals_n>0, "set",
+                                ifelse(sn_vals_n==0 & fn_vals_n>0, "drift",
                                        ifelse(sn_vals_n==0 & fn_vals_n==0, "unknown", "other"))))) %>%
   # Recode net stuff
-  mutate(perc_obs=ifelse(net_type=="set net", set_net_percent_described, float_net_percent_described),
-         net_hang_length_in=ifelse(net_type=="set net", set_net_hanging_length_inches, float_net_hanging_length_inches),
-         net_mesh_size_in=ifelse(net_type=="set net", set_net_mesh_size_inches, float_net_mesh_size_inches),
-         net_suspender_length_in=ifelse(net_type=="set net", set_net_suspender_length_inches, float_net_suspender_length_inches),
-         net_extender_length_in=ifelse(net_type=="set net", set_net_extender_length_feet, float_net_extender_length_feet),
-         net_perc_slack=ifelse(net_type=="set net", set_net_percent_slack, float_net_percent_slack),
-         net_n_meshes_hang=ifelse(net_type=="set net", set_net_number_of_meshes_hanging, float_net_number_of_meshes_hanging),
-         net_material_strength_lbs=ifelse(net_type=="set net", set_net_material_strength_lbs, float_net_material_strength_lbs),
-         net_mesh_panel_length_fathoms=ifelse(net_type=="set net", set_net_mesh_panel_length_fathoms, float_net_mesh_panel_length_fathoms),
-         net_depth_in_mesh_n=ifelse(net_type=="set net", set_net_net_depth_in_mesh_number, float_net_net_depth_in_mesh_number),
-         net_color_code=ifelse(net_type=="set net", set_net_net_color_code, float_net_net_color_code),
-         net_hang_line_material_code=ifelse(net_type=="set net", set_net_net_hanging_line_mat_code, float_net_net_hanging_line_mat_code),
-         net_material_code=ifelse(net_type=="set net", set_net_net_material_code, float_net_net_material_code),
-         net_material_strength_code=ifelse(net_type=="set net", set_net_net_mat_strength_unit_code, float_net_net_mat_strength_unit_code)) %>%
+  mutate(perc_obs=ifelse(net_type=="set", set_net_percent_described, float_net_percent_described),
+         net_hang_length_in=ifelse(net_type=="set", set_net_hanging_length_inches, float_net_hanging_length_inches),
+         net_mesh_size_in=ifelse(net_type=="set", set_net_mesh_size_inches, float_net_mesh_size_inches),
+         net_suspender_length_in=ifelse(net_type=="set", set_net_suspender_length_inches, float_net_suspender_length_inches),
+         net_extender_length_in=ifelse(net_type=="set", set_net_extender_length_feet, float_net_extender_length_feet),
+         net_perc_slack=ifelse(net_type=="set", set_net_percent_slack, float_net_percent_slack),
+         net_n_meshes_hang=ifelse(net_type=="set", set_net_number_of_meshes_hanging, float_net_number_of_meshes_hanging),
+         net_material_strength_lbs=ifelse(net_type=="set", set_net_material_strength_lbs, float_net_material_strength_lbs),
+         net_mesh_panel_length_fathoms=ifelse(net_type=="set", set_net_mesh_panel_length_fathoms, float_net_mesh_panel_length_fathoms),
+         net_depth_in_mesh_n=ifelse(net_type=="set", set_net_net_depth_in_mesh_number, float_net_net_depth_in_mesh_number),
+         net_color_code=ifelse(net_type=="set", set_net_net_color_code, float_net_net_color_code),
+         net_hang_line_material_code=ifelse(net_type=="set", set_net_net_hanging_line_mat_code, float_net_net_hanging_line_mat_code),
+         net_material_code=ifelse(net_type=="set", set_net_net_material_code, float_net_net_material_code),
+         net_material_strength_code=ifelse(net_type=="set", set_net_net_mat_strength_unit_code, float_net_net_mat_strength_unit_code)) %>%
   # Remove useless net columns
   select(-c(set_net_percent_described:float_net_net_mat_strength_unit_code)) %>%
   # Add set id
@@ -269,6 +272,13 @@ table(data3$port_depart)
 table(data3$port_return)
 table(data3$haul_temp_device)
 table(data3$haul_pos_code)
+
+# Target species
+table(data3$target1_spp)
+table(data3$target2_spp)
+
+# Net type
+table(data3$net_type)
 
 # Coordinates
 range(data3$haul_lat_dd, na.rm=T)

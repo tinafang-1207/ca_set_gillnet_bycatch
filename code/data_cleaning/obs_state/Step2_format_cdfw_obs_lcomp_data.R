@@ -10,16 +10,17 @@ rm(list = ls())
 library(tidyverse)
 
 # Directories
-indir <- "data/cdfw_obs/raw"
-outdir <- "data/cdfw_obs/processed"
-plotdir <- "data/cdfw_obs/figures"
+indir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_state/raw"
+outdir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_state/processed"
+plotdir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_state/figures"
+keydir <- "data/keys"
 
 # Read data
 data_orig <- read.csv(file.path(indir, "GNM8389.csv"), as.is=T, na.strings="")
 
 # Read species key
-spp_key <- readRDS("data/cdfw_keys/processed/CDFW_species_key.Rds")
-port_key <- readRDS("data/cdfw_keys/processed/CDFW_port_key.Rds")
+port_key <- readRDS(file.path(keydir, "CDFW_port_key.Rds"))
+spp_key <- readRDS(file.path(keydir, "CDFW_species_key.Rds"))
 
 
 # Format data
