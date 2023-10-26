@@ -16,6 +16,7 @@ outdir <- "data/historical_estimates/processed"
 plotdir <- "data/historical_estimates/figures"
 
 # Read data
+bar83_orig <- readxl::read_excel(file.path(indir, "Barlow_etal_1994_Table3.xlsx"))
 jb_orig <- readxl::read_excel(file.path(indir, "Julian_Beeson_1995_Tables4_5.xlsx"))
 cam99_orig <- readxl::read_excel(file.path(indir, "Cameron_1999.xlsx"))
 cam00_orig <- readxl::read_excel(file.path(indir, "Cameron_2000.xlsx"))
@@ -28,6 +29,25 @@ car12_orig <- readxl::read_excel(file.path(indir, "Carretta_2012.xlsx"))
 
 # Format data
 ################################################################################
+
+# Format Barlow et al. 1994
+bar83 <- bar83_orig %>% 
+  # Remove effort
+  filter(category!="Effort") %>% 
+  # Rename
+  rename(species=value) %>% 
+  # Gather
+  gather(key="year", value="value", 3:ncol(.)) %>% 
+  mutate(year=as.numeric(year)) %>% 
+  # Spread
+  mutate(category=recode(category,
+                         "Observed marine mammal mortality"="obs",
+                         "Estimated marine mammal mortality"="mort")) %>% 
+  spread(key="category", value="value") %>% 
+  # Add reference
+  mutate(reference="Barlow et al. 1994") %>% 
+  # Remove 1990 and after
+  filter(year<1990)
 
 # Format Julian & Beeson 1995
 jb <- jb_orig %>% 
@@ -87,7 +107,7 @@ car12 <- car12_orig %>%
 ################################################################################
 
 # Merge data
-data_merge <- bind_rows(jb, cam99, cam00, car01, car03, car10, car11, car12)
+data_merge <- bind_rows(bar83, jb, cam99, cam00, car01, car03, car10, car11, car12)
 
 # Format data
 data <- data_merge %>% 
@@ -104,7 +124,9 @@ data <- data_merge %>%
                         "Loggerhead turtle"="Loggerhead sea turtle",
                         "Unid. seabird"="Unidentified bird",
                         "Unid. pinniped"="Unidentified pinniped",
-                        "Unidentified turtle"="Unidentified sea turtle")) %>% 
+                        "Unidentified turtle"="Unidentified sea turtle",
+                        "Southern sea otters"="Southern sea otter",
+                        "Sea otter"="Southern sea otter")) %>% 
   # Derive missing SEs and variances
   # var = SE^2
   # CV = se / mean
@@ -129,6 +151,12 @@ sort(unique(data$species))
 # Export data
 saveRDS(data, file=file.path(outdir, "ca_set_gillnet_bycatch_estimates_historical.Rds"))
 
+# Reference stats
+ref_stats <- data %>% 
+  group_by(reference) %>% 
+  summarize(years=paste(unique(year), collapse=", "),
+            species=paste(unique(species), collapse=", "))
+
 
 # Plot all data
 ################################################################################
@@ -136,10 +164,14 @@ saveRDS(data, file=file.path(outdir, "ca_set_gillnet_bycatch_estimates_historica
 # Stats
 stats <- data %>% 
   group_by(species) %>% 
-  summarize(mort=sum(mort, na.rm=T),
-            ymax=max(mort_hi)) %>% 
+  summarize(mort_tot=sum(mort, na.rm=T),
+            ymax1=max(mort_hi, na.rm=T),
+            ymax2=max(mort, na.rm=T)) %>% 
   ungroup() %>% 
-  arrange(desc(mort)) %>% 
+  rowwise() %>% 
+  mutate(ymax=pmax(ymax1, ymax2, na.rm=T)) %>% 
+  ungroup() %>% 
+  arrange(desc(mort_tot)) %>% 
   mutate(species=factor(species, species))
 
 # Order data
@@ -167,10 +199,11 @@ g <- ggplot(data_ordered, aes(x=year, y=mort)) +
   geom_bar(stat="identity", fill="grey70") +
   geom_errorbar(mapping=aes(ymin=mort_lo, ymax=mort_hi), width=0) +
   # Labels
-  geom_text(data=stats, mapping=aes(y=ymax, label=mort), x=2012, 
+  geom_text(data=stats, mapping=aes(y=ymax, label=mort_tot), x=2012,
             size=2.4, hjust=1) +
   # Labels
   labs(x="Year", y="Bycatch estimate") +
+  scale_x_continuous(breaks=seq(1980,2020,5)) +
   # Theme
   theme_bw() + my_theme
 g
@@ -192,8 +225,8 @@ stats_select <- stats %>%
                         "Brandt's cormorant", "Northern elephant seal", "Harbor porpoise"))
 
 # Theme
-my_theme2 <-  theme(axis.text=element_text(size=8),
-                   axis.title=element_text(size=10),
+my_theme2 <-  theme(axis.text=element_text(size=7),
+                    axis.title = element_text(size=8),
                    strip.text=element_text(size=8),
                    # Gridlines
                    panel.grid.major = element_blank(), 
@@ -211,8 +244,9 @@ g <- ggplot(data_select, aes(x=year, y=mort)) +
   geom_bar(stat="identity", fill="grey70") +
   geom_errorbar(mapping=aes(ymin=mort_lo, ymax=mort_hi), width=0) +
   # Labels
-  geom_text(data=stats_select, mapping=aes(y=ymax, label=mort), x=2012, 
+  geom_text(data=stats_select, mapping=aes(y=ymax, label=mort_tot), x=2012, 
             size=2.4, hjust=1) +
+  scale_x_continuous(breaks=seq(1980,2020,5)) +
   # Labels
   labs(x="Year", y="Bycatch estimate") +
   # Theme
