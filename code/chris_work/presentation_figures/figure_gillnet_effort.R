@@ -11,10 +11,10 @@ library(tidyverse)
 
 # Directories
 plotdir <- "figures"
-outputdir <- "~/Desktop"
+outputdir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/processed"
 
 # Read data
-data_orig <- readRDS("california/cdfw_data/data/confidential/gillnet_logbooks_2023/processed/CDFW_1981_2020_gillnet_logbook_data.Rds")
+data_orig <- readRDS("/Users/cfree/Dropbox/Chris/UCSB/projects/california/cdfw_data/data/confidential/gillnet_logbooks_2023/processed/CDFW_1981_2020_gillnet_logbook_data.Rds")
 
 
 # Build data
