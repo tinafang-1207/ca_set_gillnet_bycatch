@@ -17,14 +17,16 @@ plotdir <- "data/historical_estimates/figures"
 
 # Read data
 bar83_orig <- readxl::read_excel(file.path(indir, "Barlow_etal_1994_Table3.xlsx"))
-jb_orig <- readxl::read_excel(file.path(indir, "Julian_Beeson_1995_Tables4_5.xlsx"))
+jb_orig <- readxl::read_excel(file.path(indir, "Julian_Beeson_1998_Tables4_5.xlsx"))
 cam99_orig <- readxl::read_excel(file.path(indir, "Cameron_1999.xlsx"))
 cam00_orig <- readxl::read_excel(file.path(indir, "Cameron_2000.xlsx"))
 car01_orig <- readxl::read_excel(file.path(indir, "Carretta_2001.xlsx"))
-car03_orig <- readxl::read_excel(file.path(indir, "Carretta_2003.xlsx"))
-car10_orig <- readxl::read_excel(file.path(indir, "Carretta_2010.xlsx"))
-car11_orig <- readxl::read_excel(file.path(indir, "Carretta_2011.xlsx"))
-car12_orig <- readxl::read_excel(file.path(indir, "Carretta_2012.xlsx"))
+car02_orig <- readxl::read_excel(file.path(indir, "Carretta_2002.xlsx"), sheet="Table 3")
+car03_orig <- readxl::read_excel(file.path(indir, "Carretta_Chivers_2004.xlsx"))
+car07_orig <- readxl::read_excel(file.path(indir, "Carretta_Enriquez_2009.xlsx"))
+car10_orig <- readxl::read_excel(file.path(indir, "Carretta_Enriquez_2012a.xlsx")) 
+car11_orig <- readxl::read_excel(file.path(indir, "Carretta_Enriquez_2012b.xlsx"))
+car12_orig <- readxl::read_excel(file.path(indir, "Carretta_etal_2014.xlsx"))
 
 
 # Format data
@@ -37,15 +39,13 @@ bar83 <- bar83_orig %>%
   # Rename
   rename(species=value) %>% 
   # Gather
-  gather(key="year", value="value", 3:ncol(.)) %>% 
+  gather(key="year", value="value", 5:ncol(.)) %>% 
   mutate(year=as.numeric(year)) %>% 
   # Spread
   mutate(category=recode(category,
                          "Observed marine mammal mortality"="obs",
                          "Estimated marine mammal mortality"="mort")) %>% 
   spread(key="category", value="value") %>% 
-  # Add reference
-  mutate(reference="Barlow et al. 1994") %>% 
   # Remove 1990 and after
   filter(year<1990)
 
@@ -88,8 +88,22 @@ car01 <- car01_orig %>%
   # Add table
   mutate(table="Tables 1&2")
 
+# Format Carretta 2002
+car02 <- car02_orig %>% 
+  # Remove 2000
+  select(-mort_2000) %>% 
+  # Rename 2001
+  rename(mort=mort_2001) %>% 
+  mutate(year=2001)
+
 # Format Carretta 2003
 car03 <- car03_orig
+
+# Format Carretta 2007
+car07 <- car07_orig %>% 
+  mutate(kill_100sets=bycatch_set*100,
+         kill_100sets_var=bycatch_set_var*100) %>% 
+  select(-c(bycatch_set, bycatch_set_var))
 
 # Format Carretta 2010
 car10 <- car10_orig
@@ -107,7 +121,7 @@ car12 <- car12_orig %>%
 ################################################################################
 
 # Merge data
-data_merge <- bind_rows(bar83, jb, cam99, cam00, car01, car03, car10, car11, car12)
+data_merge <- bind_rows(bar83, jb, cam99, cam00, car01, car02, car03, car07, car10, car11, car12)
 
 # Format data
 data <- data_merge %>% 
@@ -122,6 +136,8 @@ data <- data_merge %>%
                         "Harbor porpoise, including unidentified cetacean"="Harbor porpoise",
                         "Leatherback turtle"="Leatherback sea turtle",
                         "Loggerhead turtle"="Loggerhead sea turtle",
+                        "N. elephant seal"="Northern elephant seal",
+                        "Unid. Common dolphin"="Unidentified common dolphin",
                         "Unid. seabird"="Unidentified bird",
                         "Unid. pinniped"="Unidentified pinniped",
                         "Unidentified turtle"="Unidentified sea turtle",
@@ -137,7 +153,7 @@ data <- data_merge %>%
   mutate(mort_lo=pmax(0, mort-mort_se_calc*1.96),
          mort_hi=mort+mort_se_calc*1.96) %>% 
   # Arrange
-  select(reference:species, year, obs, 
+  select(reference, table, species, year, obs, 
          kill_day, kill_day_se, kill_100sets, kill_100sets_se,
          mort, mort_var, mort_se, mort_cv, everything())
   
@@ -155,7 +171,10 @@ saveRDS(data, file=file.path(outdir, "ca_set_gillnet_bycatch_estimates_historica
 ref_stats <- data %>% 
   group_by(reference) %>% 
   summarize(years=paste(unique(year), collapse=", "),
-            species=paste(unique(species), collapse=", "))
+            species=paste(unique(species), collapse=", ")) %>% 
+  ungroup() %>% 
+  arrange(years)
+ref_stats
 
 
 # Plot all data
@@ -239,7 +258,7 @@ my_theme2 <-  theme(axis.text=element_text(size=7),
 # Plot data
 g <- ggplot(data_select, aes(x=year, y=mort)) +
   # Facet
-  facet_wrap(~species, scales="free_y", ncol=3) +
+  lemon::facet_rep_wrap(~species, scales="free_y", ncol=3, repeat.tick.labels = 'bottom') +
   # Data
   geom_bar(stat="identity", fill="grey70") +
   geom_errorbar(mapping=aes(ymin=mort_lo, ymax=mort_hi), width=0) +
