@@ -300,6 +300,15 @@ table(data3$net_material_code)
 table(data3$net_hang_line_material_code)
 table(data3$net_material_strength_code)
 
+# Vessel key
+vessel_key <- data3 %>% 
+  select(vessel_plate, vessel) %>% 
+  unique()
+freeR::which_duplicated(vessel_key$vessel)
+freeR::which_duplicated(vessel_key$vessel_plate) # unique identifier
+saveRDS(vessel_key, file=file.path(outdir, "SWFSC_observer_vessel_key.Rds"))
+
+
 # Export data
 saveRDS(data3, file=file.path(outdir, "SWFSC_1990_2017_set_net_observer_trips.Rds"))
 

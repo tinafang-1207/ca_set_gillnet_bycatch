@@ -171,18 +171,55 @@ data1 <- data_orig %>%
                          "Unknown, maybe seal"="Unknown")) %>% 
   # Format common name 1
   mutate(comm_name1=comm_name1 %>% stringr::str_squish(.) %>% stringr::str_to_title(.)) %>% 
-  # Add missing species codes
-  mutate(spp_code=case_when(spp_code=="1520" ~ "152",
+  # Add missing species codes and fix incorrect species codes
+  mutate(spp_code=case_when(spp_code=="1" ~ "001",   
+                            spp_code=="2" ~ "002",   
+                            spp_code=="3" ~ "003",   
+                            spp_code=="4" ~ "004",   
+                            spp_code=="5" ~ "005",   
+                            spp_code=="6" ~ "006",   
+                            spp_code=="8" ~ "008",   
+                            spp_code=="9" ~ "009",  
+                            spp_code=="15" ~ "015",  
+                            spp_code=="17" ~ "017",  
+                            spp_code=="19" ~ "019",  
+                            spp_code=="40" ~ "040",  
+                            spp_code=="41" ~ "041",  
+                            spp_code=="42" ~ "042",  
+                            spp_code=="43" ~ "043",  
+                            spp_code=="50" ~ "050",  
+                            spp_code=="51" ~ "051",  
+                            spp_code=="52" ~ "052",  
+                            spp_code=="55" ~ "055",  
+                            spp_code=="80" ~ "080",  
+                            spp_code=="81" ~ "081",  
+                            spp_code=="90" ~ "091", # swordfish  
+                            spp_code=="92" ~ "092",  
+                            spp_code=="95" ~ "095",  
+                            spp_code=="96" ~ "096",  
+                            spp_code=="97" ~ "097",  
+                            spp_code=="98" ~ "098", 
+                            # spp_code=="241" ~ "235", # curlfin turbot
+                            # spp_code=="242" ~ "236", # diamond turbot
+                            # spp_code=="243" ~ "237", # C-O sole
+                            # spp_code=="244" ~ "238", # hornyhead turbot
+                            # spp_code=="471" ~ "", # green sturgeon
+                            # spp_code=="472" ~ "", # white sturgeon
+                            # spp_code=="650" ~ "", # rougheye rockfish
+                            # spp_code=="677" ~ "", # shortraker rockfish
+                            # spp_code=="945" ~ "", # Sea snails nei
+                            spp_code=="980" ~ "",
+                            spp_code=="1520" ~ "152",
                             spp_code=="154/ 179" ~ "154/179",
-                            comm_name1=="Eastern Pacific Bonito" ~ "3",
+                            comm_name1=="Eastern Pacific Bonito" ~ "003",
                             comm_name1=="Rock Crabs" ~ "801",             
-                            comm_name1=="Pacific Sierra" ~ "52",        
-                            comm_name1=="Blt-Bullet Tuna" ~ "19",        
+                            comm_name1=="Pacific Sierra" ~ "052",        
+                            comm_name1=="Blt-Bullet Tuna" ~ "019",        
                             comm_name1=="Dlp-Dolphins Nei" ~ "481", # decided this is dolphinfish     
                             comm_name1=="Amphioxus Lancelets" ~ "915",    
                             comm_name1=="Hydrozoans" ~ "681",            
                             comm_name1=="Agars" ~ "951",                 
-                            comm_name1=="Blue Mackerel" ~ "51",         
+                            comm_name1=="Blue Mackerel" ~ "051",         
                             # comm_name1=="Sb" ~ ,              
                             # comm_name1=="X" ~ ,                      
                             # comm_name1=="Crab" ~ ,                   
@@ -201,6 +238,7 @@ data1 <- data_orig %>%
   mutate(comm_name=case_when(spp_code=="154/158" ~ "Brown smoothhound shark/Smooth hammerhead shark",
                              spp_code=="154/179" ~ "Brown smoothhound shark/Gray smoothhound shark", 
                              comm_name1=="Harbor Seal" ~ "Harbor seal",
+                             comm_name1=="Sea Lion" ~ "Sea lion",
                              comm_name2=="SeaUrchin,unspecified" ~ "Unspecified sea urchin",
                              T ~ comm_name)) %>% 
   # Vessel identifier
@@ -279,8 +317,58 @@ target_spp_key <- data1 %>%
 # Caught species
 spp_key_orig <- data1 %>% 
   select(spp_code, comm_name_orig1, comm_name_orig2, comm_name) %>% unique()
-spp_key_orig$comm_name_orig1[is.na(spp_key_orig$comm_name)] %>% unique()
+spp_key_orig$spp_code[is.na(spp_key_orig$comm_name)] %>% unique() %>% as.numeric() %>% sort()
 
+
+# Build vessel key
+################################################################################
+
+boat_nums <- data1 %>% pull(boat_num) %>% unique() %>% sort()
+
+# This is all garbage
+# If you come back to it months from now you can delete
+# You were trying to add vessel ids for the permit numbers so the logbooks could talk to the observer data
+
+# #
+# permit2id <- data1 %>% 
+#   select(permit_id, vessel_id) %>% 
+#   unique() %>% 
+#   na.omit() %>% 
+#   arrange(permit_id)
+# 
+# # Vessel key
+# vessel_key1 <- data1 %>% 
+#   select(vessel_id, vessel_name, boat_num) %>% 
+#   unique() %>% 
+#   arrange(vessel_id)
+# 
+# #
+# vessel_key2 <- vessel_key1 %>% 
+#   select(vessel_id, vessel_name) %>% 
+#   na.omit() %>% 
+#   unique() %>% 
+#   rename(vessel_name1=vessel_name)
+# 
+# vessel_key3 <- vessel_key1 %>% 
+#   # Add vessel name
+#   left_join(vessel_key2, by=c("vessel_id"))  %>% 
+#   mutate(vessel_name=ifelse(!is.na(vessel_name), vessel_name, vessel_name1)) %>% 
+#   select(-vessel_name1)
+# 
+# vessel_key4 <- vessel_key1 %>% 
+#   select(vessel_id, boat_num) %>% 
+#   na.omit() %>% 
+#   unique() %>% 
+#   rename(boat_num1=boat_num)
+# 
+# vessel_key5 <- vessel_key3 %>% 
+#   # Add vessel name
+#   left_join(vessel_key4, by=c("vessel_id"))  %>% 
+#   mutate(boat_num=ifelse(!is.na(boat_num), boat_num, boat_num1))# %>% 
+#   select(-vessel_name1)
+# 
+# 
+# write.csv(vessel_key, file=file.path("~/Desktop/vessel_key.csv"), row.names = F)
 
 # Export data
 ################################################################################
