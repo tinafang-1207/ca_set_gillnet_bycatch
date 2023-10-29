@@ -99,9 +99,8 @@ model_test <- testing (model_split) %>%
   select(-set_id) %>%
   drop_na()
 
-model_rec <- recipe(sl_response~., data = model_train)
-  # step_smote from themis package use smote algorithm to deal with imbalanced data
-  #step_downsample(sl_response)
+model_rec <- recipe(sl_response~., data = model_train) %>%
+  step_downsample(sl_response)
 
 
 
@@ -144,8 +143,10 @@ rf_res <-
     metrics = metric_set(roc_auc, kap)
   )
 
-rf_res %>%
-  collect_metrics()
+rf_res_df <- rf_res %>%
+  collect_metrics() %>%
+  as.data.frame() %>%
+  mutate(balanced_type = "downsample")
 
 rf_res %>%
   collect_metrics() %>%
