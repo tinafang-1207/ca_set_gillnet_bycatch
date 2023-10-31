@@ -17,7 +17,8 @@ library(workflows)
 
 ### read in data ###
 
-model_orig <- read.csv("data/confidential/processed/fig2_total_merge_final.csv")
+# model_orig <- read.csv("data/confidential/processed/fig2_total_merge_final.csv") # yutian
+model_orig <- read.csv("/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/processed/fig2_total_merge_final.csv") # chris
 
 ### set up the species ###
 
@@ -167,7 +168,24 @@ fit_rf_model <- function(spp, model_orig) {
   
   rf_all_df <- rbind(rf_down_df, rf_up_df, rf_smote_df)
   
-  return(rf_all_df)
+  # Extract best tunes
+  model_up_best <- ""
+  model_down_best <-  ""
+  model_smote_best <-  ""
+  
+  # Merge best
+  best_models <- list(model_up_best=model_up_best, 
+                      model_down_best=model_down_best,
+                      model_smote_best=model_smote_best)
+  
+  # Merge outputs
+  output <- list(rf_all_df=rf_all_df, # tuning results - a dataframe
+                 best_models = best_models, # best models - list of model objects
+                 data_train=model_train_balance, # training data
+                 data_test=model_test_balance # test data
+                 )
+  
+  return(output)
   
   
   
@@ -182,8 +200,11 @@ fit_rf_model <- function(spp, model_orig) {
 
 
 
+# Run example
+output <- fit_rf_model(spp = "California sea lion", model_orig)
 
-fit_rf_model(spp = "California sea lion", model_orig)
+# Extract info
+best_models <- output[["best_models"]]
 
 
 
