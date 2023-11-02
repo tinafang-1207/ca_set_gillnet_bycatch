@@ -18,8 +18,8 @@ plotdir <- "data/historical_estimates/figures"
 # Read data
 bar83_orig <- readxl::read_excel(file.path(indir, "Barlow_etal_1994_Table3.xlsx"))
 jb_orig <- readxl::read_excel(file.path(indir, "Julian_Beeson_1998_Tables4_5.xlsx"))
-cam99_orig <- readxl::read_excel(file.path(indir, "Cameron_1999.xlsx"))
-cam00_orig <- readxl::read_excel(file.path(indir, "Cameron_2000.xlsx"))
+cam99_orig <- readxl::read_excel(file.path(indir, "Cameron_Forney_1999.xlsx"))
+cam00_orig <- readxl::read_excel(file.path(indir, "Cameron_Forney_2000.xlsx"))
 car01_orig <- readxl::read_excel(file.path(indir, "Carretta_2001.xlsx"))
 car02_orig <- readxl::read_excel(file.path(indir, "Carretta_2002.xlsx"), sheet="Table 3")
 car03_orig <- readxl::read_excel(file.path(indir, "Carretta_Chivers_2004.xlsx"))
