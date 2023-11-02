@@ -325,6 +325,23 @@ spp_key_orig$spp_code[is.na(spp_key_orig$comm_name)] %>% unique() %>% as.numeric
 
 boat_nums <- data1 %>% pull(boat_num) %>% unique() %>% sort()
 
+# Vessel key
+vessel_key <- data1 %>% 
+  select(vessel_id, boat_num) %>%
+  unique()
+
+# Vessel key
+vessel_key1 <- data1 %>% 
+  select(vessel_id, boat_num) %>%
+  na.omit() %>% 
+  unique()
+
+vessel_key2 <- data1 %>% 
+  select(vessel_id, vessel_name) %>%
+  na.omit() %>% 
+  unique()
+freeR::which_duplicated(vessel_key2$vessel_id)
+
 # This is all garbage
 # If you come back to it months from now you can delete
 # You were trying to add vessel ids for the permit numbers so the logbooks could talk to the observer data
