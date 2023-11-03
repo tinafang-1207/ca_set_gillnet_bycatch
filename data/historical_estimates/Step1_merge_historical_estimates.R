@@ -155,7 +155,9 @@ data <- data_merge %>%
   # Arrange
   select(reference, table, species, year, obs, 
          kill_day, kill_day_se, kill_100sets, kill_100sets_se,
-         mort, mort_var, mort_se, mort_cv, everything())
+         mort, mort_var, mort_se, mort_cv, everything()) %>% 
+  # Remove missing
+  filter(!is.na(mort))
   
 # Inspect
 str(data)
