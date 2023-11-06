@@ -112,7 +112,11 @@ g
 
 # Reg dates
 reg_years <- c(1987, 1994, 2002)
-reg_dates <- paste0(reg_years, "-01-01") %>% lubridate::ymd()
+reg_data <- tibble(year=reg_years,
+                   yval=c(380, 280, 180),
+                   label=c("1987\n40 fathom depth restrition",
+                           "1994\nMainland state waters exclusion",
+                           "2002\n60 fathom depth\nrestriction"))
 
 # Base theme
 base_theme <- theme(axis.text=element_text(size=6),
@@ -167,7 +171,9 @@ g1
 # Number of vessels
 g2 <- ggplot(stats_yr, aes(x=year, y=nvessels)) +
   # Reference lines
-  geom_vline(xintercept=reg_years, linetype="dotted", color="grey70") +
+  geom_vline(xintercept=reg_years, linetype="dotted", color="grey70", size=0.25) +
+  geom_text(data=reg_data, mapping=aes(x=year, y=yval, label=label), 
+            color="grey50", vjust=1, hjust=0, size=1.8, nudge_x=1) +
   # Data
   geom_line() +
   # Labels
@@ -181,7 +187,7 @@ g2
 # Number of vessel daya
 g3 <- ggplot(stats_yr, aes(x=year, y=nvesseldays)) +
   # Reference lines
-  geom_vline(xintercept=reg_years, linetype="dotted", color="grey70") +
+  geom_vline(xintercept=reg_years, linetype="dotted", color="grey70", size=0.25) +
   # Data
   geom_line() +
   # Labels
@@ -194,7 +200,7 @@ g3
 # Number of sets
 g4 <- ggplot(stats_yr, aes(x=year, y=nsets)) +
   # Reference lines
-  geom_vline(xintercept=reg_years, linetype="dotted", color="grey70") +
+  geom_vline(xintercept=reg_years, linetype="dotted", color="grey70", size=0.25) +
   # Data
   geom_line() +
   # Labels
