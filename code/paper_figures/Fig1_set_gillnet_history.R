@@ -84,6 +84,9 @@ stats_yr <- data %>%
             nvessels=n_distinct(vessel_id_use))  %>%
   ungroup()
 
+# Export data
+write.csv(stats_yr, file=file.path(datadir, "CA_3.5in_set_gillnet_effort_by_year.csv"), row.names=F)
+
 # Build block data
 stats_blocks <- data %>%
   # Summarize by period and block

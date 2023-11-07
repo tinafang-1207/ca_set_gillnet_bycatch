@@ -12,12 +12,18 @@ library(tidyverse)
 # Directories
 plotdir <- "figures"
 datadir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_merge" # Chris
+datadir2 <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/processed" # Chris
 
 # Read data
 data_orig <- readRDS(file=file.path(datadir, "1983_2017_gillnet_observer_data_3.5in_set_halibut.Rds"))
 
 # Read species key
 spp_key <- read.csv("data/keys/species_key_final.csv", as.is=T)
+
+# Read effort data
+effort_df <- read.csv(file=file.path(datadir2, "CA_3.5in_set_gillnet_effort_by_year.csv")) %>% 
+  rename(ntrips_tot=nvesseldays)
+
 
 
 # Build data
@@ -29,6 +35,8 @@ ventura_blocks <- c(651:663, 664:677, 697, 776, 691:696, 714:717, 701:706, 678:6
 
 # Format data
 data <- data_orig %>% 
+  # Add trip id
+  mutate(trip_id=paste(vessel_id, date, sep="-")) %>% 
   # Add quarter
   mutate(month=lubridate::month(date),
          quarter=case_when(month %in% c(12,1,2) ~ "Q1",
@@ -69,10 +77,16 @@ stats_tots <- data %>%
   arrange(desc(n))
 
 # Number of sets
-stats_nsets <- data %>% 
+stats_nsets <- data %>%
+  # Calcule annual effort obs
   group_by(year) %>% 
-  summarize(nsets=n_distinct(set_id)) %>% 
-  ungroup()
+  summarize(nsets=n_distinct(set_id),
+            ntrips=n_distinct(trip_id)) %>% 
+  ungroup() %>% 
+  # Add total effort and calc prop
+  left_join(effort_df %>% select(year, ntrips_tot)) %>% 
+  mutate(prop_obs=ntrips/ntrips_tot,
+         prop_obs_label=paste0(round(prop_obs*100, 1), "%"))
 
 # Calculate sets per trip
 stats_trip <- data %>% 
@@ -90,7 +104,25 @@ ggplot(stats_trip,  aes(x=year, y=nsets1, group=year)) +
 # Stats by strata
 stats_strata <- data %>% 
   group_by(year, strata, quarter) %>% 
-  mutate(nsets=n_distinct(set_id))
+  mutate(nsets=n_distinct(set_id),
+         ntrips=n_distinct(trip_id))
+
+# Year borrowing key
+year_key <- tibble(year=c(1995:1998, 2001:2005,2008,2009, 2014:2016)) %>% 
+  mutate(year_use=case_when(year == 1995 ~ 1994,
+                            year == 1996 ~ 1994,
+                            year == 1997 ~ 1999,
+                            year == 1998 ~ 1999,
+                            year == 2001 ~ 2000,
+                            year == 2002 ~ 2000,
+                            year == 2003 ~ 2000,
+                            year == 2004 ~ 2006,
+                            year == 2005 ~ 2006,
+                            year == 2008 ~ 2007,
+                            year == 2009 ~ 2010,
+                            year == 2014 ~ 2013,
+                            year == 2015 ~ 2017,
+                            year == 2016 ~ 2017))
 
 
 # Plot data
@@ -132,12 +164,18 @@ g1 <- ggplot(stats_tots, aes(y=reorder(comm_name, n), x=n, fill=type)) +
 g1
 
 # Plot data
-g2 <- ggplot(stats_nsets, aes(x=year, y=nsets)) +
+g2 <- ggplot(stats_nsets, aes(x=year, y=ntrips)) +
   geom_bar(stat="identity") +
+  # Plot perc obs labels
+  geom_text(mapping=aes(label=prop_obs_label), color="grey30", size=1.7, angle=90, hjust=-0.1) +
+  # Plot borrowed year labels
+  geom_text(data=year_key, mapping=aes(x=year, y=0, label=year_use), color="grey70", size=1.7, angle=90, hjust=0) +
   # Labels
-  labs(x="", y="Number of observed sets", tag="B") +
+  labs(x="", y="Number of observed trips", tag="B") +
   # Axes
+  scale_y_continuous(lim=c(0, 1050), breaks=seq(0,1000,200)) +
   scale_x_continuous(breaks=stats_nsets$year) +
+  # scale_x_continuous(breaks=seq(1980,2020,5)) +
   # Theme
   theme_bw() + my_theme +
   theme(axis.title.x=element_blank(),
@@ -146,13 +184,13 @@ g2 <- ggplot(stats_nsets, aes(x=year, y=nsets)) +
 g2
 
 # Plot data
-g3 <- ggplot(stats_strata, aes(x=as.character(year), y=quarter, fill=nsets)) +
+g3 <- ggplot(stats_strata, aes(x=as.character(year), y=quarter, fill=ntrips)) +
   facet_wrap(~strata, ncol=1) +
   geom_tile() +
   # Labels
   labs(x="", y="Quarter", tag="C") +
   # Legend
-  scale_fill_gradientn(name="# of sets\nobserved", colors=RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
+  scale_fill_gradientn(name="# of trips\nobserved", colors=RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
   guides(fill = guide_colorbar(ticks.colour = "black", frame.colour = "black")) +
   # Theme
   theme_bw() + my_theme +
