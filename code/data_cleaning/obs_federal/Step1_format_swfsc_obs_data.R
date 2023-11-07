@@ -342,13 +342,14 @@ latlong_key <- data3 %>%
   sf::st_as_sf(coords=c("haul_long_dd", "haul_lat_dd"), crs=sf::st_crs(blocks))
 
 # Grab block
-block_key <- sf::st_intersects(x=latlong_key, y=blocks) %>% 
+block_index <- sf::st_intersects(x=latlong_key, y=blocks) %>% 
   as.numeric()
+block_ids <- blocks$block_id[block_index]
 
 # Add to key
 latlong_key1 <- latlong_key %>% 
   sf::st_drop_geometry() %>% 
-  mutate(block_id = block_key)
+  mutate(block_id = block_ids)
 
 # Add to data
 data3_out <- data3 %>% 

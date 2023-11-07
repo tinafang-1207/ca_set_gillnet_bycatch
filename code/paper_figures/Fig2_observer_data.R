@@ -39,19 +39,19 @@ data <- data_orig %>%
   mutate(trip_id=paste(vessel_id, date, sep="-")) %>% 
   # Add quarter
   mutate(month=lubridate::month(date),
-         quarter=case_when(month %in% c(12,1,2) ~ "Q1",
-                           month %in%c(3,4,5) ~ "Q2",
-                           month %in% c(6,7,8) ~ "Q3",
-                           month %in% c(9,10,11) ~ "Q4",
+         quarter=case_when(month %in% c(12,1,2) ~ "1",
+                           month %in%c(3,4,5) ~ "2",
+                           month %in% c(6,7,8) ~ "3",
+                           month %in% c(9,10,11) ~ "4",
                            T ~ "Unknown")) %>% 
   # Add strata
-  mutate(strata=case_when(block_id %in% ci_blocks ~ "Channel Islands",
+  mutate(strata=case_when(block_id %in% ci_blocks ~ "Channel Isl.",
                           block_id %in% ventura_blocks ~ "Ventura",
-                          block_id <= 650 ~ "Central California",
-                          T ~ "Southern California")) %>% 
+                          block_id <= 650 ~ "Central CA",
+                          T ~ "Southern CA")) %>% 
   # Order strata
-  mutate(strata=factor(strata, levels=c("Central California", "Ventura", 
-                                        "Channel Islands", "Southern California")))
+  mutate(strata=factor(strata, levels=c("Central CA", "Ventura", 
+                                        "Channel Isl.", "Southern CA")))
 
 # Totals
 stats_tots <- data %>%
@@ -133,7 +133,7 @@ my_theme <-  theme(axis.text=element_text(size=6),
                    axis.title=element_text(size=7),
                    legend.text=element_text(size=6),
                    legend.title=element_text(size=7),
-                   strip.text = element_text(size=7),
+                   strip.text = element_text(size=5),
                    plot.tag = element_text(size=8),
                    # Gridlines
                    panel.grid.major = element_blank(), 
@@ -185,7 +185,7 @@ g2
 
 # Plot data
 g3 <- ggplot(stats_strata, aes(x=as.character(year), y=quarter, fill=ntrips)) +
-  facet_wrap(~strata, ncol=1) +
+  facet_wrap(~strata, ncol=1, strip.position="right") +
   geom_tile() +
   # Labels
   labs(x="", y="Quarter", tag="C") +
