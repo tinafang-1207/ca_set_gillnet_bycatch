@@ -265,8 +265,8 @@ g <- ggplot(data_select, aes(x=year, y=mort)) +
   geom_bar(stat="identity", fill="grey70") +
   geom_errorbar(mapping=aes(ymin=mort_lo, ymax=mort_hi), width=0) +
   # Labels
-  geom_text(data=stats_select, mapping=aes(y=ymax, label=mort_tot), x=2012, 
-            size=2.4, hjust=1) +
+  # geom_text(data=stats_select, mapping=aes(y=ymax, label=mort_tot), x=2012, 
+  #           size=2.4, hjust=1) +
   scale_x_continuous(breaks=seq(1980,2020,5)) +
   # Labels
   labs(x="Year", y="Bycatch estimate") +

@@ -33,7 +33,14 @@ state_waters <- readRDS(file.path(gisdatadir, "CA_state_waters_polyline.Rds"))
 ################################################################################
 
 # Inspect
-freeR::complete(data_orig) # sets are actually sets pre-2017ish but are logooks after, vessel id is good
+freeR::complete(data_orig)
+
+# Reg years
+reg_years <- c(1987, 1994, 2002)
+
+# Block ids
+ci_blocks <- c(684:690, 707:713, 813:814, 760:762, 806:807, 829, 850, 849, 867, 765)
+ventura_blocks <- c(651:663, 664:677, 697, 776, 691:696, 714:717, 701:706, 678:683) 
 
 # Build data
 data <- data_orig %>%
@@ -47,7 +54,22 @@ data <- data_orig %>%
                       soak_hr, target_spp, sep="-")) %>% 
   # Add period
   mutate(period=cut(year, breaks=c(1980, reg_years, 2023), 
-                    labels=c("1981-1986", "1987-1993", "1994-2001", "2002-present"), right=F))
+                    labels=c("1981-1986", "1987-1993", "1994-2001", "2002-present"), right=F)) %>% 
+  # Add quarter
+  mutate(month=lubridate::month(date),
+         quarter=case_when(month %in% c(12,1,2) ~ "Winter",
+                           month %in%c(3,4,5) ~ "Spring",
+                           month %in% c(6,7,8) ~ "Summer",
+                           month %in% c(9,10,11) ~ "Fall",
+                           T ~ "Unknown")) %>% 
+  # Add strata
+  mutate(strata=case_when(block_id %in% ci_blocks ~ "Channel Islands",
+                          block_id %in% ventura_blocks ~ "Ventura",
+                          block_id <= 650 ~ "Central California",
+                          T ~ "Southern California")) %>% 
+  # Order strata
+  mutate(strata=factor(strata, levels=c("Central California", "Ventura", 
+                                        "Channel Islands", "Southern California")))
 
 # Inspect period key
 period_key <- data %>% 
@@ -61,6 +83,9 @@ stats_yr <- data %>%
             nvesseldays=n_distinct(vessel_day),
             nvessels=n_distinct(vessel_id_use))  %>%
   ungroup()
+
+# Export data
+write.csv(stats_yr, file=file.path(datadir, "CA_3.5in_set_gillnet_effort_by_year.csv"), row.names=F)
 
 # Build block data
 stats_blocks <- data %>%
@@ -94,7 +119,7 @@ stats_blocks_sf <- stats_blocks %>%
   sf::st_as_sf()
 
 # Inspect year key
-count(data_blocks, period, year)
+count(data, period, year)
 
 # Calulcate sets per trip
 stats_trip <- data %>% 
@@ -107,12 +132,17 @@ g <- ggplot(stats_trip, aes(x=nsets)) +
   theme_bw()
 g
 
+
+
 # Plot data
 ################################################################################
 
-# Reg dates
-reg_years <- c(1987, 1994, 2002)
-reg_dates <- paste0(reg_years, "-01-01") %>% lubridate::ymd()
+# Reg data
+reg_data <- tibble(year=reg_years,
+                   yval=c(380, 280, 180),
+                   label=c("1987\n40 fathom depth restrition",
+                           "1994\nMainland state waters exclusion",
+                           "2002\n60 fathom depth\nrestriction"))
 
 # Base theme
 base_theme <- theme(axis.text=element_text(size=6),
@@ -140,10 +170,10 @@ g1 <- ggplot(data=stats_blocks_sf, mapping=aes(fill=prop)) +
   # State waters
   geom_sf(data=state_waters, color="grey30", linewidth=0.2, inherit.aes = F) +
   # Plot Point Arguello
-  geom_hline(yintercept = 34.577201, lwd=0.2) +
+  geom_hline(yintercept = 34.577201, linewidth=0.2) +
   # Land
-  geom_sf(data = usa, fill = "grey85", col = "white", size = 0.2, inherit.aes = F) +
-  geom_sf(data=mexico, fill="grey85", col="white", size=0.2, inherit.aes = F) +
+  geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  geom_sf(data=mexico, fill="grey85", col="white", linewidth=0.2, inherit.aes = F) +
   # Labels
   labs(x="", y=" ", tag="A") +
   # Crop
@@ -167,7 +197,9 @@ g1
 # Number of vessels
 g2 <- ggplot(stats_yr, aes(x=year, y=nvessels)) +
   # Reference lines
-  geom_vline(xintercept=reg_years, linetype="dotted", color="grey70") +
+  geom_vline(xintercept=reg_years, linetype="dotted", color="grey70", size=0.25) +
+  geom_text(data=reg_data, mapping=aes(x=year, y=yval, label=label), 
+            color="grey50", vjust=1, hjust=0, size=1.8, nudge_x=1) +
   # Data
   geom_line() +
   # Labels
@@ -181,7 +213,7 @@ g2
 # Number of vessel daya
 g3 <- ggplot(stats_yr, aes(x=year, y=nvesseldays)) +
   # Reference lines
-  geom_vline(xintercept=reg_years, linetype="dotted", color="grey70") +
+  geom_vline(xintercept=reg_years, linetype="dotted", color="grey70", size=0.25) +
   # Data
   geom_line() +
   # Labels
@@ -194,7 +226,7 @@ g3
 # Number of sets
 g4 <- ggplot(stats_yr, aes(x=year, y=nsets)) +
   # Reference lines
-  geom_vline(xintercept=reg_years, linetype="dotted", color="grey70") +
+  geom_vline(xintercept=reg_years, linetype="dotted", color="grey70", size=0.25) +
   # Data
   geom_line() +
   # Labels

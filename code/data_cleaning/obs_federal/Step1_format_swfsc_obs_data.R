@@ -24,8 +24,11 @@ data_orig3 <- read.csv(file.path(indir, "SN_trip_SET_1990_2017.csv"), as.is=T, n
 spp_key <- readRDS(file.path(outdir, "SWFSC_observer_program_spp_key.Rds"))
 
 
-# Format data 1
+# Format counts (data 1)
 ################################################################################
+
+# Categories recorded differently (protect spp)
+protected_catg <- c("Marine mammals", "Sea turtles", "Seabirds")
 
 # Format data 1
 data1 <- data_orig1 %>%
@@ -60,11 +63,12 @@ data1 <- data_orig1 %>%
                          "080"="80",
                          "096"="96")) %>%
   # Add species info
-  left_join(spp_key %>% select(spp_code, comm_name, sci_name), by="spp_code") %>%
+  left_join(spp_key %>% select(spp_code, comm_name, sci_name, category), by="spp_code") %>%
   # Fill in missing species
   mutate(comm_name_orig=ifelse(spp_code=="152", "Shark, Spiny Dogfish", comm_name_orig),
          comm_name=ifelse(spp_code=="152", "Spiny dogfish shark", comm_name),
-         sci_name=ifelse(spp_code=="152", "Squalus suckleyi", sci_name)) %>%
+         sci_name=ifelse(spp_code=="152", "Squalus suckleyi", sci_name),
+         category=ifelse(spp_code=="152", "Fish", category)) %>%
   # Format sex
   mutate(sex=ifelse(sex=="", "Unknown", sex),
          sex=recode(sex,
@@ -72,7 +76,7 @@ data1 <- data_orig1 %>%
                     "M"="Male",
                     "F"="Female")) %>%
   # Format condition
-  mutate(condition=ifelse(condition=="", "Unknown", condition)) %>%
+  mutate(condition=ifelse(category %in% protected_catg & (condition=="" | is.na(condition)), "Unknown", condition)) %>%
   # Format tag
   mutate(tag_yn=recode(tag_yn,
                        "Y"="yes",
@@ -81,18 +85,22 @@ data1 <- data_orig1 %>%
   mutate(mammal_damage_yn=recode(mammal_damage_yn,
                        "Y"="yes",
                        "N"="no")) %>%
+  # Record marine mammals in n caught column
+  mutate(n_caught=ifelse(category %in% protected_catg & is.na(n_caught), 1, n_caught),
+         n_returned_dead=ifelse(!is.na(condition) & condition=="Dead" & is.na(n_returned_dead), 1, n_returned_dead),
+         n_returned_alive=ifelse(!is.na(condition) & condition=="Alive" & is.na(n_returned_alive), 1, n_returned_alive)) %>% 
   # Check totals
   mutate(n_caught_calc=n_kept+n_returned_alive+n_returned_dead+n_returned_unknown,
          n_caught_diff=n_caught-n_caught_calc) %>%
   # Remove b/c pass check
-  select(-c(n_caught_calc, n_caught_diff)) %>%
+  # select(-c(n_caught_calc, n_caught_diff)) %>%
   # Build set id
   mutate(set_id=paste(trip_id, set_num, sep="-")) %>%
   # Arrange
   select(trip_id, set_num, set_id,
-         spp_code, comm_name_orig, comm_name, sci_name,
+         category, spp_code, comm_name_orig, comm_name, sci_name,
          everything()) %>%
-  arrange(trip_id, set_num, set_id, spp_code)
+  arrange(trip_id, set_num, set_id, spp_code) 
 
 # Inspect
 str(data1)
@@ -117,7 +125,7 @@ freeR::which_duplicated(spp_key$comm_name)
 saveRDS(data1, file=file.path(outdir, "SWFSC_set_net_observer_data.Rds"))
 
 
-# Format data 2
+# Format length compositions (data 2)
 ################################################################################
 
 # Format data 2
@@ -165,8 +173,14 @@ spp_key_check2 <- data2 %>%
 saveRDS(data2, file=file.path(outdir, "SWFSC_set_net_observer_length_comps.Rds"))
 
 
-# Format data 3
+# Format set metadata (data 3)
 ################################################################################
+
+# MAJOR ASSUMPTION
+# We assume that sets without a set type (no net metadata) that target known set gillnet species primarily or secondarily are set nets
+
+# Known set net target species
+set_target_spp <- c("California halibut", "White seabass", "Pacific angel shark")
 
 # Format data 3
 data3 <- data_orig3 %>%
@@ -239,6 +253,8 @@ data3 <- data_orig3 %>%
                          ifelse(fn_vals_n==0 & sn_vals_n>0, "set",
                                 ifelse(sn_vals_n==0 & fn_vals_n>0, "drift",
                                        ifelse(sn_vals_n==0 & fn_vals_n==0, "unknown", "other"))))) %>%
+  # Classify unknown nets targeting California halibut as set nets
+  mutate(net_type=ifelse(net_type=="unknown" & ( (!is.na(target1_spp) & target1_spp %in% set_target_spp) | (!is.na(target2_spp) & target2_spp %in% set_target_spp) ), "set", net_type)) %>% 
   # Recode net stuff
   mutate(perc_obs=ifelse(net_type=="set", set_net_percent_described, float_net_percent_described),
          net_hang_length_in=ifelse(net_type=="set", set_net_hanging_length_inches, float_net_hanging_length_inches),
@@ -266,12 +282,16 @@ data3 <- data_orig3 %>%
 str(data3)
 freeR::complete(data3)
 
-# Inspect
+# Dates
 range(data3$date_haul1)
+
+# Ports
 table(data3$port_depart)
 table(data3$port_return)
-table(data3$haul_temp_device)
-table(data3$haul_pos_code)
+
+# SST/GPS devices
+table(data3$haul_temp_device) # don't know what these codes mean
+table(data3$haul_pos_code) # don't know what these codes mean
 
 # Target species
 table(data3$target1_spp)
@@ -296,9 +316,9 @@ g
 # Net characteristics
 table(data3$net_type)
 table(data3$net_color_code) # always empty
-table(data3$net_material_code)
-table(data3$net_hang_line_material_code)
-table(data3$net_material_strength_code)
+table(data3$net_material_code) # don't know what these codes mean
+table(data3$net_hang_line_material_code)  # natural / synthetic???
+table(data3$net_material_strength_code) # pounds / size??
 
 # Vessel key
 vessel_key <- data3 %>% 
@@ -309,8 +329,41 @@ freeR::which_duplicated(vessel_key$vessel_plate) # unique identifier
 saveRDS(vessel_key, file=file.path(outdir, "SWFSC_observer_vessel_key.Rds"))
 
 
+# Add block id
+################################################################################
+
+# Blocks
+blocks <- wcfish::blocks
+
+# Lat/long key
+latlong_key <- data3 %>% 
+  select(haul_lat_dd, haul_long_dd, set_id) %>% 
+  na.omit() %>% 
+  sf::st_as_sf(coords=c("haul_long_dd", "haul_lat_dd"), crs=sf::st_crs(blocks))
+
+# Grab block
+block_index <- sf::st_intersects(x=latlong_key, y=blocks) %>% 
+  as.numeric()
+block_ids <- blocks$block_id[block_index]
+
+# Add to key
+latlong_key1 <- latlong_key %>% 
+  sf::st_drop_geometry() %>% 
+  mutate(block_id = block_ids)
+
+# Add to data
+data3_out <- data3 %>% 
+  # Add block id
+  left_join(latlong_key1 %>% select(set_id, block_id), by="set_id") %>% 
+  # Arrange
+  select(season:haul_long_dd, block_id, everything())
+
+
 # Export data
-saveRDS(data3, file=file.path(outdir, "SWFSC_1990_2017_set_net_observer_trips.Rds"))
+################################################################################
+
+# Export data
+saveRDS(data3_out, file=file.path(outdir, "SWFSC_1990_2017_set_net_observer_trips.Rds"))
 
 
 
