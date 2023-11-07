@@ -35,6 +35,13 @@ state_waters <- readRDS(file.path(gisdatadir, "CA_state_waters_polyline.Rds"))
 # Inspect
 freeR::complete(data_orig)
 
+# Reg years
+reg_years <- c(1987, 1994, 2002)
+
+# Block ids
+ci_blocks <- c(684:690, 707:713, 813:814, 760:762, 806:807, 829, 850, 849, 867, 765)
+ventura_blocks <- c(651:663, 664:677, 697, 776, 691:696, 714:717, 701:706, 678:683) 
+
 # Build data
 data <- data_orig %>%
   # Set gillnet
@@ -47,7 +54,22 @@ data <- data_orig %>%
                       soak_hr, target_spp, sep="-")) %>% 
   # Add period
   mutate(period=cut(year, breaks=c(1980, reg_years, 2023), 
-                    labels=c("1981-1986", "1987-1993", "1994-2001", "2002-present"), right=F))
+                    labels=c("1981-1986", "1987-1993", "1994-2001", "2002-present"), right=F)) %>% 
+  # Add quarter
+  mutate(month=lubridate::month(date),
+         quarter=case_when(month %in% c(12,1,2) ~ "Winter",
+                           month %in%c(3,4,5) ~ "Spring",
+                           month %in% c(6,7,8) ~ "Summer",
+                           month %in% c(9,10,11) ~ "Fall",
+                           T ~ "Unknown")) %>% 
+  # Add strata
+  mutate(strata=case_when(block_id %in% ci_blocks ~ "Channel Islands",
+                          block_id %in% ventura_blocks ~ "Ventura",
+                          block_id <= 650 ~ "Central California",
+                          T ~ "Southern California")) %>% 
+  # Order strata
+  mutate(strata=factor(strata, levels=c("Central California", "Ventura", 
+                                        "Channel Islands", "Southern California")))
 
 # Inspect period key
 period_key <- data %>% 
@@ -94,7 +116,7 @@ stats_blocks_sf <- stats_blocks %>%
   sf::st_as_sf()
 
 # Inspect year key
-count(data_blocks, period, year)
+count(data, period, year)
 
 # Calulcate sets per trip
 stats_trip <- data %>% 
@@ -107,11 +129,12 @@ g <- ggplot(stats_trip, aes(x=nsets)) +
   theme_bw()
 g
 
+
+
 # Plot data
 ################################################################################
 
-# Reg dates
-reg_years <- c(1987, 1994, 2002)
+# Reg data
 reg_data <- tibble(year=reg_years,
                    yval=c(380, 280, 180),
                    label=c("1987\n40 fathom depth restrition",
@@ -144,10 +167,10 @@ g1 <- ggplot(data=stats_blocks_sf, mapping=aes(fill=prop)) +
   # State waters
   geom_sf(data=state_waters, color="grey30", linewidth=0.2, inherit.aes = F) +
   # Plot Point Arguello
-  geom_hline(yintercept = 34.577201, lwd=0.2) +
+  geom_hline(yintercept = 34.577201, linewidth=0.2) +
   # Land
-  geom_sf(data = usa, fill = "grey85", col = "white", size = 0.2, inherit.aes = F) +
-  geom_sf(data=mexico, fill="grey85", col="white", size=0.2, inherit.aes = F) +
+  geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  geom_sf(data=mexico, fill="grey85", col="white", linewidth=0.2, inherit.aes = F) +
   # Labels
   labs(x="", y=" ", tag="A") +
   # Crop

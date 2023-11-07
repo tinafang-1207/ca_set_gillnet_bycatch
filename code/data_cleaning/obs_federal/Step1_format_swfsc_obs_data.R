@@ -329,8 +329,40 @@ freeR::which_duplicated(vessel_key$vessel_plate) # unique identifier
 saveRDS(vessel_key, file=file.path(outdir, "SWFSC_observer_vessel_key.Rds"))
 
 
+# Add block id
+################################################################################
+
+# Blocks
+blocks <- wcfish::blocks
+
+# Lat/long key
+latlong_key <- data3 %>% 
+  select(haul_lat_dd, haul_long_dd, set_id) %>% 
+  na.omit() %>% 
+  sf::st_as_sf(coords=c("haul_long_dd", "haul_lat_dd"), crs=sf::st_crs(blocks))
+
+# Grab block
+block_key <- sf::st_intersects(x=latlong_key, y=blocks) %>% 
+  as.numeric()
+
+# Add to key
+latlong_key1 <- latlong_key %>% 
+  sf::st_drop_geometry() %>% 
+  mutate(block_id = block_key)
+
+# Add to data
+data3_out <- data3 %>% 
+  # Add block id
+  left_join(latlong_key1 %>% select(set_id, block_id), by="set_id") %>% 
+  # Arrange
+  select(season:haul_long_dd, block_id, everything())
+
+
 # Export data
-saveRDS(data3, file=file.path(outdir, "SWFSC_1990_2017_set_net_observer_trips.Rds"))
+################################################################################
+
+# Export data
+saveRDS(data3_out, file=file.path(outdir, "SWFSC_1990_2017_set_net_observer_trips.Rds"))
 
 
 
