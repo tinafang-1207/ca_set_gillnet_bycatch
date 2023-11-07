@@ -244,8 +244,15 @@ data1 <- data_orig %>%
   # Vessel identifier
   mutate(vessel_id_use=ifelse(!is.na(vessel_id), vessel_id, boat_num),
          vessel_id_use_type=ifelse(!is.na(vessel_id), "Vessel id", "Boat number")) %>% 
+  # Add trip id
+  mutate(trip_id=paste(vessel_id_use, date, sep="-")) %>% 
+  # Build set
+  mutate(set_id=paste(date, vessel_id_use, block_id, depth_fa, 
+                      net_length_fa, mesh_size_in, buoy_line_depth_ft,
+                      soak_hr, target_spp, sep="-")) %>% 
   # Arrange
-  select(logbook_id, year, date, 
+  select(logbook_id, year, date,
+         trip_id, set_id, 
          vessel_id_use, vessel_id_use_type, 
          vessel_id, vessel_name, boat_num, permit_id,
          block_id,
@@ -263,7 +270,9 @@ data1 <- data_orig %>%
   # Rename
   rename(comm_name_orig1=comm_name1,
          comm_name_orig2=comm_name2,
-         net_type=net_type_final)
+         net_type=net_type_final) %>% 
+  # Remove duplicates
+  unique()
 
 # Inspect
 str(data1)
@@ -320,6 +329,80 @@ spp_key_orig <- data1 %>%
 spp_key_orig$spp_code[is.na(spp_key_orig$comm_name)] %>% unique() %>% as.numeric() %>% sort()
 
 
+# Set id checks
+################################################################################
+
+# How frequently does a set repeat a species and is therefore unlikely to be a unique set?
+check1 <- data1 %>% 
+  # Number of times species listed for set
+  # If set id was perfect, it would be 1
+  group_by(set_id, comm_name) %>% 
+  summarize(n=n()) %>% 
+  ungroup() %>% 
+  filter(n>1) %>% 
+  # Merge repeated sppp
+  group_by(set_id) %>% 
+  summarize(comm_names=paste(comm_name, collapse = ", "),
+            nrepeats=max(n))
+
+# Proportion of sets that are unlikely to be unique
+nsets <- n_distinct(data1$set_id)
+nrow(check1) / nsets * 100
+table(check1$nrepeats)
+
+# Sets per trip
+stats <- data1 %>% 
+  group_by(year, trip_id) %>% 
+  summarize(nsets=n_distinct(set_id)) %>% 
+  ungroup()
+
+# Plot histogram of sets per trip
+ggplot(stats, aes(x=nsets)) +
+  geom_histogram(breaks=seq(0, 30,1)) +
+  labs(x="Number of sets per day", y="Frequency") +
+  theme_bw()
+
+# Average sets per trip over time
+stats_avg <- stats %>% 
+  group_by(year) %>% 
+  summarise(nsets_avg=mean(nsets))
+
+# Plot average sets per trip over time
+ggplot(stats_avg, aes(x=year, y=nsets_avg)) +
+  geom_bar(stat="identity") +
+  theme_bw()
+
+
+
+
+# Vessel identifier
+################################################################################
+
+id_type <- data1 %>% 
+  group_by(year, trip_id) %>% 
+  summarize(boat_num_yn=sum(!is.na(boat_num)) >0,
+            vessel_id_yn=sum(!is.na(vessel_id)) >0) %>% 
+  ungroup() %>% 
+  mutate(type=case_when(boat_num_yn==T & vessel_id_yn==T ~ "Both",
+                        boat_num_yn==F & vessel_id_yn==F ~ "None",
+                        boat_num_yn==T & vessel_id_yn==F ~ "Boat number",
+                        boat_num_yn==F & vessel_id_yn==T ~ "Vessel id")) %>% 
+  group_by(year, type) %>% 
+  summarize(n=n()) %>% 
+  ungroup() %>% 
+  group_by(year) %>% 
+  mutate(prop=n/sum(n)) %>% 
+  ungroup() %>% 
+  mutate(type=factor(type, levels=c("Boat number", "Vessel id", "Both", "None")))
+
+
+ggplot(id_type, mapping=aes(x=year, y=prop, fill=type)) +
+  geom_bar(stat="identity") + 
+  labs(x="Year", y="Proportion of trips") +
+  scale_fill_ordinal(name="Vessel identifier") +
+  theme_bw()
+
+
 # Build vessel key
 ################################################################################
 
@@ -328,7 +411,8 @@ boat_nums <- data1 %>% pull(boat_num) %>% unique() %>% sort()
 # Vessel key
 vessel_key <- data1 %>% 
   select(vessel_id, boat_num) %>%
-  unique()
+  unique() %>% 
+  na.omit()
 
 # Vessel key
 vessel_key1 <- data1 %>% 

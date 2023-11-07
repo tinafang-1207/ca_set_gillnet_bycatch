@@ -23,6 +23,9 @@ data_orig <- read.csv(file.path(indir, "GNS8389.csv"), as.is=T, na.strings="")
 port_key <- readRDS(file.path(keydir, "CDFW_port_key.Rds"))
 spp_key <- readRDS(file.path(keydir, "CDFW_species_key.Rds"))
 
+# Get blocks blocks
+blocks <- wcfish::blocks
+
 
 # Helper functions
 ################################################################################
@@ -197,9 +200,38 @@ g <- ggplot(data, aes(x=long_dd, y=lat_dd, color=port_depart)) +
 g
 
 
+# Add block id
+################################################################################
+
+# Lat/long key
+latlong_key <- data %>% 
+  select(lat_dd, long_dd, set_id) %>% 
+  na.omit() %>% 
+  sf::st_as_sf(coords=c("long_dd", "lat_dd"), crs=sf::st_crs(blocks))
+
+# Grab block
+block_key <- sf::st_intersects(x=latlong_key, y=blocks) %>% 
+   as.numeric()
+
+# Add to key
+latlong_key1 <- latlong_key %>% 
+  sf::st_drop_geometry() %>% 
+  mutate(block_id = block_key)
+
+# Add to data
+data1 <- data %>% 
+  # Add block id
+  left_join(latlong_key1 %>% select(set_id, block_id), by="set_id") %>% 
+  # Arrange
+  select(date, vessel_id, set_num, set_id, complete_yn, obs_type,
+         port_depart_code, port_depart,
+         port_landing_code, port_landing,
+         target_spp_code, target_spp, block_id, lat_dd, long_dd, everything())
+
+
 # Export data
 ################################################################################
 
 # Export
-saveRDS(data, file=file.path(outdir, "CDFW_1983_1989_gillnet_observer_set_info.Rds"))
+saveRDS(data1, file=file.path(outdir, "CDFW_1983_1989_gillnet_observer_set_info.Rds"))
 

@@ -33,7 +33,7 @@ state_waters <- readRDS(file.path(gisdatadir, "CA_state_waters_polyline.Rds"))
 ################################################################################
 
 # Inspect
-freeR::complete(data_orig) # sets are actually sets pre-2017ish but are logooks after, vessel id is good
+freeR::complete(data_orig)
 
 # Build data
 data <- data_orig %>%
