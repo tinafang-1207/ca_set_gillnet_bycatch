@@ -29,6 +29,8 @@ spp <- "California sea lion"
 ######################### Balanced random forest ############################
 #############################################################################
 
+# Notice: This takes about 20 minutes to run for 1 species
+
 fit_balanced_rf_model <- function(spp, model_orig) {
   
   # Format data (predictor and response)
@@ -204,6 +206,9 @@ rf_all_df <- output_sl[["rf_all_df"]]
 ######################### Weighted random forest ############################
 #############################################################################
 
+# Notice: This takes about 20 - 30 minutes to run for 1 species
+
+
 fit_weighted_rf_model <- function(spp, model_orig) {
   
   
@@ -378,9 +383,10 @@ fit_weighted_rf_model <- function(spp, model_orig) {
     )
   
   # make the output dataframe of tuning result
-  rf_res_weighted_df %>%
+  rf_res_weighted_df <- rf_res_weighted %>%
     collect_metrics() %>%
-    as.data.frame()
+    as.data.frame() %>%
+    mutate(balanced_type = "weighted")
   
   # select the best model for weighted random forest
   model_weighted_best <- select_best(rf_res_weighted, metric = "kap")
@@ -400,12 +406,41 @@ fit_weighted_rf_model <- function(spp, model_orig) {
   
 }
 
+# run example
+
+output_sl_weighted <- fit_weighted_rf_model(spp = "California sea lion", model_orig)
 
 
+############ Compare the output and select the best model #########
 
+# We want a function here?
 
+balanced_rf_final <- output_sl[["rf_all_df"]]
 
+weighted_rf_final <- output_weighted [["rf_res_weighted_df"]]
 
+# combine
+
+rf_final_result <- rbind(balanced_rf_final, weighted_rf_final)
+
+# pick up the best type
+
+rf_final_result_best <- rf_final_result %>%
+  filter(.metric == "kap") %>%
+  filter(mean == max(mean))
+
+balanced_rf_best <- 1
+weighted_rf_best <- 1
+
+stats <- rf_all_df %>% 
+  filter(.metric=="kap") %>% 
+  arrange(balanced_type, desc(mean)) %>% 
+  group_by(balanced_type) %>% 
+  slice(1) %>% 
+  mutate(balanced_type=factor(balanced_type, levels=c("upsample", "downsample", "smote"))) %>% 
+  arrange(balanced_type)
+
+which.max(stats$mean)
 
 
 
