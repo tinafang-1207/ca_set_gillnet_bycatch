@@ -429,9 +429,18 @@ rf_final_result_best <- rf_final_result %>%
   filter(.metric == "kap") %>%
   filter(mean == max(mean))
 
-balanced_rf_best <- 
-weighted_rf_best <- 
+balanced_rf_best <- 1
+weighted_rf_best <- 1
 
+stats <- rf_all_df %>% 
+  filter(.metric=="kap") %>% 
+  arrange(balanced_type, desc(mean)) %>% 
+  group_by(balanced_type) %>% 
+  slice(1) %>% 
+  mutate(balanced_type=factor(balanced_type, levels=c("upsample", "downsample", "smote"))) %>% 
+  arrange(balanced_type)
+
+which.max(stats$mean)
 
 
 
