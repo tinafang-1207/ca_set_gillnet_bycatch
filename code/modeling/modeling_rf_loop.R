@@ -1,6 +1,7 @@
 
 #### clean working environment ####
 
+
 rm(list = ls())
 
 ### read in packages ###
@@ -193,7 +194,7 @@ fit_balanced_rf_model <- function(spp, model_orig) {
 
 # Run example
 
-output_sl <- fit_balanced_rf_model(spp = "California sea lion", model_orig)
+output_sl_balanced <- fit_balanced_rf_model(spp = "California sea lion", model_orig)
 
 # Extract info
 
@@ -230,7 +231,7 @@ fit_weighted_rf_model <- function(spp, model_orig) {
   
   # Join model data
   
-  model_data_weighted_loop <- left_join(response_pre_join, predictor_pre_join, by = "set_id") %>%
+  model_data_weighted <- left_join(response_pre_join, predictor_pre_join, by = "set_id") %>%
     filter(!duplicated(set_id)) %>%
     mutate(response = as.factor(response))
   
@@ -241,56 +242,59 @@ fit_weighted_rf_model <- function(spp, model_orig) {
   
   i <- 1
   
+  # create the best model list
+  best_model_list <- list()
+  
   for(i in 1:length(wt_vec)){
     
     #set up wt_do
     wt_do <- wt_vec[i]
     
     #assign weight to model data
-    model_data_weighted_loop <- model_data_weighted_loop %>%
+    model_data_weighted <- model_data_weighted %>%
       mutate(case_wts = ifelse(response == "1", wt_do, 1),
              case_wts = importance_weights(case_wts))
     
     # split between training and testing data
     set.seed(1207)
     
-    model_split_weighted_loop <- initial_split(model_data_weighted_loop, prop = 4/5, strata = response)
+    model_split_weighted <- initial_split(model_data_weighted, prop = 4/5, strata = response)
     
-    model_train_weighted_loop <- training(model_split_weighted_loop) %>%
+    model_train_weighted <- training(model_split_weighted) %>%
       select(-set_id) %>%
       drop_na()
     
-    model_test_weighted_loop <- testing (model_split_weighted_loop) %>%
+    model_test_weighted <- testing (model_split_weighted) %>%
       select(-set_id) %>%
       drop_na()
     
     # set up model recipe
-    model_rec_weighted_loop <- recipe(response~., data = model_train_weighted_loop)
+    model_rec_weighted <- recipe(response~., data = model_train_weighted)
     
     # set up model engine
-    rf_spec_weighted_loop <- rand_forest(mtry = tune()) %>%
+    rf_spec_weighted <- rand_forest(mtry = tune()) %>%
       set_engine("ranger", importance = "impurity") %>%
       set_mode("classification")
     
     # hyperparameter tuning
     set.seed(1207)
     
-    model_fold <- vfold_cv(model_train_weighted_loop)
+    model_fold <- vfold_cv(model_train_weighted)
     
     param_grid <- grid_regular(mtry(range = c(1, 8)), levels = 8) 
     
     # set up model workflow
     set.seed(1207)
     
-    rf_workflow_weighted_loop <- workflow() %>%
-      add_recipe(model_rec_weighted_loop) %>%
-      add_model(rf_spec_weighted_loop) %>%
+    rf_workflow_weighted <- workflow() %>%
+      add_recipe(model_rec_weighted) %>%
+      add_model(rf_spec_weighted) %>%
       add_case_weights(case_wts)
     
     
     # Tuning hyperparameters
-    rf_res_weighted_loop <- 
-      rf_workflow_weighted_loop %>%
+    rf_res_weighted <- 
+      rf_workflow_weighted %>%
       tune_grid(
         resamples = model_fold,
         grid = param_grid, 
@@ -298,109 +302,44 @@ fit_weighted_rf_model <- function(spp, model_orig) {
       )
     
     # set up extracted dataframe
-    rf_res_weighted_loop_df <- rf_res_weighted_loop %>%
+    rf_res_weighted_df <- rf_res_weighted %>%
       collect_metrics() %>%
       as.data.frame() %>%
       filter(.metric == "kap") %>%
       filter(mean == max(mean)) %>%
       select(mtry, mean)
     
-    if(i == 1) {df_out_weighted_loop <- rf_res_weighted_loop_df}else{df_out_weighted_loop <- rbind(df_out_weighted_loop, rf_res_weighted_loop_df)}
+    # Extract the best model via cross-validation from each weight
+    model_weighted_best <- select_best(rf_res_weighted, metric = "kap")
+    
+    
+    if(i == 1) {
+      df_out_weighted <- rf_res_weighted_df
+      best_model_list <- list(model_weighted_best)
+      }else{
+      df_out_weighted <- rbind(df_out_weighted, rf_res_weighted_df)
+      best_model_list <- append(best_model_list, list(model_weighted_best))
+      }
     
   }
   
   # Extract the best weight from the weighted for loop result
-  
-  # Format the best tuning df
-  wt_best_df <- wt_vec %>%
+  df_out_weighted_final <-wt_vec %>%
     as.data.frame() %>%
-    mutate(mtry = df_out_weighted_loop$mtry, mean_kappa = df_out_weighted_loop$mean) %>%
-    rename(case_wts = ".") %>%
-    filter(mean_kappa == max(mean_kappa))
+    mutate(mtry = df_out_weighted$mtry, mean_kappa = df_out_weighted$mean) %>%
+    rename(case_wts = ".")
   
-  # get the best tuning weight
-  wt_best_weight <- wt_best_df$case_wts
-  
-  
-  ###### Fit the weighted rf with the best weight selected below ######
-  
-  # Format the data (combine response and predictor)
-  
-  model_weighted <- left_join(response_pre_join, predictor_pre_join, by = "set_id") %>%
-    filter(!duplicated(set_id)) %>%
-    mutate(response = as.factor(response)) %>%
-    # assign the best case weight (from wt_best_weight)
-    mutate(case_wts = ifelse(response == "1", wt_best_weight, 1),
-           case_wts = importance_weights(case_wts))
-  
-  # Split the data
-  
-  set.seed(1207)
-  model_split_weighted <- initial_split(model_weighted, prop = 4/5, strata = response)
-  
-  model_train_weighted <- training(model_split_weighted) %>%
-    select(-set_id) %>%
-    drop_na()
-  
-  model_test_weighted <- testing (model_split_weighted) %>%
-    select(-set_id) %>%
-    drop_na()
-  
-  # set up the model recipe
-  
-  model_rec_weighted <- recipe(response~., data = model_train_weighted)
-  
-  # set up the weighted model
-  
-  rf_spec_weighted <- rand_forest(mtry = tune()) %>%
-    set_engine("ranger", importance = "impurity") %>%
-    set_mode("classification")
-  
-  # set up the grid search
-
-  set.seed(1207)
-  
-  model_fold <- vfold_cv(model_train_weighted)
-  
-  param_grid <- grid_regular(mtry(range = c(1, 8)), levels = 8) 
-  
-  # set up the weighted workflow
-  set.seed(1207)
-  
-  rf_workflow_weighted <- workflow() %>%
-    add_recipe(model_rec_weighted) %>%
-    add_model(rf_spec_weighted) %>%
-    add_case_weights(case_wts)
-  
-  # Hyperparameter tuning
-  
-  rf_res_weighted <- 
-    rf_workflow_weighted %>%
-    tune_grid(
-      resamples = model_fold,
-      grid = param_grid, 
-      metrics = metric_set(roc_auc, kap)
-    )
-  
-  # make the output dataframe of tuning result
-  rf_res_weighted_df <- rf_res_weighted %>%
-    collect_metrics() %>%
-    as.data.frame() %>%
-    mutate(balanced_type = "weighted")
-  
-  # select the best model for weighted random forest
-  model_weighted_best <- select_best(rf_res_weighted, metric = "kap")
+  # Extract the best model list
+  best_model_list <- best_model_list
   
   # format the output to return
-  output_weighted <- list(rf_res_weighted_df = rf_res_weighted_df, # tuning results - a dataframe
-                          best_model = model_weighted_best, # best models - list of model objects
+  output_weighted <- list(rf_weighted_final = df_out_weighted_final, # tuning results - a dataframe
+                          best_model = best_model_list, # best models - list of model objects
                           data_train=model_train_weighted, # training data
                           data_test=model_test_weighted # test data
                           )
   
-  
-  
-  # return the output
+   # return the output
   return(output_weighted)
   
   
@@ -410,27 +349,12 @@ fit_weighted_rf_model <- function(spp, model_orig) {
 
 output_sl_weighted <- fit_weighted_rf_model(spp = "California sea lion", model_orig)
 
+# Extract data
+
+rf_weighted_final <- output_sl_weighted[["rf_weighted_final"]]
+
 
 ############ Compare the output and select the best model #########
-
-# We want a function here?
-
-balanced_rf_final <- output_sl[["rf_all_df"]]
-
-weighted_rf_final <- output_weighted [["rf_res_weighted_df"]]
-
-# combine
-
-rf_final_result <- rbind(balanced_rf_final, weighted_rf_final)
-
-# pick up the best type
-
-rf_final_result_best <- rf_final_result %>%
-  filter(.metric == "kap") %>%
-  filter(mean == max(mean))
-
-balanced_rf_best <- 1
-weighted_rf_best <- 1
 
 stats <- rf_all_df %>% 
   filter(.metric=="kap") %>% 
