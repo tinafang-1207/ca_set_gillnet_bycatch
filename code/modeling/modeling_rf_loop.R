@@ -33,62 +33,47 @@ source("code/function/weighted_rf.R")
 
 ### set up the species list ###
 
-spp_do <- c("California sea lion", "Harbor seal", "Brandt's cormorant")
+spp_do <- c("California sea lion", "Harbor seal")
 
-# set up output dir
-outputdir <- "model_result"
 
 ########### Fit balanced rf below ###############
 
+# set up output dir
+outputdir_balanced_rf <- "model_result/balanced_rf"
+
 i <- 1
+
+output_balanced_rf_list <- list()
 
 for (i in length(spp_do)) {
   
-  balanced_rf <- fit_balanced_rf_model(spp = spp_do[i], model_orig = model_orig)
+  spp_run <- spp_do[i]
+  
+  balanced_rf <- fit_balanced_rf_model(spp = spp_run, model_orig = model_orig)
   
   outfile_balanced_rf <- paste0(tolower(gsub(" ", "_", spp_do[i])), "_model_balanced_rf.Rds")
   
-  saveRDS(balanced_rf, file=file.path(outputdir, outfile_balanced_rf) )
+  # it does not paste list from harbor seal
+  if (i == 1){output_balanced_rf_list <- list(balanced_rf)}else{output_balanced_rf_list <- append(output_balanced_rf_list, list(balanced_rf))}
+  
+  # the saveRDS only save the last item.....
+  
+  #saveRDS(output_balanced_rf_list[[i]], file = file.path(outputdir_balanced_rf, outfile_balanced_rf))
   
   }
 
+############## Fit weighted rf below ###############
 
+# For now, will write a for loop once it worked
 
-# Run example
+output_sl_weighted <- fit_weighted_rf_model(spp = "California sea lion", model_orig = model_orig)
 
-output <- readRDS("model_result/brandt's-cormorant_model_balanced_rf.Rds")
+output_hs_weighted <- fit_weighted_rf_model(spp = "Harbor seal", model_orig = model_orig)
 
-# Extract info
+saveRDS(output_sl_weighted, file = file.path("model_result/weighted_rf/california_sea_lion_model_weighted_rf.Rds"))
 
-best_models <- output_harbor_seal[["best_models"]]
+saveRDS(output_hs_weighted, file = file.path("model_result/weighted_rf/harbor_seal_model_weighted_rf.Rds"))
 
-rf_all_df <- output_harbor_seal[["rf_all_df"]]
-
-
-output_cormorant <- fit_balanced_rf_model(spp = "Brandt's cormorant", model_orig)
-
-output_harbor_seal <- fit_balanced_rf_model(spp = "Harbor seal", model_orig)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# run example
-
-output_sl_weighted <- fit_weighted_rf_model(spp = "California sea lion", model_orig)
-
-# Extract data
-
-rf_weighted_final <- output_sl_weighted[["rf_weighted_final"]]
 
 
 ############ Compare the output and select the best model #########
@@ -103,9 +88,10 @@ stats <- rf_all_df %>%
 
 which.max(stats$mean)
 
+weighted_hs_df <- output_hs_weighted[["rf_weighted_final"]]
+weighted_sl_df <- output_sl_weighted[["rf_weighted_final"]]
 
-
-
+rf_all_df_hs <- balanced_rf[["rf_all_df"]]
 
 
 
