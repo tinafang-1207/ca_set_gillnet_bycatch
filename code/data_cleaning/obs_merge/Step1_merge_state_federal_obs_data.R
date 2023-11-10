@@ -37,8 +37,9 @@ spp_key <- read.csv(file.path(keydir, "species_key_final.csv"), as.is=T) %>%
 # Format key
 cdfw_key <- cdfw_key_orig %>% 
   # Reduce
-  select(set_id, port_depart, port_landing, target_spp, 
-         lat_dd, long_dd, block_id, bottom_depth_fa, net_type, net_length_fa, mesh_size1_in) %>% 
+  select(set_id, port_depart, port_landing, net_type, target_spp, 
+         lat_dd, long_dd, block_id, bottom_depth_fa, 
+         net_length_fa, mesh_size1_in, soak_hr) %>% 
   # Rename
   rename(port_return=port_landing,
          depth_fa=bottom_depth_fa,
@@ -55,8 +56,9 @@ cdfw <- cdfw_orig %>%
   left_join(cdfw_key, by="set_id") %>% 
   # Arrange
   select(dataset, set_id, date, vessel_id, set_num, 
-         port_depart, port_return, target_spp, net_type, net_length_fa, mesh_size_in, 
-         depth_fa, lat_dd, long_dd, block_id,
+         port_depart, port_return, target_spp, net_type, 
+         block_id, lat_dd, long_dd,  depth_fa, 
+         net_length_fa, mesh_size_in, soak_hr,
          spp_code_chr, comm_name, n_caught, n_discarded_dead, n_discarded_alive, n_kept,
          everything())
 
@@ -67,7 +69,7 @@ cdfw <- cdfw_orig %>%
 # Format key
 swfsc_key <- swfsc_key_orig %>% 
   # Reduce
-  select(set_id, vessel_plate, date_haul1, port_depart, port_return, target1_spp, 
+  select(set_id, vessel_plate, date_haul1, port_depart, port_return, target1_spp, soak_hr,
          haul_lat_dd, haul_long_dd, block_id, haul_depth_fa, net_type, net_mesh_panel_length_fathoms, net_mesh_size_in) %>% 
   # Rename
   rename(vessel_id=vessel_plate, 
@@ -94,8 +96,9 @@ swfsc <- swfsc_orig %>%
   left_join(swfsc_key, by="set_id") %>% 
   # Arrange
   select(dataset, set_id, date, vessel_id, set_num, 
-         port_depart, port_return, target_spp, net_type, net_length_fa, mesh_size_in, 
-         depth_fa, lat_dd, long_dd, block_id, 
+         port_depart, port_return, target_spp, net_type, 
+         block_id, lat_dd, long_dd, depth_fa, 
+         net_length_fa, mesh_size_in, soak_hr, 
          spp_code_chr, comm_name, n_caught, n_discarded_dead, n_discarded_alive, n_discarded_unknown, n_kept,
          everything())
 
@@ -124,8 +127,9 @@ data <- bind_rows(cdfw, swfsc) %>%
   # Arrange
   arrange(year, date, vessel_id) %>% 
   select(dataset, set_id, year, date, vessel_id, set_num, 
-         port_depart, port_return, target_spp, net_type, net_length_fa, mesh_size_in, 
-         depth_fa, lat_dd, long_dd, block_id, 
+         port_depart, port_return, target_spp, net_type, 
+         block_id, lat_dd, long_dd, depth_fa, 
+         net_length_fa, mesh_size_in, soak_hr,
          spp_code_chr, comm_name, spp_type, n_caught, n_discarded_dead, n_discarded_alive, n_discarded_unknown, n_kept,
          everything())
 

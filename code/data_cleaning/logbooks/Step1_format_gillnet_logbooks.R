@@ -20,6 +20,9 @@ data_orig <- readxl::read_excel(file.path(indir, "Gillnet Logs_1981-2022_sn.xlsx
 # Read species key
 spp_key <- readRDS("data/keys/CDFW_species_key.Rds")
 
+# Blocks
+blocks <- wcfish::blocks
+blocks_df <- blocks %>% sf::st_drop_geometry()
 
 
 # Format data
@@ -60,7 +63,11 @@ data1 <- data_orig %>%
                         T ~ ""),
          date=lubridate::ymd(date)) %>% 
   # Format block id
-  mutate(block_id=gsub("/", ", ", block_id)) %>% 
+  mutate(block_id=gsub("/", ", ", block_id), 
+         block_id_num=as.numeric(block_id)) %>% 
+  # Add block details
+  left_join(blocks_df %>% select(block_id, block_type, block_lat_dd, block_long_dd), 
+            by=c("block_id_num"="block_id")) %>% 
   # Format depth
   mutate(depth_fa_num=as.numeric(depth_fa)) %>% 
   # Format net length
@@ -255,7 +262,7 @@ data1 <- data_orig %>%
          trip_id, set_id, 
          vessel_id_use, vessel_id_use_type, 
          vessel_id, vessel_name, boat_num, permit_id,
-         block_id,
+         block_id, block_id_num, block_type, block_lat_dd, block_long_dd, 
          net_type_orig1, net_type_orig2, net_type_final,
          depth_fa, depth_fa_num, 
          net_length_fa, net_length_fa_num,
