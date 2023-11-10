@@ -98,6 +98,8 @@ data <- data_orig %>%
                          "024:"="24:00"),
          duration=ifelse(nchar(duration)>6, substr(duration, 1, nchar(duration)-3), duration),
          duration=lubridate::hm(duration)) %>%
+  # Add soak time
+  mutate(soak_hr=lubridate::hour(duration) + lubridate::minute(duration)/60) %>% 
   # Format lat/long
   mutate(lat_dd=conv_lat(lat_dd_orig),
          long_dd=conv_long(long_dd_orig)) %>%
@@ -157,7 +159,7 @@ data <- data_orig %>%
          port_depart_code, port_depart,
          port_landing_code, port_landing,
          target_spp_code, target_spp, lat_dd, long_dd,
-         dfs, area, environment, bottom_depth_fa, time_pull, duration,
+         dfs, area, environment, bottom_depth_fa, time_pull, duration, soak_hr,
          net_orientation, net_type, net_material, net_length_fa, net_depth,
          mesh_size1_in, mesh_size2_in, hanging_length_in, hratio, suspender_length_ft, extender_length_ft, sampler,
          everything()) %>%

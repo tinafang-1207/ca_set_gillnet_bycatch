@@ -41,7 +41,7 @@ table(data_set_lg$target_spp)
 
 # Target species: California halibut, White seabass, Pacific angel shark
 data_set_lg <- data_set %>% 
-  # Filter to >3.5" mesh size
+  # Filter to target species
   filter(target_spp %in% c("California halibut", "White seabass", "Pacific angel shark"))
 
 
