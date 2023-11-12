@@ -104,7 +104,7 @@ swfsc <- swfsc_orig %>%
 
 
 
-# Merge SWFSC data
+# Merge data
 ################################################################################
 
 # Merge data
@@ -152,6 +152,15 @@ spp_key_check <- data %>%
   select(spp_code_chr, comm_name, spp_type) %>% 
   unique()
 freeR::which_duplicated(spp_key_check$comm_name) # MUST BE ZERO
+
+# Vessel id
+vessel_key <- data %>% 
+  select(vessel_id) %>% 
+  unique()
+
+
+# Export data
+################################################################################
 
 # Export data
 saveRDS(data, file=file.path(outdir, "1983_2017_gillnet_observer_data.Rds"))

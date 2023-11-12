@@ -33,6 +33,7 @@ data1 <- data_orig %>%
   # Rename columns
   janitor::clean_names("snake") %>% 
   rename(logbook_id=sn,
+         vessel_id_orig=vessel_id, 
          boat_num=boatno,
          permit_id=permit,
          date=fishing_date,
@@ -239,6 +240,7 @@ data1 <- data_orig %>%
                             comm_name2=="Crab,RockUnspecified" ~ "801",
                             comm_name2=="SeaUrchin,unspecified" ~ "",
                             T ~ spp_code)) %>% 
+  mutate(spp_code=ifelse(spp_code=="", NA, spp_code)) %>% 
   # Add species
   left_join(spp_key %>% select(spp_code_chr, comm_name), by=c("spp_code"="spp_code_chr")) %>% 
   # Fill in missing common names
@@ -248,20 +250,20 @@ data1 <- data_orig %>%
                              comm_name1=="Sea Lion" ~ "Sea lion",
                              comm_name2=="SeaUrchin,unspecified" ~ "Unspecified sea urchin",
                              T ~ comm_name)) %>% 
-  # Vessel identifier
-  mutate(vessel_id_use=ifelse(!is.na(vessel_id), vessel_id, boat_num),
-         vessel_id_use_type=ifelse(!is.na(vessel_id), "Vessel id", "Boat number")) %>% 
-  # Add trip id
-  mutate(trip_id=paste(vessel_id_use, date, sep="-")) %>% 
-  # Build set
-  mutate(set_id=paste(date, vessel_id_use, block_id, depth_fa, 
-                      net_length_fa, mesh_size_in, buoy_line_depth_ft,
-                      soak_hr, target_spp, sep="-")) %>% 
+  # # Vessel identifier
+  # mutate(vessel_id_use=ifelse(!is.na(vessel_id), vessel_id, boat_num),
+  #        vessel_id_use_type=ifelse(!is.na(vessel_id), "Vessel id", "Boat number")) %>% 
+  # # Add trip id
+  # mutate(trip_id=paste(vessel_id_use, date, sep="-")) %>% 
+  # # Build set
+  # mutate(set_id=paste(date, vessel_id_use, block_id, depth_fa, 
+  #                     net_length_fa, mesh_size_in, buoy_line_depth_ft,
+  #                     soak_hr, target_spp, sep="-")) %>% 
   # Arrange
   select(logbook_id, year, date,
-         trip_id, set_id, 
-         vessel_id_use, vessel_id_use_type, 
-         vessel_id, vessel_name, boat_num, permit_id,
+         #trip_id, set_id, 
+         #vessel_id_use, vessel_id_use_type, 
+         vessel_id_orig, vessel_name, boat_num, permit_id,
          block_id, block_id_num, block_type, block_lat_dd, block_long_dd, 
          net_type_orig1, net_type_orig2, net_type_final,
          depth_fa, depth_fa_num, 
@@ -277,9 +279,10 @@ data1 <- data_orig %>%
   # Rename
   rename(comm_name_orig1=comm_name1,
          comm_name_orig2=comm_name2,
-         net_type=net_type_final) %>% 
+         net_type=net_type_final) 
   # Remove duplicates
-  unique()
+  # not sure if this is actually a good idea
+  # unique()
 
 # Inspect
 str(data1)
@@ -336,11 +339,77 @@ spp_key_orig <- data1 %>%
 spp_key_orig$spp_code[is.na(spp_key_orig$comm_name)] %>% unique() %>% as.numeric() %>% sort()
 
 
+# Build vessel key
+################################################################################
+
+# Vessel key 
+vessel_key1 <- data1 %>% 
+  # Unique id combos
+  select(vessel_id_orig, boat_num) %>% 
+  unique() %>% 
+  # Count characters
+  mutate(vessel_id_nchar=nchar(vessel_id_orig),
+         boat_num_nchar=nchar(boat_num)) %>% 
+  # Vessel id type
+  mutate(vessel_id_type=case_when(grepl("CF", vessel_id_orig) ~ "DMV number",
+                                  vessel_id_nchar<=5 ~ "Vessel id",
+                                  vessel_id_nchar>5 ~ "Primary vessel number",
+                                  T ~ "")) %>% 
+  # Boat number type
+  mutate(boat_num_type=case_when(boat_num_nchar<=5 ~ "Vessel id",
+                                 boat_num_nchar>5 ~ "Primary vessel number",
+                                 T ~ "")) %>% 
+  # Add vessel id
+  mutate(vessel_id=ifelse(vessel_id_type=="Vessel id", vessel_id_orig,
+                          ifelse(boat_num_type=="Vessel id", boat_num, NA))) %>% 
+  # Add primary vessel id
+  mutate(primary_id=ifelse(vessel_id_type=="Primary vessel number", vessel_id_orig,
+                           ifelse(boat_num_type=="Primary vessel number", boat_num, NA))) %>% 
+  # Add DMV id
+  mutate(dmv_id=ifelse(vessel_id_type=="DMV number", vessel_id_orig, NA)) %>% 
+  # Add vessel id use
+  mutate(vessel_id_use=ifelse(!is.na(vessel_id), vessel_id,
+                              ifelse(!is.na(primary_id), primary_id, dmv_id)),
+         vessel_id_use_type=ifelse(!is.na(vessel_id), "Vessel id",
+                                   ifelse(!is.na(primary_id), "Primary vessel number", 
+                                          ifelse(!is.na(dmv_id), "DMV number", NA))))
+
+# PVNs
+pvns <- vessel_key1 %>% 
+  select(primary_id)  %>% 
+  na.omit()
+write.csv(pvns, file=file.path(outdir, "primary_vessel_ids_in_gillnet_logbook_data.csv"), row.names=F)
+  
+# Prepare for merging
+vessel_key2 <- vessel_key1 %>% 
+  select(vessel_id_use_type, vessel_id_use, vessel_id, primary_id, dmv_id, vessel_id_orig, boat_num) %>% 
+  arrange(vessel_id_use_type)
+
+
+# Add vessel key to data
+################################################################################
+
+# Expand data
+data2 <- data1 %>% 
+  # Add vessel ids
+  left_join(vessel_key2) %>% 
+  # Add trip id
+  mutate(trip_id=paste(vessel_id_use, date, sep="-")) %>% 
+  # Add set id
+  mutate(set_id=paste(vessel_id_use, date, net_type, block_id, depth_fa,
+                      net_length_fa, mesh_size_in, buoy_line_depth_ft, soak_hr,
+                      target_spp, sep="-")) %>% 
+  # Arrange
+  select(logbook_id, year, date, trip_id, set_id,
+         vessel_id_use_type, vessel_id_use, vessel_id, primary_id, dmv_id,
+         everything())
+
+
 # Set id checks
 ################################################################################
 
 # How frequently does a set repeat a species and is therefore unlikely to be a unique set?
-check1 <- data1 %>% 
+check1 <- data2 %>% 
   # Number of times species listed for set
   # If set id was perfect, it would be 1
   group_by(set_id, comm_name) %>% 
@@ -350,15 +419,17 @@ check1 <- data1 %>%
   # Merge repeated sppp
   group_by(set_id) %>% 
   summarize(comm_names=paste(comm_name, collapse = ", "),
-            nrepeats=max(n))
+            nrepeats=max(n)) %>% 
+  ungroup()
 
 # Proportion of sets that are unlikely to be unique
-nsets <- n_distinct(data1$set_id)
+nsets <- n_distinct(data2$set_id)
 nrow(check1) / nsets * 100
 table(check1$nrepeats)
+mean(check1$nrepeats)
 
 # Sets per trip
-stats <- data1 %>% 
+stats <- data2 %>% 
   group_by(year, trip_id) %>% 
   summarize(nsets=n_distinct(set_id)) %>% 
   ungroup()
@@ -381,108 +452,11 @@ ggplot(stats_avg, aes(x=year, y=nsets_avg)) +
 
 
 
-
-# Vessel identifier
-################################################################################
-
-id_type <- data1 %>% 
-  group_by(year, trip_id) %>% 
-  summarize(boat_num_yn=sum(!is.na(boat_num)) >0,
-            vessel_id_yn=sum(!is.na(vessel_id)) >0) %>% 
-  ungroup() %>% 
-  mutate(type=case_when(boat_num_yn==T & vessel_id_yn==T ~ "Both",
-                        boat_num_yn==F & vessel_id_yn==F ~ "None",
-                        boat_num_yn==T & vessel_id_yn==F ~ "Boat number",
-                        boat_num_yn==F & vessel_id_yn==T ~ "Vessel id")) %>% 
-  group_by(year, type) %>% 
-  summarize(n=n()) %>% 
-  ungroup() %>% 
-  group_by(year) %>% 
-  mutate(prop=n/sum(n)) %>% 
-  ungroup() %>% 
-  mutate(type=factor(type, levels=c("Boat number", "Vessel id", "Both", "None")))
-
-
-ggplot(id_type, mapping=aes(x=year, y=prop, fill=type)) +
-  geom_bar(stat="identity") + 
-  labs(x="Year", y="Proportion of trips") +
-  scale_fill_ordinal(name="Vessel identifier") +
-  theme_bw()
-
-
-# Build vessel key
-################################################################################
-
-boat_nums <- data1 %>% pull(boat_num) %>% unique() %>% sort()
-
-# Vessel key
-vessel_key <- data1 %>% 
-  select(vessel_id, boat_num) %>%
-  unique() %>% 
-  na.omit()
-
-# Vessel key
-vessel_key1 <- data1 %>% 
-  select(vessel_id, boat_num) %>%
-  na.omit() %>% 
-  unique()
-
-vessel_key2 <- data1 %>% 
-  select(vessel_id, vessel_name) %>%
-  na.omit() %>% 
-  unique()
-freeR::which_duplicated(vessel_key2$vessel_id)
-
-# This is all garbage
-# If you come back to it months from now you can delete
-# You were trying to add vessel ids for the permit numbers so the logbooks could talk to the observer data
-
-# #
-# permit2id <- data1 %>% 
-#   select(permit_id, vessel_id) %>% 
-#   unique() %>% 
-#   na.omit() %>% 
-#   arrange(permit_id)
-# 
-# # Vessel key
-# vessel_key1 <- data1 %>% 
-#   select(vessel_id, vessel_name, boat_num) %>% 
-#   unique() %>% 
-#   arrange(vessel_id)
-# 
-# #
-# vessel_key2 <- vessel_key1 %>% 
-#   select(vessel_id, vessel_name) %>% 
-#   na.omit() %>% 
-#   unique() %>% 
-#   rename(vessel_name1=vessel_name)
-# 
-# vessel_key3 <- vessel_key1 %>% 
-#   # Add vessel name
-#   left_join(vessel_key2, by=c("vessel_id"))  %>% 
-#   mutate(vessel_name=ifelse(!is.na(vessel_name), vessel_name, vessel_name1)) %>% 
-#   select(-vessel_name1)
-# 
-# vessel_key4 <- vessel_key1 %>% 
-#   select(vessel_id, boat_num) %>% 
-#   na.omit() %>% 
-#   unique() %>% 
-#   rename(boat_num1=boat_num)
-# 
-# vessel_key5 <- vessel_key3 %>% 
-#   # Add vessel name
-#   left_join(vessel_key4, by=c("vessel_id"))  %>% 
-#   mutate(boat_num=ifelse(!is.na(boat_num), boat_num, boat_num1))# %>% 
-#   select(-vessel_name1)
-# 
-# 
-# write.csv(vessel_key, file=file.path("~/Desktop/vessel_key.csv"), row.names = F)
-
 # Export data
 ################################################################################
 
 # Export
-saveRDS(data1, file=file.path(outdir, "CDFW_1981_2020_gillnet_logbook_data.Rds"))
+saveRDS(data2, file=file.path(outdir, "CDFW_1981_2020_gillnet_logbook_data.Rds"))
 
 
 

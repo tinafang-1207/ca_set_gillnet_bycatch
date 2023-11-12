@@ -85,6 +85,9 @@ data <- data_orig %>%
 # Subset to data of interest
 ################################################################################
 
+# Net types
+table(data$net_type)
+
 #  Set nets
 data_set <- data %>% 
   # Filter to set gillnets

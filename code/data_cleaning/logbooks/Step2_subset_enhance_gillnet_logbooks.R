@@ -28,10 +28,6 @@ block_key <- readRDS("data/bathymetry/processed/block_key.Rds") %>%
 data <- data_orig %>% 
   # Reduce
   filter(net_type=="Set") %>%
-  # Build set
-  mutate(set_id=paste(date, vessel_id_use, block_id, depth_fa, 
-                      net_length_fa, mesh_size_in, buoy_line_depth_ft,
-                      soak_hr, target_spp, sep="-")) %>% 
   # Add block distance from shore
   left_join(block_key %>% select(block_id, shore_km), by=c("block_id_num"="block_id")) %>% 
   # Arrange
