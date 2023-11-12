@@ -18,7 +18,7 @@ datadir2 <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/p
 obs_orig <- readRDS(file=file.path(datadir1, "1983_2017_gillnet_observer_data_3.5in_set_halibut.Rds"))
 
 # Read logbook data
-logs_orig <- readRDS(file.path(datadir2, "CDFW_1981_2020_gillnet_logbook_data.Rds"))
+logs_orig <- readRDS(file.path(datadir2, "CDFW_1981_2020_gillnet_logbook_data_use.Rds"))
 
 
 # Build data
@@ -34,12 +34,6 @@ obs <- obs_orig %>%
   
 # Build logbooks data
 logs <- logs_orig %>% 
-  # Reduce
-  filter(net_type=="Set") %>%
-  # Build set
-  mutate(set_id=paste(date, vessel_id_use, block_id, depth_fa, 
-                      net_length_fa, mesh_size_in, buoy_line_depth_ft,
-                      soak_hr, target_spp, sep="-")) %>% 
   # Simplify
   select(set_id, target_spp, mesh_size_in_num)  %>% 
   unique() %>% 
@@ -82,7 +76,9 @@ g <- ggplot(data,  aes(y=target_spp, x=mesh_size_in, fill=dataset)) +
   geom_boxplot(outlier.shape=21, linewidth=0.5) +
   # Labels
   labs(x="Mesh size (inches)", y="") +
-  scale_x_continuous(breaks=c(seq(0,30,5), 3.5, 8.5), lim=c(0, 30)) +
+  scale_x_continuous(lim=c(0, 30),
+                     breaks=c(seq(0,30,5), 3.5, 6, 8.5) %>% sort(), 
+                     labels=c("0", "3.5", "5", "6", "8.5", "10", "15", "20", "25", "30")) +
   # Legend
   scale_fill_discrete(name="") +
   # Theme

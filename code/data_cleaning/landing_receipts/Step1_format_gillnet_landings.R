@@ -17,6 +17,10 @@ outdir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/landings_rec
 keydir <- "data/keys"
 spp_key <- readRDS(file.path(keydir, "CDFW_species_key.Rds"))
 
+# Read vessel key
+permitdir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/comm_permits/processed"
+vessel_key <- readRDS(file=file.path(permitdir, "CDFW_vessel_key.Rds"))
+
 
 # Merge data
 ################################################################################
@@ -144,6 +148,11 @@ gear_key <- data1 %>%
   count(gear_id, gear) %>% 
   arrange(gear_id)
 freeR::which_duplicated(gear_key$gear_id)
+
+# Vessel key
+vessel_key1 <- data1 %>% 
+  count(vessel_id) %>% 
+  left_join(vessel_key %>% select(vessel_id, cfdocs))
 
 
 # Export data

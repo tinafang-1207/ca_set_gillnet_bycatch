@@ -46,15 +46,9 @@ ventura_blocks <- c(651:663, 664:677, 697, 776, 691:696, 714:717, 701:706, 678:6
 data <- data_orig %>%
   # Set gillnet
   filter(net_type=="Set") %>%
-  # Build vessel-day
-  mutate(vessel_day=paste(vessel_id_use, date, sep="-")) %>% 
-  # Build set
-  mutate(set_id=paste(date, vessel_id_use, block_id, depth_fa, 
-                      net_length_fa, mesh_size_in, buoy_line_depth_ft,
-                      soak_hr, target_spp, sep="-")) %>% 
   # Add period
   mutate(period=cut(year, breaks=c(1980, reg_years, 2023), 
-                    labels=c("1981-1986", "1987-1993", "1994-2001", "2002-present"), right=F)) %>% 
+                    labels=c("1. 1981-1986", "2. 1987-1993", "3. 1994-2001", "4. 2002-present"), right=F)) %>% 
   # Add quarter
   mutate(month=lubridate::month(date),
          quarter=case_when(month %in% c(12,1,2) ~ "Winter",
@@ -80,7 +74,7 @@ stats_yr <- data %>%
   # Summarize
   group_by(period, year) %>%
   summarize(nsets=n_distinct(set_id),
-            nvesseldays=n_distinct(vessel_day),
+            nvesseldays=n_distinct(trip_id),
             nvessels=n_distinct(vessel_id_use))  %>%
   ungroup()
 
@@ -92,7 +86,7 @@ stats_blocks <- data %>%
   # Summarize by period and block
   group_by(period, block_id) %>% 
   summarize(nvessels=n_distinct(vessel_id_use),
-            nvesseldays=n_distinct(vessel_day)) %>% 
+            nvesseldays=n_distinct(trip_id)) %>% 
   ungroup() %>% 
   # Calculate proportion by period
   group_by(period) %>% 
@@ -104,33 +98,22 @@ stats_blocks <- data %>%
   filter(block_type=="Inshore") %>% 
   # Adjust longitude to stagger
   mutate(long_adj=recode(period,
-                         "1981-1986"=3,
-                         "1987-1993"=2,
-                         "1994-2001"=1,
-                         "2002-present"=0,
+                         "1. 1981-1986"=3,
+                         "2. 1987-1993"=2,
+                         "3. 1994-2001"=1,
+                         "4. 2002-present"=0,
                          ) %>% as.numeric()) %>% 
   mutate(block_long_dd_adj = block_long_dd- long_adj) %>% 
   # Remove confidential data
   filter(nvessels>=3)
 
-# Spatializae
+# Spatialize
 stats_blocks_sf <- stats_blocks %>% 
   left_join(blocks %>% select(block_id)) %>% 
   sf::st_as_sf()
 
 # Inspect year key
 count(data, period, year)
-
-# Calulcate sets per trip
-stats_trip <- data %>% 
-  group_by(vessel_day) %>% 
-  summarize(nsets=n_distinct(set_id)) %>% 
-  ungroup()
-
-g <- ggplot(stats_trip, aes(x=nsets)) +
-  geom_histogram() +
-  theme_bw()
-g
 
 
 
