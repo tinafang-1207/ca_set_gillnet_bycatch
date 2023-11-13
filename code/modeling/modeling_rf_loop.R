@@ -75,7 +75,7 @@ saveRDS(output_sl_weighted, file = file.path("model_result/weighted_rf/californi
 saveRDS(output_hs_weighted, file = file.path("model_result/weighted_rf/harbor_seal_model_weighted_rf.Rds"))
 
 
-
+output_sl_df <- output_sl_weighted[["rf_weighted_final"]]
 ############ Compare the output and select the best model #########
 
 stats <- rf_all_df %>% 
@@ -87,12 +87,4 @@ stats <- rf_all_df %>%
   arrange(balanced_type)
 
 which.max(stats$mean)
-
-weighted_hs_df <- output_hs_weighted[["rf_weighted_final"]]
-weighted_sl_df <- output_sl_weighted[["rf_weighted_final"]]
-
-rf_all_df_hs <- balanced_rf[["rf_all_df"]]
-
-
-
 
