@@ -46,7 +46,7 @@ model_df_final <- rbind(sl_balanced_df, sl_weighted_df, hs_balanced_df, hs_weigh
 
 base_theme <-  theme(axis.text=element_text(size=6),
                      axis.text.y = element_text(angle = 90, hjust = 0.5),
-                     axis.text.x = element_text(angle = 90, hjust = 0.5),
+                     axis.title.y = element_blank(),
                      axis.title=element_text(size=7),
                      legend.text=element_text(size=6),
                      legend.title=element_text(size=7),
@@ -60,11 +60,14 @@ base_theme <-  theme(axis.text=element_text(size=6),
                      # Legend
                      legend.background = element_rect(fill=alpha('blue', 0)))
 
+metric_name = c("Cohen's Kappa", "Area under the Curve (AUC)")
+species_name = c("California sea lion", "Harbor seal")
+
 g_balanced <-ggplot(data = model_df_final %>% filter(balanced_type != "weighted"), mapping = aes(x = mtry, y = mean)) +
   geom_line(aes(color = balanced_type)) +
-  labs(x = "Number of variables(mtry)", y = )
-  facet_wrap(~species +.metric, scales = "free_y") +
-  theme_bw() +base_theme
+  labs(x = "Number of variables(mtry)" ) +
+  facet_grid(.metric~species, scales = "free_y") +
+  theme_bw()+base_theme
 
 g_balanced
 
