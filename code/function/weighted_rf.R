@@ -103,9 +103,7 @@ fit_weighted_rf_model <- function(spp, model_orig) {
     rf_res_weighted_df <- rf_res_weighted %>%
       collect_metrics() %>%
       as.data.frame() %>%
-      filter(.metric == "kap") %>%
-      filter(mean == max(mean)) %>%
-      select(mtry, mean)
+      mutate(weight = wt_do, balanced_type = "weighted")
     
     # Extract the best model via cross-validation from each weight
     model_weighted_best <- select_best(rf_res_weighted, metric = "kap")
@@ -122,10 +120,7 @@ fit_weighted_rf_model <- function(spp, model_orig) {
   }
   
   # Extract the best weight from the weighted for loop result
-  df_out_weighted_final <-wt_vec %>%
-    as.data.frame() %>%
-    mutate(mtry = df_out_weighted$mtry, mean_kappa = df_out_weighted$mean) %>%
-    rename(case_wts = ".")
+  df_out_weighted_final <- df_out_weighted
   
   # Extract the best model list
   best_model_list <- best_model_list
