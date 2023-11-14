@@ -250,19 +250,8 @@ data1 <- data_orig %>%
                              comm_name1=="Sea Lion" ~ "Sea lion",
                              comm_name2=="SeaUrchin,unspecified" ~ "Unspecified sea urchin",
                              T ~ comm_name)) %>% 
-  # # Vessel identifier
-  # mutate(vessel_id_use=ifelse(!is.na(vessel_id), vessel_id, boat_num),
-  #        vessel_id_use_type=ifelse(!is.na(vessel_id), "Vessel id", "Boat number")) %>% 
-  # # Add trip id
-  # mutate(trip_id=paste(vessel_id_use, date, sep="-")) %>% 
-  # # Build set
-  # mutate(set_id=paste(date, vessel_id_use, block_id, depth_fa, 
-  #                     net_length_fa, mesh_size_in, buoy_line_depth_ft,
-  #                     soak_hr, target_spp, sep="-")) %>% 
   # Arrange
   select(logbook_id, year, date,
-         #trip_id, set_id, 
-         #vessel_id_use, vessel_id_use_type, 
          vessel_id_orig, vessel_name, boat_num, permit_id,
          block_id, block_id_num, block_type, block_lat_dd, block_long_dd, 
          net_type_orig1, net_type_orig2, net_type_final,
@@ -342,6 +331,13 @@ spp_key_orig$spp_code[is.na(spp_key_orig$comm_name)] %>% unique() %>% as.numeric
 # Build vessel key
 ################################################################################
 
+# Here's the approach
+# The original data includes two vessel identifier columns: vessel_id, boat_num
+# They each contain a mixture of vessel ids, DMV numbers, and primary vessel numbers
+# First, we identify unique combos of vessel id and boat_num
+# Second, we figure out what each row is
+# Third, we use this to build correctly delineated combos for each unique combo
+
 # Vessel key 
 vessel_key1 <- data1 %>% 
   # Unique id combos
@@ -367,6 +363,25 @@ vessel_key1 <- data1 %>%
                            ifelse(boat_num_type=="Primary vessel number", boat_num, NA))) %>% 
   # Add DMV id
   mutate(dmv_id=ifelse(vessel_id_type=="DMV number", vessel_id_orig, NA)) %>% 
+  # Add missing vessel ids using DMV id
+  # Found VESSEL IDs in the old gillnet logbook data
+  mutate(vessel_id=case_when(dmv_id=="CF0318CV" ~ "42598", # MILEA, MALIA in old gillnet logbooks
+                             dmv_id=="CF1296HU" ~ "39188", # TEKOA on CGMIX
+                             dmv_id=="CF2036TJ" ~ "6575", # F/V THREE BOYS in old gillnet logbooks
+                             dmv_id=="CF2776KR" ~ "43328", # LARACHEL 
+                             dmv_id=="CF2803ST" ~ "1117", # LOREN
+                             dmv_id=="CF3193ED" ~ "26478", # RINCON on CGMIX, MISS CHARLENE in old gillnet logbooks
+                             dmv_id=="CF3571SU" ~ "48422", # SEAVIEW
+                             dmv_id=="CF3836SA" ~ "28414", # ANNA in old gillnet logbooks
+                             dmv_id=="CF3879EH" ~ "19159", # NEW BREED
+                             dmv_id=="CF4086SD" ~ "48439", # MISS JENNY
+                             dmv_id=="CF4430GJ" ~ "32550", # PACIFIC SWORD
+                             dmv_id=="CF4618GW" ~ "36080", # PHARAON on CGMIX, CAPTAIN SMITHY in old gillnet logbooks
+                             dmv_id=="CF4869SS" ~ "51824", # RENEE MARIE
+                             dmv_id=="CF5821BS" ~ "29285", # JOLENE ANN
+                             dmv_id=="CF9388HD" ~ "37537", # ASHLEY NICOLE
+                             dmv_id=="CF9713TK" ~ "3239", # T-BONE
+                             T ~ vessel_id)) %>% 
   # Add vessel id use
   mutate(vessel_id_use=ifelse(!is.na(vessel_id), vessel_id,
                               ifelse(!is.na(primary_id), primary_id, dmv_id)),
@@ -375,6 +390,9 @@ vessel_key1 <- data1 %>%
                                           ifelse(!is.na(dmv_id), "DMV number", NA))))
 
 # PVNs
+dmvs <- vessel_key1 %>% 
+    pull(dmv_id)  %>% 
+    unique() %>% sort()
 pvns <- vessel_key1 %>% 
   select(primary_id)  %>% 
   na.omit()
