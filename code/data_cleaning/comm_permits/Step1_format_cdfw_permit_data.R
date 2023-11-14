@@ -112,6 +112,7 @@ permit_key <- data %>%
 # Export
 saveRDS(data, file=file.path(outdir, "CDFW_2000_2021_permit_data.Rds"))
 saveRDS(vessel_key_out, file=file.path(outdir, "CDFW_vessel_key.Rds"))
+write.csv(vessel_key_out, file=file.path(outdir, "CDFW_vessel_key.csv"), row.names = F)
 write.csv(permit_key, file=file.path(outdir, "CDFW_permit_types.csv"), row.names=F)
 
 

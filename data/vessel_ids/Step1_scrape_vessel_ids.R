@@ -7,12 +7,16 @@
 rm(list = ls())
 
 # Packages
+library(rvest)
 library(tidyverse)
 library(RSelenium)
 
 # Directories
 outdir <- "data/vessel_ids/raw"
 
+# Read PVNs
+pvn_df <- read.csv("/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/processed/primary_vessel_ids_in_gillnet_logbook_data.csv")
+pvns <- pvn_df$primary_id
 
 # Loop through
 ################################################################################
@@ -54,20 +58,9 @@ base_url <- "https://cgmix.uscg.mil/psix/psixsearch.aspx"
 # Go to page
 remDr$navigate(base_url)
 
-
-# PVNs 
-pvns <- c("546360", "592017", "570760", "611940", "638547", "622026", "647513", "512678", "550580", "610884", "690689", "537827",
-          "563793", "608155", "559214", "611816", "590891", "956837", "1044140", "628101", "591067", "627282", "1078115", "292133",
-          "597524", "276600", "978988", "906370", "638547", "956837", "553607", "1078115", "512678", "906370", "292133", "611816",
-          "647513", "553607", "592017", "276600", "927890", "690689", "969797", "570760", "584748", "597524", "608155", "618104",
-          "626847", "628101", "1044140", "611940", "978988", "580562", "590891", "656254", "697944", "610884", "253247", "620078", 
-          "563793", "632207", "622587", "1217070", "629818", "566847", "509557", "622026", "635102", "514371", "550580", "668163",
-          "299076", "571399", "537827", "648910", "559214", "1217070", "295397", "550062", "620078", "550062", "253247", "644228", 
-          "509557", "618104", "635102", "545886", "584748", "295397", "656254", "969797", "571063", "552120", "1107052", "571399",
-          "614077", "248798", "629818")
-
 # Loop through PVNs
 i <- 1
+# pvn_do <- "292133"
 for(i in 1:length(pvns)){
   
   # PVN
@@ -83,9 +76,43 @@ for(i in 1:length(pvns)){
   search_button <- remDr$findElement(using="id", "ButtonSearch")
   search_button$clickElement()
   
-  # Find and press link
-  vessel_link <- remDr$findElement(using = "id", "GridViewPSIX_ctl02_ButtonDetails")
-  vessel_link$clickElement()
+  # Extract the table using rvest
+  # Note: Assuming the table has id "GridViewPSIX"
+  table_html <- remDr$getPageSource()[[1]]
+  table <- read_html(table_html) %>%
+    html_node("#GridViewPSIX") %>%
+    html_table(fill = TRUE)
+  
+  # Extract the first table (you may need to adjust the index if there are multiple tables)
+  table_df <- as.data.frame(table)
+  
+  # Find the name of vessel you want by eliminating ones with "DUPLICATE" in the name
+  # The VIN must also match the PVN
+  vessel_name_to_click <- table_df %>% 
+    janitor::clean_names() %>% 
+    filter(!grepl("DUPLICATE", vessel_name) & vin==pvn_do) %>% 
+    pull(vessel_name)
+  
+  # Determine the correct ID dynamically based on the vessel name
+  link_xpath <- sprintf("//a[text()='%s']", vessel_name_to_click)
+  link_element <- remDr$findElement(using = "xpath", value = link_xpath)
+  
+  # Click on the hyperlink directly
+  link_element$clickElement()
+  
+  # # 2)Determine the correct ID dynamically based on the vessel name
+  # link_xpath <- sprintf("//a[text()='%s']", vessel_name_to_click)
+  # link_element <- remDr$findElement(using = "xpath", value = link_xpath)
+  # link_id <- link_element$getElementAttribute("id")$value
+  # 
+  # # 2) Execute JavaScript to click on the hyperlink
+  # js_code <- sprintf("__doPostBack('%s','')", link_id)
+  # remDr$executeScript(js_code)
+  
+  # 1) Execute JavaScript to click on the "NIGHT STALKER" hyperlink
+  # vessel_name_to_click <- "NIGHT STALKER"
+  # js_code <- sprintf("__doPostBack('GridViewPSIX$ctl03$ButtonDetails','')")
+  # remDr$executeScript(js_code)
   
   # Table 1 text
   table1 <- remDr$findElement(using = "id", value = "LabelVesselInfo")
@@ -124,7 +151,11 @@ for(i in 1:length(pvns)){
 }
 
 
+# Close the Selenium browser
+remDr$close()
 
+# Stop the Selenium server
+rD$server$stop()
 
 
 

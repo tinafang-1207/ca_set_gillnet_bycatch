@@ -17,6 +17,7 @@ outdir <- "data/vessel_ids/processed"
 # Files 2 merge
 files2merge <- list.files(indir)
 
+
 # Build data
 ################################################################################
 
@@ -26,7 +27,7 @@ data_orig <- purrr::map_df(files2merge, function(x){
     mutate(filename=x)
 })
 
-# 
+# Attributes
 sort(unique(data_orig$attrbute))
 
 # Non-alternate number attrbutes
@@ -87,10 +88,44 @@ data1 <- data_orig %>%
   mutate(primary_id_orig=gsub("\\(U.S.\\))", "U.S.)", primary_id_orig)) %>% 
   separate(col=primary_id_orig, into=c("primary_id", "primary_id_type"), sep=" \\(", remove=F) %>% 
   mutate(primary_id_type=gsub(")", "", primary_id_type)) %>% 
-  select(-primary_id_orig)
+  select(-primary_id_orig) %>% 
+  # Format flag countru
+  mutate(flag=stringr::str_to_title(flag))
   
-
+# Inspect
 head(data1)
+
+# Pull out alternative codes
+data2 <- data_orig %>% 
+  # Rename
+  rename(attribute=attrbute) %>% 
+  # Arrange
+  select(filename, everything()) %>% 
+  # Filter
+  filter(!attribute %in% attributes) %>% 
+  # Separate
+  mutate(attribute=gsub("\\(Foreign\\)", "Foreign", attribute)) %>% 
+  separate(attribute, into=c("alt_id", "alt_id_type"), sep=" \\(", remove=T) %>% 
+  mutate(alt_id_type=gsub("\\)", "", alt_id_type)) %>% 
+  # Simpligy
+  select(-value)
+
+# Merge
+data <- data1 %>% 
+  # Add alternative codes
+  left_join(data2, by="filename") %>% 
+  select(filename:vessel_name, alt_id, alt_id_type, everything()) %>% 
+  # Confirm that match was correct
+  mutate(filename_pvn=gsub(".csv", "", filename) %>% as.numeric(),
+         pvn_check=primary_id==filename_pvn)
+
+# Eliminate ones that don't match
+data_out <- data %>% 
+  filter(pvn_check) %>% 
+  select(-c(filename_pvn, pvn_check))
+
+# Export data
+write.csv(data, file=file.path(outdir, "primary_vessel_number_key.csv"), row.names=F)
 
 
   

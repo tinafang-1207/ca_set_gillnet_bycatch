@@ -1,0 +1,61 @@
+"filename","primary_id","primary_id_type","vessel_name","alt_id","alt_id_type","imo_number","hin","manufacturer_hin","call_sign","flag","service","length_ft","depth_ft","breadth_ft","build_year"
+"1044140.csv","1044140","Official Number U.S.","BOUNTY HUNTER","CG442734","Coast Guard Number",NA,NA,"MTD45102A096","WDD3752","United States","Commercial Fishing Vessel",45,5,15,1996
+"1078115.csv","1078115","Official Number U.S.","SANDY BEA","CG491268","Coast Guard Number",NA,NA,"HLG38072I899","WDC4800","United States","Commercial Fishing Vessel",38.1,6.6,12.8,1999
+"1107052.csv","1107052","Official Number U.S.","LOUISE CAROLINE",NA,NA,NA,"ABH39042C000",NA,"WDI4026","United States","Commercial Fishing Vessel",39.3,8.5,14.3,2000
+"1217070.csv","1217070","Official Number U.S.","CHULA",NA,NA,NA,"LHD65021G808",NA,"WDN4500","United States","Commercial Fishing Vessel",65,9.5,18.5,2008
+"248798.csv","248798","Official Number U.S.","ELMARUE","CG62868","Coast Guard Number",NA,NA,NA,"WDD5728","United States","Commercial Fishing Vessel",44.8,5.5,13,1945
+"253247.csv","253247","Official Number U.S.","NANCY","CG64609","Coast Guard Number",NA,NA,NA,"WCZ4374","United States","Commercial Fishing Vessel",53.8,NA,NA,1947
+"276600.csv","276600","Official Number U.S.","THRUSH",NA,NA,NA,NA,NA,"WDC8988","United States","Commercial Fishing Vessel",35,NA,NA,1958
+"292133.csv","292133","Official Number U.S.","NIGHT STALKER","CG82646","Coast Guard Number",NA,NA,"22628","WDG7915","United States","Commercial Fishing Vessel",40.2,NA,NA,1944
+"295397.csv","295397","Official Number U.S.","GLORIA MARIE","CG84579","Coast Guard Number",NA,NA,NA,"WU2569","United States","Commercial Fishing Vessel",46.3,NA,NA,1964
+"299076.csv","299076","Official Number U.S.","BABY JOE","CG86779","Coast Guard Number",NA,NA,NA,"WX6808","United States","Commercial Fishing Vessel",36.3,NA,NA,1965
+"509557.csv","509557","Official Number U.S.","CHARLOTTE V","CG93492","Coast Guard Number",NA,NA,NA,"WDF3990","United States","Commercial Fishing Vessel",55.3,NA,NA,1967
+"512678.csv","512678","Official Number U.S.","MARY BETH","CG95501","Coast Guard Number",NA,NA,NA,"WY3269","United States","Commercial Fishing Vessel",40,NA,NA,1968
+"514371.csv","514371","Official Number U.S.","MISS HEIDI","CG96630","Coast Guard Number",NA,NA,NA,"WAM9027","United States","Commercial Fishing Vessel",58,7.6,24.7,1968
+"537827.csv","537827","Official Number U.S.","AGUERO","CG112988","Coast Guard Number",NA,NA,NA,"WCZ5353","United States","Commercial Fishing Vessel",42.9,NA,NA,1972
+"545886.csv","545886","Official Number U.S.","MARGARET O",NA,NA,NA,NA,NA,"WDJ6048","United States","Commercial Fishing Vessel",50.5,NA,NA,1973
+"546360.csv","546360","Official Number U.S.","WHITE DOVE",NA,NA,NA,NA,NA,NA,"United States","Passenger (Inspected)",46,NA,NA,1971
+"550062.csv","550062","Official Number U.S.","MARY LOU","CG122792","Coast Guard Number",NA,NA,"23","WDI5287","United States","Commercial Fishing Vessel",49.2,NA,NA,1973
+"550580.csv","550580","Official Number U.S.","J-B",NA,NA,NA,NA,"VEG41003M73A","WDG9931","United States","Commercial Fishing Vessel",39.4,NA,NA,1973
+"552120.csv","552120","Official Number U.S.","KONO",NA,NA,NA,NA,"2","WDG5434","United States","Commercial Fishing Vessel",31,NA,NA,1973
+"553607.csv","553607","Official Number U.S.","TOM & GERRY","CG125635","Coast Guard Number",NA,NA,NA,"WCB2621","United States","Commercial Fishing Vessel",38,4.8,13.3,1973
+"559214.csv","559214","Official Number U.S.","ST ANIELLO","CG130211","Coast Guard Number",NA,NA,NA,"WDJ5746","United States","Commercial Fishing Vessel",33.6,NA,NA,1974
+"563793.csv","563793","Official Number U.S.","PACIFIC SUN","CG133789","Coast Guard Number",NA,NA,NA,"WBC9066","United States","Commercial Fishing Vessel",30.5,NA,NA,1967
+"566847.csv","566847","Official Number U.S.","BRIGADOON",NA,NA,NA,NA,NA,"WYM3560","United States","Commercial Fishing Vessel",43,NA,NA,1972
+"570760.csv","570760","Official Number U.S.","MAGGIE","CG139631","Coast Guard Number",NA,NA,NA,"WDC7764","United States","Commercial Fishing Vessel",38.3,NA,NA,1975
+"571063.csv","571063","Official Number U.S.","SARONGA",NA,NA,NA,NA,NA,"WDB9258","United States","Commercial Fishing Vessel",43.4,NA,NA,1976
+"571399.csv","571399","Official Number U.S.","DON CICCIO",NA,NA,NA,"DYEK00220875",NA,NA,"United States","Commercial Fishing Vessel",37.4,NA,NA,1975
+"580562.csv","580562","Official Number U.S.","MISS EMMA","CG147943","Coast Guard Number",NA,NA,"6","WDE2983","United States","Commercial Fishing Vessel",45.4,NA,NA,1977
+"584748.csv","584748","Official Number U.S.","COMMANDER","CG151606","Coast Guard Number",NA,NA,NA,"WCZ7918","United States","Commercial Fishing Vessel",32.9,NA,NA,1977
+"590891.csv","590891","Official Number U.S.","JOHN G","CG157002","Coast Guard Number",NA,NA,NA,"WDE3043","United States","Commercial Fishing Vessel",34.9,NA,NA,1978
+"591067.csv","591067","Official Number U.S.","LINDA-JEAN","CG157137","Coast Guard Number",NA,NA,NA,"WDF7447","United States","Commercial Fishing Vessel",43.8,NA,NA,1978
+"592017.csv","592017","Official Number U.S.","VICTORIA","CG157998","Coast Guard Number",NA,NA,NA,"WDJ7336","United States","Commercial Fishing Vessel",34.2,NA,NA,1978
+"597524.csv","597524","Official Number U.S.","AURELIA","CG162910","Coast Guard Number",NA,NA,"VEG41039M77B","WDI9325","United States","Commercial Fishing Vessel",38.6,NA,NA,1978
+"608155.csv","608155","Official Number U.S.","MELISSA MARIE","CG172417","Coast Guard Number",NA,NA,NA,"WDD3630","United States","Commercial Fishing Vessel",34.2,NA,NA,1979
+"610884.csv","610884","Official Number U.S.","TRAIL BLAZER","CG174940","Coast Guard Number",NA,NA,"ONE","WDN5539","United States","Commercial Fishing Vessel",57.8,NA,NA,1979
+"611816.csv","611816","Official Number U.S.","JACQUELYN","CG175778","Coast Guard Number",NA,NA,NA,"WDD3747","United States","Commercial Fishing Vessel",33.6,NA,NA,1979
+"611940.csv","611940","Official Number U.S.","SPIRIT","CG175896","Coast Guard Number",NA,NA,NA,"WDH6640","United States","Commercial Fishing Vessel",38.1,NA,NA,1979
+"614077.csv","614077","Official Number U.S.","BEV A","CG177843","Coast Guard Number",NA,NA,NA,"WDF6921","United States","Commercial Fishing Vessel",42.2,NA,NA,1979
+"618104.csv","618104","Official Number U.S.","CALOGERA","CG181542","Coast Guard Number",NA,NA,NA,"WDD4322","United States","Commercial Fishing Vessel",37.9,NA,NA,1980
+"620078.csv","620078","Official Number U.S.","TEMPTATION",NA,NA,NA,NA,NA,"WDF2078","United States","Commercial Fishing Vessel",52,NA,NA,1980
+"622026.csv","622026","Official Number U.S.","GOLDCOAST","CG185110","Coast Guard Number",NA,NA,NA,"WYQ8714","United States","Commercial Fishing Vessel",38.1,NA,NA,1979
+"622587.csv","622587","Official Number U.S.","AUTUMN STAR","CG185626","Coast Guard Number",NA,NA,NA,"WDC9147","United States","Commercial Fishing Vessel",45,NA,NA,1980
+"626847.csv","626847","Official Number U.S.","MEGA",NA,NA,NA,NA,NA,"WTS4003","United States","Commercial Fishing Vessel",41.1,NA,NA,1980
+"627282.csv","627282","Official Number U.S.","PAULA ANN","CG189861","Coast Guard Number",NA,NA,NA,"WDC6017","United States","Commercial Fishing Vessel",45,NA,NA,1980
+"628101.csv","628101","Official Number U.S.","SUNDOWNER",NA,NA,NA,NA,"561CBW7934","WDF2788","United States","Commercial Fishing Vessel",26.7,NA,NA,1980
+"629818.csv","629818","Official Number U.S.","TOMMY JOHN","CG192120","Coast Guard Number",NA,NA,NA,"WDK5275","United States","Commercial Fishing Vessel",50.8,NA,NA,1980
+"632207.csv","632207","Official Number U.S.","MISS MORIAH","CG194246","Coast Guard Number",NA,NA,NA,"WCY7299","United States","Commercial Fishing Vessel",55.2,NA,NA,1980
+"635102.csv","635102","Official Number U.S.","SEA HAVEN",NA,NA,NA,NA,NA,"WDK8025","United States","Commercial Fishing Vessel",56.9,NA,NA,1981
+"638547.csv","638547","Official Number U.S.","LINDE","CG199794","Coast Guard Number",NA,NA,NA,"WDG7914","United States","Commercial Fishing Vessel",37,NA,NA,1981
+"644228.csv","644228","Official Number U.S.","ELIZABETH H","CG204560","Coast Guard Number",NA,"DUJ040790981",NA,"WDJ7235","United States","Commercial Fishing Vessel",36.7,NA,NA,1981
+"647513.csv","647513","Official Number U.S.","HORIZON",NA,NA,NA,NA,NA,"WBC9957","United States","Commercial Fishing Vessel",38.1,NA,NA,1982
+"648910.csv","648910","Official Number U.S.","JODY-H","CG207249","Coast Guard Number",NA,NA,"06","WRS9597","United States","Commercial Fishing Vessel",62.1,NA,NA,1982
+"656254.csv","656254","Official Number U.S.","ALBATRO","CG216497","Coast Guard Number",NA,NA,NA,"WDJ2130","United States","Commercial Fishing Vessel",50,6.5,15,1983
+"668163.csv","668163","Official Number U.S.","VEDRFOLNIR",NA,NA,NA,NA,"PYK420240284","WCZ9867","United States","Recreational",41.7,6.3,12.8,1984
+"690689.csv","690689","Official Number U.S.","TYTAN","CG264709","Coast Guard Number",NA,NA,"16","WDD9762","United States","Commercial Fishing Vessel",50,NA,NA,1985
+"697944.csv","697944","Official Number U.S.","ALLISON C","CG269231","Coast Guard Number","8852930",NA,NA,"WDD9947","United States","Commercial Fishing Vessel",76,10,22,1986
+"906370.csv","906370","Official Number U.S.","PHILLIP NICK",NA,NA,NA,NA,NA,"WDE2819","United States","Commercial Fishing Vessel",39.9,6.3,13.5,1986
+"927890.csv","927890","Official Number U.S.","MOON LIGHT","CG324007","Coast Guard Number",NA,NA,"VEG26061M79L","WDK8215","United States","Commercial Fishing Vessel",35.7,5.3,12.9,1979
+"956837.csv","956837","Official Number U.S.","SNEAKY PETE","CF2060ZM","State Number",NA,NA,"C2901USN",NA,"United States","Commercial Fishing Vessel",33,5,11,1964
+"969797.csv","969797","Official Number U.S.","OUTER BANKS","CG029950","Coast Guard Number",NA,"GSJ42009I090",NA,"WDE2128","United States","Commercial Fishing Vessel",41.9,5.3,15.1,1990
+"978988.csv","978988","Official Number U.S.","CRAZY AUSSIE",NA,NA,NA,NA,NA,NA,"United States","Commercial Fishing Vessel",30,5.8,11.2,1991
