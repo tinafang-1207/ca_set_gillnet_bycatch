@@ -46,8 +46,8 @@ model_df_final <- rbind(sl_balanced_df, sl_weighted_df, hs_balanced_df, hs_weigh
 
 base_theme <-  theme(axis.text=element_text(size=6),
                      axis.text.y = element_text(angle = 90, hjust = 0.5),
+                     axis.text.x = element_text(angle = 90, hjust = 0.5),
                      axis.title=element_text(size=7),
-                     axis.title.x=element_blank(),
                      legend.text=element_text(size=6),
                      legend.title=element_text(size=7),
                      strip.text=element_text(size=7),
@@ -62,6 +62,7 @@ base_theme <-  theme(axis.text=element_text(size=6),
 
 g_balanced <-ggplot(data = model_df_final %>% filter(balanced_type != "weighted"), mapping = aes(x = mtry, y = mean)) +
   geom_line(aes(color = balanced_type)) +
+  labs(x = "Number of variables(mtry)", y = )
   facet_wrap(~species +.metric, scales = "free_y") +
   theme_bw() +base_theme
 
