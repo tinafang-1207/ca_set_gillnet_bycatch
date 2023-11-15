@@ -16,6 +16,12 @@ output_sl_weighted <- readRDS("model_result/weighted_rf/california_sea_lion_mode
 output_hs_balanced <- readRDS("model_result/balanced_rf/harbor_seal_model_balanced_rf.Rds")
 output_hs_weighted <- readRDS("model_result/weighted_rf/harbor_seal_model_weighted_rf.Rds")
 
+# soupfin shark
+output_ss_balanced <- readRDS("model_result/balanced_rf/soupfin_shark_model_balanced_rf.Rds")
+
+# giant seabass
+output_gs_balanced <- readRDS("model_result/balanced_rf/giant_sea_bass_model_balanced_rf.Rds")
+
 #### Extract output from model result ####
 
 # sealion
@@ -31,12 +37,20 @@ hs_balanced_df <- output_hs_balanced[["rf_all_df"]] %>%
 
 hs_weighted_df <- output_hs_weighted[["rf_weighted_final"]] %>%
   mutate(species = "Harbor seal")
+
+#soupfin shark
+ss_balanced_df <- output_ss_balanced[["rf_all_df"]] %>%
+  mutate(species = "Soupfin shark", weight = NA)
+
+#giant seabass
+gs_balanced_df <- output_gs_balanced[["rf_all_df"]] %>%
+  mutate(species = "Giant seabass", weight = NA)
   
 #### Make plots to show the result ####
 
 # make the final table
 
-model_df_final <- rbind(sl_balanced_df, sl_weighted_df, hs_balanced_df, hs_weighted_df) %>%
+model_df_final <- rbind(sl_balanced_df, sl_weighted_df, hs_balanced_df, hs_weighted_df, ss_balanced_df, gs_balanced_df) %>%
   rename(metric = .metric) %>%
   mutate(metric = recode_factor(metric, 
                                 "kap" = "Cohen's kappa", 
