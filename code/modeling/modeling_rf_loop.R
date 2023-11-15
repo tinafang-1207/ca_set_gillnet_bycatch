@@ -33,7 +33,7 @@ source("code/function/weighted_rf.R")
 
 ### set up the species list ###
 
-spp_do <- c("California sea lion", "Harbor seal")
+spp_do <- c("California sea lion", "Harbor seal", "Soupfin shark", "Giant sea bass")
 
 
 ########### Fit balanced rf below ###############
@@ -43,22 +43,20 @@ outputdir_balanced_rf <- "model_result/balanced_rf"
 
 i <- 1
 
-output_balanced_rf_list <- list()
-
-for (i in length(spp_do)) {
+for (i in 1:length(spp_do)) {
   
   spp_run <- spp_do[i]
   
   balanced_rf <- fit_balanced_rf_model(spp = spp_run, model_orig = model_orig)
   
-  outfile_balanced_rf <- paste0(tolower(gsub(" ", "_", spp_do[i])), "_model_balanced_rf.Rds")
+  outfile_balanced_rf <- paste0(tolower(gsub(" ", "_", spp_run)), "_model_balanced_rf.Rds")
   
   # it does not paste list from harbor seal
-  if (i == 1){output_balanced_rf_list <- list(balanced_rf)}else{output_balanced_rf_list <- append(output_balanced_rf_list, list(balanced_rf))}
+  #if (i == 1){output_balanced_rf_list <- list(balanced_rf)}else{output_balanced_rf_list <- append(output_balanced_rf_list, list(balanced_rf))}
   
   # the saveRDS only save the last item.....
   
-  #saveRDS(output_balanced_rf_list[[i]], file = file.path(outputdir_balanced_rf, outfile_balanced_rf))
+  saveRDS(balanced_rf, file = file.path(outputdir_balanced_rf, outfile_balanced_rf))
   
   }
 

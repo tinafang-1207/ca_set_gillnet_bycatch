@@ -20,24 +20,31 @@ output_hs_weighted <- readRDS("model_result/weighted_rf/harbor_seal_model_weight
 
 # sealion
 sl_balanced_df <- output_sl_balanced[["rf_all_df"]] %>%
-  mutate(species = "california sea lion", weight = NA)
+  mutate(species = "California sea lion", weight = NA)
 
 sl_weighted_df <- output_sl_weighted[["rf_weighted_final"]] %>%
-  mutate(species = "california sea lion")
+  mutate(species = "California sea lion")
 
 # harbor seal
 hs_balanced_df <- output_hs_balanced[["rf_all_df"]] %>%
-  mutate(species = "harbor seal", weight = NA)
+  mutate(species = "Harbor seal", weight = NA)
 
 hs_weighted_df <- output_hs_weighted[["rf_weighted_final"]] %>%
-  mutate(species = "harbor seal")
+  mutate(species = "Harbor seal")
   
 #### Make plots to show the result ####
 
 # make the final table
 
 model_df_final <- rbind(sl_balanced_df, sl_weighted_df, hs_balanced_df, hs_weighted_df) %>%
-  mutate(weight = as.factor(weight))
+  rename(metric = .metric) %>%
+  mutate(metric = recode_factor(metric, 
+                                "kap" = "Cohen's kappa", 
+                                "roc_auc" = "Area under the ROC curve"),
+         balanced_type = recode_factor(balanced_type, 
+                                "downsample" = "Downsample", 
+                                "upsample" = "Upsample",
+                                "smote" = "SMOTE"))
 
 
 # make the plot
@@ -46,7 +53,6 @@ model_df_final <- rbind(sl_balanced_df, sl_weighted_df, hs_balanced_df, hs_weigh
 
 base_theme <-  theme(axis.text=element_text(size=6),
                      axis.text.y = element_text(angle = 90, hjust = 0.5),
-                     axis.title.y = element_blank(),
                      axis.title=element_text(size=7),
                      legend.text=element_text(size=6),
                      legend.title=element_text(size=7),
@@ -60,23 +66,38 @@ base_theme <-  theme(axis.text=element_text(size=6),
                      # Legend
                      legend.background = element_rect(fill=alpha('blue', 0)))
 
-metric_name = c("Cohen's Kappa", "Area under the Curve (AUC)")
-species_name = c("California sea lion", "Harbor seal")
+kappa_df <- tibble(metric = "Cohen's kappa", 
+                   value = c(0.2, 0.4, 0.7))
 
-g_balanced <-ggplot(data = model_df_final %>% filter(balanced_type != "weighted"), mapping = aes(x = mtry, y = mean)) +
+auc_df <- tibble(metric = "Area under the ROC curve", 
+                  value = c(0.7, 0.8, 0.9))
+
+ref_df <- rbind(kappa_df, auc_df)
+
+g_balanced <-ggplot(data = model_df_final %>% filter(balanced_type != "weighted"), 
+                    mapping = aes(x = mtry, y = mean)) +
+  geom_hline(data = ref_df, mapping = aes(yintercept = value), color = "grey70",linetype = "dashed") +
   geom_line(aes(color = balanced_type)) +
-  labs(x = "Number of variables(mtry)" ) +
-  facet_grid(.metric~species, scales = "free_y") +
+  labs(x = "Number of variables (mtry)", y = "Value" ) +
+  facet_grid(metric~species, scales = "free_y") +
+  scale_color_discrete(name = "Balance type") +
   theme_bw()+base_theme
 
 g_balanced
 
-g_weighted <- ggplot(data = model_df_final %>% filter(balanced_type == "weighted"), mapping = aes(x = mtry, y = mean)) +
-  geom_line(aes(color = weight)) +
-  facet_wrap(~species +.metric, scales = "free_y") +
+g_weighted <- ggplot(data = model_df_final %>% filter(balanced_type == "weighted"), 
+                     mapping = aes(x = mtry, y = mean, color = weight, group = weight)) +
+  geom_line() +
+  labs(x = "Number of variables (mtry)", y = "Value" ) +
+  facet_grid(metric~species, scales = "free_y") +
+  scale_color_gradientn(name = "Weight", 
+                    colors = RColorBrewer::brewer.pal(9, "YlOrRd")[2:9]) +
+  guides(color = guide_colorbar(ticks.colour = "black", frame.colour = "black")) +
   theme_bw() +base_theme
 
 g_weighted
+
+RColorBrewer::display.brewer.all(9)
 
 
 #### select the best model ####
