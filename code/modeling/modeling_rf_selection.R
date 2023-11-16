@@ -18,9 +18,10 @@ output_hs_weighted <- readRDS("model_result/weighted_rf/harbor_seal_model_weight
 
 # soupfin shark
 output_ss_balanced <- readRDS("model_result/balanced_rf/soupfin_shark_model_balanced_rf.Rds")
+output_ss_weighted <- readRDS("model_result/weighted_rf/soupfin_shark_model_weighted_rf.Rds")
 
 # giant seabass
-output_gs_balanced <- readRDS("model_result/balanced_rf/giant_sea_bass_model_balanced_rf.Rds")
+# output_gs_balanced <- readRDS("model_result/balanced_rf/giant_sea_bass_model_balanced_rf.Rds")
 
 #### Extract output from model result ####
 
@@ -42,15 +43,18 @@ hs_weighted_df <- output_hs_weighted[["rf_weighted_final"]] %>%
 ss_balanced_df <- output_ss_balanced[["rf_all_df"]] %>%
   mutate(species = "Soupfin shark", weight = NA)
 
+ss_weighted_df <- output_ss_weighted[["rf_weighted_final"]] %>%
+  mutate(species = "Soupfin shark")
+
 #giant seabass
-gs_balanced_df <- output_gs_balanced[["rf_all_df"]] %>%
-  mutate(species = "Giant seabass", weight = NA)
+#gs_balanced_df <- output_gs_balanced[["rf_all_df"]] %>%
+  #mutate(species = "Giant seabass", weight = NA)
   
 #### Make plots to show the result ####
 
 # make the final table
 
-model_df_final <- rbind(sl_balanced_df, sl_weighted_df, hs_balanced_df, hs_weighted_df, ss_balanced_df, gs_balanced_df) %>%
+model_df_final <- rbind(sl_balanced_df, sl_weighted_df, hs_balanced_df, hs_weighted_df, ss_balanced_df, ss_weighted_df) %>%
   rename(metric = .metric) %>%
   mutate(metric = recode_factor(metric, 
                                 "kap" = "Cohen's kappa", 
@@ -103,7 +107,7 @@ g_weighted <- ggplot(data = model_df_final %>% filter(balanced_type == "weighted
                      mapping = aes(x = mtry, y = mean, color = weight, group = weight)) +
   geom_line() +
   labs(x = "Number of variables (mtry)", y = "Value" ) +
-  facet_grid(metric~species, scales = "free_y") +
+  facet_grid(species~metric, scales = "free_y") +
   scale_color_gradientn(name = "Weight", 
                     colors = RColorBrewer::brewer.pal(9, "YlOrRd")[2:9]) +
   guides(color = guide_colorbar(ticks.colour = "black", frame.colour = "black")) +
@@ -119,16 +123,36 @@ RColorBrewer::display.brewer.all(9)
 # based on kappa
 
 best_model <- model_df_final %>% 
-  filter(.metric=="kap") %>% 
+  filter(metric=="Cohen's kappa") %>% 
   arrange(balanced_type, desc(mean)) %>% 
   group_by(balanced_type, species) %>% 
   slice(1) %>% 
-  mutate(balanced_type=factor(balanced_type, levels=c("upsample", "downsample", "smote", "weighted"))) %>% 
+  mutate(balanced_type=factor(balanced_type, levels=c("Upsample", "Downsample", "SMOTE", "weighted"))) %>% 
   arrange(balanced_type)
 
-
-which.max(best_model$mean)
-
+best_model_weighted <- best_model %>%
+  filter(balanced_)
   
+
+##### Experiment in making Chris figure below #####
+
+model_df_balance <- rbind(sl_balanced_df, hs_balanced_df, ss_balanced_df)
+
+model_df_weight <- rbind(sl_weighted_df, hs_weighted_df, ss_weighted_df)
+
+model_df_balance_kappa <- model_df_balance %>%
+  filter(metric == "Cohen's kappa")
+
+model_df_weight_kappa <- model_df_weight %>%
+  filter(metric == "Cohen's kappa") %>%
+  case_when()
+
+
+
+g_kappa <- ggplot(data = model_df_final %>%filter(metric == "Cohen's kappa"))
+
+
+
+
   
   
