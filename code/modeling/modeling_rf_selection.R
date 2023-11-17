@@ -107,7 +107,7 @@ g_weighted <- ggplot(data = model_df_final %>% filter(balanced_type == "weighted
                      mapping = aes(x = mtry, y = mean, color = weight, group = weight)) +
   geom_line() +
   labs(x = "Number of variables (mtry)", y = "Value" ) +
-  facet_grid(species~metric, scales = "free_y") +
+  facet_grid(metric~species, scales = "free_y") +
   scale_color_gradientn(name = "Weight", 
                     colors = RColorBrewer::brewer.pal(9, "YlOrRd")[2:9]) +
   guides(color = guide_colorbar(ticks.colour = "black", frame.colour = "black")) +
@@ -130,27 +130,43 @@ best_model <- model_df_final %>%
   mutate(balanced_type=factor(balanced_type, levels=c("Upsample", "Downsample", "SMOTE", "weighted"))) %>% 
   arrange(balanced_type)
 
-best_model_weighted <- best_model %>%
-  filter(balanced_)
+select_model <- best_model %>%
+  group_by(species) %>%
+  filter(mean == max(mean)) %>%
+  ungroup()
   
 
 ##### Experiment in making Chris figure below #####
 
-model_df_balance <- rbind(sl_balanced_df, hs_balanced_df, ss_balanced_df)
-
-model_df_weight <- rbind(sl_weighted_df, hs_weighted_df, ss_weighted_df)
-
-model_df_balance_kappa <- model_df_balance %>%
-  filter(metric == "Cohen's kappa")
-
-model_df_weight_kappa <- model_df_weight %>%
-  filter(metric == "Cohen's kappa") %>%
-  case_when()
+model_best <- model_df_final %>%
+  #filter(metric == "Cohen's kappa") %>%
+  filter(balanced_type%in%c("Upsample", "Downsample", "SMOTE")|(species == "California sea lion" & weight == "75")|(species == "Harbor seal" & weight == "150")|(species == "Soupfin shark"& weight == "25")) %>%
+  select(-weight)
 
 
 
-g_kappa <- ggplot(data = model_df_final %>%filter(metric == "Cohen's kappa"))
+g_best <- ggplot(data = model_best, mapping = aes(x = mtry, y = mean)) +
+  geom_line(aes(color = balanced_type)) +
+  geom_point(data = select_model, aes(x = mtry, y = mean), color = "black", shape = 20, size = 1) +
+  labs(x = "Number of variables (mtry)", y = "Value" ) +
+  facet_grid(metric~species, scales = "free_y") +
+  scale_color_discrete(name = "Balance type") +
+  theme_bw()+base_theme
 
+g_best
+
+g_kappa_weight <- ggplot(data = model_df_final %>% filter(balanced_type == "weighted") %>% filter(metric == "Cohen's kappa"), 
+                         mapping = aes(x = mtry, y = mean, color = weight, group = weight)) +
+  geom_line() +
+  labs(x = "Number of variables (mtry)", y = "Value" ) +
+  facet_grid(species~metric, scales = "free_y") +
+  scale_color_gradientn(name = "Weight", 
+                        colors = RColorBrewer::brewer.pal(9, "YlOrRd")[2:9]) +
+  guides(color = guide_colorbar(ticks.colour = "black", frame.colour = "black")) +
+  theme_bw() +base_theme
+
+g_kappa_weight  
+  
 
 
 
