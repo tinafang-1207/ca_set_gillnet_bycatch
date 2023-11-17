@@ -100,7 +100,7 @@ data1_stats2 <- data1 %>%
   mutate(spp_label=factor(spp_label, levels=data1_spp_order$spp_label))
 
 # Plot data
-g1 <- ggplot(data1_stats1, aes(x=year, y=value_usd/1e6, fill=gear)) +
+g1a <- ggplot(data1_stats1, aes(x=year, y=value_usd/1e6, fill=gear)) +
   geom_bar(stat="identity", color="grey30", linewidth=0.2) +
   # Labels
   labs(x="Year", y="Revenues (USD millions)", title="Filter 1") +
@@ -109,10 +109,10 @@ g1 <- ggplot(data1_stats1, aes(x=year, y=value_usd/1e6, fill=gear)) +
   # Theme 
   theme_bw() + my_theme +
   theme(legend.position = c(0.8,0.8))
-g1
+g1a
 
 # Plot data
-g2 <- ggplot(data1_stats2, aes(x=year, y=value_usd/1e6, fill=spp_label)) +
+g1b <- ggplot(data1_stats2, aes(x=year, y=value_usd/1e6, fill=spp_label)) +
   geom_bar(stat="identity", color="grey30", linewidth=0.2) +
   # Labels
   labs(x="Year", y="Revenues (USD millions)", title=" ") +
@@ -121,11 +121,11 @@ g2 <- ggplot(data1_stats2, aes(x=year, y=value_usd/1e6, fill=spp_label)) +
   # Theme 
   theme_bw() + my_theme +
   theme(legend.position = c(0.8,0.7))
-g2
+g1b
 
 # Merge
-g <- gridExtra::grid.arrange(g1, g2, nrow=1)
-g
+g1 <- gridExtra::grid.arrange(g1a, g1b, nrow=1)
+g1
 
 
 # Filter 2: vessels that submit set gillnet logbooks
@@ -171,7 +171,7 @@ data2_stats2 <- data2 %>%
   mutate(spp_label=factor(spp_label, levels=data2_spp_order$spp_label))
 
 # Plot data
-g1 <- ggplot(data2_stats1, aes(x=year, y=value_usd/1e6, fill=gear)) +
+g2a <- ggplot(data2_stats1, aes(x=year, y=value_usd/1e6, fill=gear)) +
   geom_bar(stat="identity", color="grey30", linewidth=0.2) +
   # Labels
   labs(x="Year", y="Revenues (USD millions)", title="Filter 2") +
@@ -180,10 +180,10 @@ g1 <- ggplot(data2_stats1, aes(x=year, y=value_usd/1e6, fill=gear)) +
   # Theme 
   theme_bw() + my_theme +
   theme(legend.position = c(0.8,0.8))
-g1
+g2a
 
 # Plot data
-g2 <- ggplot(data2_stats2, aes(x=year, y=value_usd/1e6, fill=spp_label)) +
+g2b <- ggplot(data2_stats2, aes(x=year, y=value_usd/1e6, fill=spp_label)) +
   geom_bar(stat="identity", color="grey30", linewidth=0.2) +
   # Labels
   labs(x="Year", y="Revenues (USD millions)", title=" ") +
@@ -192,16 +192,15 @@ g2 <- ggplot(data2_stats2, aes(x=year, y=value_usd/1e6, fill=spp_label)) +
   # Theme 
   theme_bw() + my_theme +
   theme(legend.position = c(0.7,0.7))
-g2
+g2b
 
 # Merge
-g <- gridExtra::grid.arrange(g1, g2, nrow=1)
-g
+g2 <- gridExtra::grid.arrange(g2a, g2b, nrow=1)
+g2
 
 
 # Filter 3: strict interpretation of logbooks
 ################################################################################
-
 
 # Build data
 data3 <- data2 %>% 
@@ -240,7 +239,7 @@ data3_stats2 <- data3 %>%
   mutate(spp_label=factor(spp_label, levels=data3_spp_order$spp_label))
 
 # Plot data
-g1 <- ggplot(data3_stats1, aes(x=year, y=value_usd/1e6, fill=gear)) +
+g3a <- ggplot(data3_stats1, aes(x=year, y=value_usd/1e6, fill=gear)) +
   geom_bar(stat="identity", color="grey30", linewidth=0.2) +
   # Labels
   labs(x="Year", y="Revenues (USD millions)", title="Filter 3") +
@@ -249,10 +248,10 @@ g1 <- ggplot(data3_stats1, aes(x=year, y=value_usd/1e6, fill=gear)) +
   # Theme 
   theme_bw() + my_theme +
   theme(legend.position = c(0.8,0.8))
-g1
+g3a
 
 # Plot data
-g2 <- ggplot(data3_stats2, aes(x=year, y=value_usd/1e6, fill=spp_label)) +
+g3b <- ggplot(data3_stats2, aes(x=year, y=value_usd/1e6, fill=spp_label)) +
   geom_bar(stat="identity", color="grey30", linewidth=0.2) +
   # Labels
   labs(x="Year", y="Revenues (USD millions)", title=" ") +
@@ -261,11 +260,11 @@ g2 <- ggplot(data3_stats2, aes(x=year, y=value_usd/1e6, fill=spp_label)) +
   # Theme 
   theme_bw() + my_theme +
   theme(legend.position = c(0.7,0.7))
-g2
+g3b
 
 # Merge
-g <- gridExtra::grid.arrange(g1, g2, nrow=1)
-g
+g3 <- gridExtra::grid.arrange(g3a, g3b, nrow=1)
+g3
 
 
 
@@ -280,7 +279,7 @@ log_trip_key <- logs_orig %>%
 
 # Build expanded trip ids
 nday_buffer <- 1
-trip_id_key <- purrr::map_df(1:nrow(log_trip_key), function(x){
+trip_id_key1 <- purrr::map_df(1:nrow(log_trip_key), function(x){
  
   # Trip to do
   vessel_id_do <- log_trip_key$vessel_id[x]
@@ -300,7 +299,7 @@ trip_id_key <- purrr::map_df(1:nrow(log_trip_key), function(x){
 # Build data
 data4 <- data2 %>% 
   mutate(trip_id=paste(vessel_id, date, sep="-")) %>% 
-  filter(trip_id %in% trip_id_key$trip_id)
+  filter(trip_id %in% trip_id_key1$trip_id)
 
 # Identify species
 data4_spp <- data4 %>% 
@@ -334,7 +333,7 @@ data4_stats2 <- data4 %>%
   mutate(spp_label=factor(spp_label, levels=data4_spp_order$spp_label))
 
 # Plot data
-g1 <- ggplot(data4_stats1, aes(x=year, y=value_usd/1e6, fill=gear)) +
+g4a <- ggplot(data4_stats1, aes(x=year, y=value_usd/1e6, fill=gear)) +
   geom_bar(stat="identity", color="grey30", linewidth=0.2) +
   # Labels
   labs(x="Year", y="Revenues (USD millions)", title="Filter 4") +
@@ -343,10 +342,10 @@ g1 <- ggplot(data4_stats1, aes(x=year, y=value_usd/1e6, fill=gear)) +
   # Theme 
   theme_bw() + my_theme +
   theme(legend.position = c(0.8,0.8))
-g1
+g4a
 
 # Plot data
-g2 <- ggplot(data4_stats2, aes(x=year, y=value_usd/1e6, fill=spp_label)) +
+g4b <- ggplot(data4_stats2, aes(x=year, y=value_usd/1e6, fill=spp_label)) +
   geom_bar(stat="identity", color="grey30", linewidth=0.2) +
   # Labels
   labs(x="Year", y="Revenues (USD millions)", title=" ") +
@@ -355,20 +354,20 @@ g2 <- ggplot(data4_stats2, aes(x=year, y=value_usd/1e6, fill=spp_label)) +
   # Theme 
   theme_bw() + my_theme +
   theme(legend.position = c(0.7,0.7))
-g2
+g4b
 
 # Merge
-g <- gridExtra::grid.arrange(g1, g2, nrow=1)
-g
+g4 <- gridExtra::grid.arrange(g4a, g4b, nrow=1)
+g4
 
 
 
-# Filter 4: looser interpretation of logbook dates
+# Filter 5: looser interpretation of logbook dates
 ################################################################################
 
 # Build expanded trip ids
 nday_buffer <- 2
-trip_id_key <- purrr::map_df(1:nrow(log_trip_key), function(x){
+trip_id_key2 <- purrr::map_df(1:nrow(log_trip_key), function(x){
   
   # Trip to do
   vessel_id_do <- log_trip_key$vessel_id[x]
@@ -388,7 +387,7 @@ trip_id_key <- purrr::map_df(1:nrow(log_trip_key), function(x){
 # Build data
 data5 <- data2 %>% 
   mutate(trip_id=paste(vessel_id, date, sep="-")) %>% 
-  filter(trip_id %in% trip_id_key$trip_id)
+  filter(trip_id %in% trip_id_key2$trip_id)
 
 # Identify species
 data5_spp <- data5 %>% 
@@ -422,19 +421,19 @@ data5_stats2 <- data5 %>%
   mutate(spp_label=factor(spp_label, levels=data5_spp_order$spp_label))
 
 # Plot data
-g1 <- ggplot(data5_stats1, aes(x=year, y=value_usd/1e6, fill=gear)) +
+g5a <- ggplot(data5_stats1, aes(x=year, y=value_usd/1e6, fill=gear)) +
   geom_bar(stat="identity", color="grey30", linewidth=0.2) +
   # Labels
-  labs(x="Year", y="Revenues (USD millions)", title="Filter 4") +
+  labs(x="Year", y="Revenues (USD millions)", title="Filter 5") +
   # Legend
   scale_fill_discrete(name="Gear") +
   # Theme 
   theme_bw() + my_theme +
   theme(legend.position = c(0.8,0.8))
-g1
+g5a
 
 # Plot data
-g2 <- ggplot(data5_stats2, aes(x=year, y=value_usd/1e6, fill=spp_label)) +
+g5b <- ggplot(data5_stats2, aes(x=year, y=value_usd/1e6, fill=spp_label)) +
   geom_bar(stat="identity", color="grey30", linewidth=0.2) +
   # Labels
   labs(x="Year", y="Revenues (USD millions)", title=" ") +
@@ -443,20 +442,20 @@ g2 <- ggplot(data5_stats2, aes(x=year, y=value_usd/1e6, fill=spp_label)) +
   # Theme 
   theme_bw() + my_theme +
   theme(legend.position = c(0.7,0.7))
-g2
+g5a
 
 # Merge
-g <- gridExtra::grid.arrange(g1, g2, nrow=1)
-g
+g5 <- gridExtra::grid.arrange(g5a, g5b, nrow=1)
+g5
 
 
 
-# Filter 4: looser interpretation of logbook dates
+# Filter 6: looser interpretation of logbook dates
 ################################################################################
 
 # Build expanded trip ids
 nday_buffer <- 3
-trip_id_key <- purrr::map_df(1:nrow(log_trip_key), function(x){
+trip_id_key3 <- purrr::map_df(1:nrow(log_trip_key), function(x){
   
   # Trip to do
   vessel_id_do <- log_trip_key$vessel_id[x]
@@ -476,7 +475,7 @@ trip_id_key <- purrr::map_df(1:nrow(log_trip_key), function(x){
 # Build data
 data6 <- data2 %>% 
   mutate(trip_id=paste(vessel_id, date, sep="-")) %>% 
-  filter(trip_id %in% trip_id_key$trip_id)
+  filter(trip_id %in% trip_id_key3$trip_id)
 
 # Identify species
 data6_spp <- data6 %>% 
@@ -510,7 +509,7 @@ data6_stats2 <- data6 %>%
   mutate(spp_label=factor(spp_label, levels=data6_spp_order$spp_label))
 
 # Plot data
-g1 <- ggplot(data6_stats1, aes(x=year, y=value_usd/1e6, fill=gear)) +
+g6a <- ggplot(data6_stats1, aes(x=year, y=value_usd/1e6, fill=gear)) +
   geom_bar(stat="identity", color="grey30", linewidth=0.2) +
   # Labels
   labs(x="Year", y="Revenues (USD millions)", title="Filter 4") +
@@ -519,10 +518,10 @@ g1 <- ggplot(data6_stats1, aes(x=year, y=value_usd/1e6, fill=gear)) +
   # Theme 
   theme_bw() + my_theme +
   theme(legend.position = c(0.8,0.8))
-g1
+g6a
 
 # Plot data
-g2 <- ggplot(data6_stats2, aes(x=year, y=value_usd/1e6, fill=spp_label)) +
+g6b <- ggplot(data6_stats2, aes(x=year, y=value_usd/1e6, fill=spp_label)) +
   geom_bar(stat="identity", color="grey30", linewidth=0.2) +
   # Labels
   labs(x="Year", y="Revenues (USD millions)", title=" ") +
@@ -531,8 +530,18 @@ g2 <- ggplot(data6_stats2, aes(x=year, y=value_usd/1e6, fill=spp_label)) +
   # Theme 
   theme_bw() + my_theme +
   theme(legend.position = c(0.7,0.7))
-g2
+g6b
 
 # Merge
-g <- gridExtra::grid.arrange(g1, g2, nrow=1)
-g
+g6 <- gridExtra::grid.arrange(g6a, g6b, nrow=1)
+g6
+
+# Export data
+save(log_trip_key, trip_id_key1, trip_id_key2, trip_id_key3,
+     file=file.path(outdir, "1980_2022_landings_receipts_set_gillnet_options.Rdata"))
+
+
+# Temporary
+saveRDS(data6, file=file.path(outdir, "1980_2022_landings_receipts_set_gillnet_use.Rds"))
+
+

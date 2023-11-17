@@ -302,6 +302,13 @@ data3 <- data2 %>%
          soak_source=soak_hr_imp_source)
 
 
+# Export data
+################################################################################
+
+# Export
+saveRDS(data3, file=file.path(outdir, "CDFW_1981_2020_gillnet_logbook_data_imputed.Rds"))
+
+
 # Plot
 ################################################################################
 
@@ -374,11 +381,6 @@ g2
 g <- gridExtra::grid.arrange(g1, g2, heights=c(0.3, 0.7), ncol=1)
 
 
-# Export data
-################################################################################
-
-# Export
-saveRDS(data, file=file.path(outdir, "CDFW_1981_2020_gillnet_logbook_data_imputed.Rds"))
 
 
 
