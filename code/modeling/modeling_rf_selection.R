@@ -6,6 +6,9 @@ rm(list = ls())
 #### read in library ####
 library(tidyverse)
 
+### output directory ###
+plotdir <- "figures"
+
 #### read in model result ####
 
 # sealion
@@ -62,7 +65,9 @@ model_df_final <- rbind(sl_balanced_df, sl_weighted_df, hs_balanced_df, hs_weigh
          balanced_type = recode_factor(balanced_type, 
                                 "downsample" = "Downsample", 
                                 "upsample" = "Upsample",
-                                "smote" = "SMOTE"))
+                                "smote" = "SMOTE",
+                                "weighted" = "Weighted")) %>%
+  mutate(model_id = paste(metric, .config, balanced_type, species, mtry, weight, sep = "-"))
 
 
 # make the plot
@@ -90,9 +95,10 @@ kappa_df <- tibble(metric = "Cohen's kappa",
 auc_df <- tibble(metric = "Area under the ROC curve", 
                   value = c(0.7, 0.8, 0.9))
 
-ref_df <- rbind(kappa_df, auc_df)
+ref_df <- rbind(kappa_df, auc_df) %>%
+  mutate(metric = factor(metric, levels = c("Cohen's kappa", "Area under the ROC curve")))
 
-g_balanced <-ggplot(data = model_df_final %>% filter(balanced_type != "weighted"), 
+g_balanced <-ggplot(data = model_df_final %>% filter(balanced_type != "Weighted"), 
                     mapping = aes(x = mtry, y = mean)) +
   geom_hline(data = ref_df, mapping = aes(yintercept = value), color = "grey70",linetype = "dashed") +
   geom_line(aes(color = balanced_type)) +
@@ -103,7 +109,7 @@ g_balanced <-ggplot(data = model_df_final %>% filter(balanced_type != "weighted"
 
 g_balanced
 
-g_weighted <- ggplot(data = model_df_final %>% filter(balanced_type == "weighted"), 
+g_weighted <- ggplot(data = model_df_final %>% filter(balanced_type == "Weighted"), 
                      mapping = aes(x = mtry, y = mean, color = weight, group = weight)) +
   geom_line() +
   labs(x = "Number of variables (mtry)", y = "Value" ) +
@@ -122,53 +128,84 @@ RColorBrewer::display.brewer.all(9)
 
 # based on kappa
 
-best_model <- model_df_final %>% 
+best_model_kappa <- model_df_final %>% 
   filter(metric=="Cohen's kappa") %>% 
   arrange(balanced_type, desc(mean)) %>% 
   group_by(balanced_type, species) %>% 
   slice(1) %>% 
-  mutate(balanced_type=factor(balanced_type, levels=c("Upsample", "Downsample", "SMOTE", "weighted"))) %>% 
+  mutate(balanced_type=factor(balanced_type, levels=c("Upsample", "Downsample", "SMOTE", "Weighted"))) %>% 
   arrange(balanced_type)
 
-select_model <- best_model %>%
+select_model_kappa <- best_model_kappa %>%
   group_by(species) %>%
   filter(mean == max(mean)) %>%
   ungroup()
-  
 
+
+select_model_roc <- model_df_final %>%
+  filter(metric == "Area under the ROC curve") %>%
+  filter(model_id == "Area under the ROC curve-Preprocessor1_Model3-SMOTE-Harbor seal-3-NA"|model_id == "Area under the ROC curve-Preprocessor1_Model1-SMOTE-Soupfin shark-1-NA"|model_id == "Area under the ROC curve-Preprocessor1_Model1-Weighted-California sea lion-1-75")
+
+select_model_final <- rbind(select_model_kappa, select_model_roc) %>%
+  mutate(metric = factor(metric, levels = c("Cohen's kappa", "Area under the ROC curve")))
+  
 ##### Experiment in making Chris figure below #####
 
-model_best <- model_df_final %>%
-  #filter(metric == "Cohen's kappa") %>%
+# All best models
+model_best_all <- model_df_final %>%
   filter(balanced_type%in%c("Upsample", "Downsample", "SMOTE")|(species == "California sea lion" & weight == "75")|(species == "Harbor seal" & weight == "150")|(species == "Soupfin shark"& weight == "25")) %>%
+  mutate(metric = factor(metric, levels = c("Cohen's kappa", "Area under the ROC curve"))) %>%
   select(-weight)
 
-
-
-g_best <- ggplot(data = model_best, mapping = aes(x = mtry, y = mean)) +
+g_best <- ggplot(data = model_best_all, mapping = aes(x = mtry, y = mean)) +
   geom_line(aes(color = balanced_type)) +
-  geom_point(data = select_model, aes(x = mtry, y = mean), color = "black", shape = 20, size = 1) +
-  labs(x = "Number of variables (mtry)", y = "Value" ) +
+  geom_point(data = select_model_final, aes(x = mtry, y = mean, color = balanced_type), shape = 20, size = 3) +
+  geom_hline(data = ref_df, mapping = aes(yintercept = value), color = "grey70",linetype = "dashed") +
+  labs(x = "Number of variables (mtry)", y = "Value",tag = "A" ) +
   facet_grid(metric~species, scales = "free_y") +
   scale_color_discrete(name = "Balance type") +
   theme_bw()+base_theme
 
 g_best
 
-g_kappa_weight <- ggplot(data = model_df_final %>% filter(balanced_type == "weighted") %>% filter(metric == "Cohen's kappa"), 
-                         mapping = aes(x = mtry, y = mean, color = weight, group = weight)) +
+
+#best weight model
+
+model_best_weight_kappa <- model_df_final %>%
+  filter(balanced_type == "Weighted") %>%
+  filter(metric == "Cohen's kappa") %>%
+  group_by(species) %>%
+  filter(mean == max(mean)) %>%
+  ungroup()
+
+model_best_weight_roc <- model_df_final %>%
+  filter(balanced_type == "Weighted") %>%
+  filter(metric == "Area under the ROC curve") %>%
+  filter(model_id == "Area under the ROC curve-Preprocessor1_Model1-Weighted-California sea lion-1-75"|model_id == "Area under the ROC curve-Preprocessor1_Model7-Weighted-Harbor seal-7-150"|model_id == "Area under the ROC curve-Preprocessor1_Model2-Weighted-Soupfin shark-2-25")
+
+model_best_weight_final<-rbind(model_best_weight_kappa, model_best_weight_roc)
+
+g_best_weight <- ggplot(data = model_df_final %>% filter(balanced_type == "Weighted"), 
+                        mapping = aes(x = mtry, y = mean, color = weight, group = weight)) +
   geom_line() +
-  labs(x = "Number of variables (mtry)", y = "Value" ) +
-  facet_grid(species~metric, scales = "free_y") +
-  scale_color_gradientn(name = "Weight", 
+  geom_point(data = model_best_weight_final, aes(x = mtry, y = mean, color = weight), shape = 20, size = 3) +
+  geom_hline(data = ref_df, mapping = aes(yintercept = value), color = "grey70",linetype = "dashed") +
+  labs(x = "Number of variables (mtry)", y = "Value", tag = "B" ) +
+  facet_grid(metric~species, scales = "free_y") +
+  scale_color_gradientn(name = "Weight                ", 
                         colors = RColorBrewer::brewer.pal(9, "YlOrRd")[2:9]) +
   guides(color = guide_colorbar(ticks.colour = "black", frame.colour = "black")) +
-  theme_bw() +base_theme
+  theme_bw() +base_theme  
 
-g_kappa_weight  
-  
+g_best_weight  
 
 
+g <- gridExtra::grid.arrange(g_best, g_best_weight, ncol = 1)
+
+
+
+ggsave(g, filename=file.path(plotdir, "FigSX_rf_model_selection.png"),
+       width=5.5, height=6.5, units="in", dpi=600)
 
   
   
