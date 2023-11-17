@@ -15,7 +15,7 @@ gisdatadir <- "data/gis_data"
 
 # Read data
 datadir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/processed"
-data_orig <- readRDS(file.path(datadir, "CDFW_1981_2020_gillnet_logbook_data.Rds"))
+data_orig <- readRDS(file.path(datadir, "CDFW_1981_2020_gillnet_logbook_data_use.Rds"))
 
 # World
 usa <- rnaturalearth::ne_states(country = "United States of America", returnclass = "sf")
@@ -44,8 +44,6 @@ ventura_blocks <- c(651:663, 664:677, 697, 776, 691:696, 714:717, 701:706, 678:6
 
 # Build data
 data <- data_orig %>%
-  # Set gillnet
-  filter(net_type=="Set") %>%
   # Add period
   mutate(period=cut(year, breaks=c(1980, reg_years, 2023), 
                     labels=c("1. 1981-1986", "2. 1987-1993", "3. 1994-2001", "4. 2002-present"), right=F)) %>% 
@@ -75,7 +73,7 @@ stats_yr <- data %>%
   group_by(period, year) %>%
   summarize(nsets=n_distinct(set_id),
             nvesseldays=n_distinct(trip_id),
-            nvessels=n_distinct(vessel_id_use))  %>%
+            nvessels=n_distinct(vessel_id))  %>%
   ungroup()
 
 # Export data
@@ -85,7 +83,7 @@ write.csv(stats_yr, file=file.path(datadir, "CA_3.5in_set_gillnet_effort_by_year
 stats_blocks <- data %>%
   # Summarize by period and block
   group_by(period, block_id) %>% 
-  summarize(nvessels=n_distinct(vessel_id_use),
+  summarize(nvessels=n_distinct(vessel_id),
             nvesseldays=n_distinct(trip_id)) %>% 
   ungroup() %>% 
   # Calculate proportion by period
@@ -120,6 +118,14 @@ count(data, period, year)
 # Plot data
 ################################################################################
 
+# Bays
+bays_df <- matrix(c("SF\nBay", 37.840267, -122.143795,
+                    "Monterey\nBay", 36.822049, -121.726172,
+                    "Morro\nBay", 35.383806, -120.818686), ncol=3, byrow = T) %>% 
+  as.data.frame() %>% setNames(c("bay", "lat_dd", "long_dd")) %>% 
+  mutate(lat_dd=as.numeric(lat_dd),
+         long_dd=as.numeric(long_dd))
+
 # Reg data
 reg_data <- tibble(year=reg_years,
                    yval=c(380, 280, 180),
@@ -153,10 +159,15 @@ g1 <- ggplot(data=stats_blocks_sf, mapping=aes(fill=prop)) +
   # State waters
   geom_sf(data=state_waters, color="grey30", linewidth=0.2, inherit.aes = F) +
   # Plot Point Arguello
-  geom_hline(yintercept = 34.577201, linewidth=0.2) +
+  # geom_hline(yintercept = 34.577201, linewidth=0.2) +
+  geom_segment(x=-122.5, xend=-117, y=34.577201, yend=34.577201, linewidth=0.2) +
   # Land
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data=mexico, fill="grey85", col="white", linewidth=0.2, inherit.aes = F) +
+  # Plot bay labels
+  geom_text(data=bays_df, mapping = aes(x=long_dd, y=lat_dd, label=bay), 
+            inherit.aes = F, color="grey30",fontface="italic",  
+            hjust=0, nudge_x=0.1, size=1.5, lineheight = 0.8) +
   # Labels
   labs(x="", y=" ", tag="A") +
   # Crop
@@ -180,7 +191,7 @@ g1
 # Number of vessels
 g2 <- ggplot(stats_yr, aes(x=year, y=nvessels)) +
   # Reference lines
-  geom_vline(xintercept=reg_years, linetype="dotted", color="grey70", size=0.25) +
+  geom_vline(xintercept=reg_years, linetype="dotted", color="grey70", linewidth=0.25) +
   geom_text(data=reg_data, mapping=aes(x=year, y=yval, label=label), 
             color="grey50", vjust=1, hjust=0, size=1.8, nudge_x=1) +
   # Data
@@ -196,7 +207,7 @@ g2
 # Number of vessel daya
 g3 <- ggplot(stats_yr, aes(x=year, y=nvesseldays)) +
   # Reference lines
-  geom_vline(xintercept=reg_years, linetype="dotted", color="grey70", size=0.25) +
+  geom_vline(xintercept=reg_years, linetype="dotted", color="grey70", linewidth=0.25) +
   # Data
   geom_line() +
   # Labels
@@ -209,7 +220,7 @@ g3
 # Number of sets
 g4 <- ggplot(stats_yr, aes(x=year, y=nsets)) +
   # Reference lines
-  geom_vline(xintercept=reg_years, linetype="dotted", color="grey70", size=0.25) +
+  geom_vline(xintercept=reg_years, linetype="dotted", color="grey70", linewidth=0.25) +
   # Data
   geom_line() +
   # Labels

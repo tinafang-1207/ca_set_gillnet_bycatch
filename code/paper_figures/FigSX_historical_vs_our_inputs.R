@@ -92,7 +92,6 @@ g1 <- ggplot(data=effort_df, mapping=aes(x=year, y=nvesseldays)) +
   theme_bw() + base_theme
 g1
 
-
 # Plot # of observed trips
 g2 <- ggplot(data=obs_trips, mapping=aes(x=year, y=nvesseldays_obs)) +
   # Data
