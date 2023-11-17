@@ -54,38 +54,82 @@ data1 <- data_orig %>%
          comm_name2=final_mlds_common_name) %>% 
   # Remove empty columns
   select(-c(x25, x26)) %>% 
-  # Format year
-  mutate(year=as.numeric(year)) %>% 
   # Format date
   mutate(date=recode(date, 
                      "6/31/2021"="6/30/2021"),
          date=case_when(grepl("/", date) ~ lubridate::mdy(date) %>% as.character(),
-                        !grepl("/", date) ~ openxlsx::convertToDate(date) %>% as.character(),
+                        !grepl("/", date) ~ openxlsx::convertToDate(date, optional=T) %>% as.character(),
                         T ~ ""),
          date=lubridate::ymd(date)) %>% 
+  # Format year
+  mutate(year=as.numeric(year),
+         year=ifelse(!is.na(date), lubridate::year(date), year)) %>% 
   # Format block id
+  # When multiple blocks provided, take first
   mutate(block_id=gsub("/", ", ", block_id), 
-         block_id_num=as.numeric(block_id)) %>% 
+         block_id_num=recode(block_id,
+                             "4530, 12530"="4530",
+                             "664, 683"="664",
+                             "685, 664"="685",      
+                             "685, 708"="685",
+                             "708, 664"="708",      
+                             "708, 685"="708",
+                             "711, 710"="711",
+                             "outside 100 miles"="") %>% as.numeric()) %>% 
   # Add block details
   left_join(blocks_df %>% select(block_id, block_type, block_lat_dd, block_long_dd), 
             by=c("block_id_num"="block_id")) %>% 
   # Format depth
-  mutate(depth_fa_num=as.numeric(depth_fa)) %>% 
+  # Average depth when multiple are provided
+  mutate(depth_fa_num=recode(depth_fa,
+                             "17, 11"="14",
+                             "25, 30"="27.5",
+                             "14, 28"="21",
+                             "200, 500"="350",
+                             "300, 500"="400",
+                             "200, 350"="275",
+                             "250+"="251",
+                             "200+"="200",
+                             "15, 11"="13") %>% as.numeric()) %>% 
   # Format net length
   mutate(net_length_fa=case_when(net_length_fa=="Halibut" ~ NA_character_,
                                  net_length_fa=="1 Mile" ~ "880",
                                  T ~ net_length_fa),
-         net_length_fa_num=as.numeric(net_length_fa)) %>% 
+         net_length_fa_num=recode(net_length_fa,
+                                  "200, 300"="250",
+                                  "2000, 350"="",
+                                  "2000, 375"="") %>% as.numeric()) %>% 
   # Format mesh size
+  # When multiple, take average
+  # Assume mesh sizes >60 in are decimal point typos
   mutate(mesh_size_in=gsub("/", ", ", mesh_size_in),
-         mesh_size_in_num=as.numeric(mesh_size_in)) %>% 
+         mesh_size_in_num=recode(mesh_size_in,
+                                 "22, 18"="20", 
+                                 "6, 6.5"="6.25",             
+                                 "6, 8.5"="7.25", 
+                                 "6.5, 8.5"="7.5",
+                                 "8.5, 6"="7.25",             
+                                 "8.5, 6.5"="7.5") %>% as.numeric(),
+         mesh_size_in_num=ifelse(mesh_size_in_num>=60 & mesh_size_in_num<=100, mesh_size_in_num/10, mesh_size_in_num),
+         mesh_size_in_num=ifelse(mesh_size_in_num>=100, mesh_size_in_num/100, mesh_size_in_num)) %>% 
   # Format buoy line depth
   mutate(buoy_line_depth_ft=ifelse(buoy_line_depth_ft=="SM Mesh", NA, buoy_line_depth_ft),
-         buoy_line_depth_ft_num=as.numeric(buoy_line_depth_ft)) %>% 
+         buoy_line_depth_ft_num=recode(buoy_line_depth_ft,
+                                       "200, 300"="250") %>% as.numeric()) %>% 
   # Format soak hour
+  # When multiple, average values
   mutate(soak_hr=recode(soak_hr,
                         "20 mins"="0.33"),
-         soak_hr_num=as.numeric(soak_hr)) %>% 
+         soak_hr_num=recode(soak_hr,
+                            "24-48"="36", 
+                            "2, 4"="3", 
+                            "24, 8"="16") %>% as.numeric()) %>% 
+  # Replace zeros with NAs in numeric columns
+  mutate(depth_fa_num=ifelse(depth_fa_num==0, NA, depth_fa_num),
+         net_length_fa_num=ifelse(net_length_fa_num==0, NA, net_length_fa_num),
+         mesh_size_in_num=ifelse(mesh_size_in_num==0, NA, mesh_size_in_num),
+         buoy_line_depth_ft_num=ifelse(buoy_line_depth_ft_num==0, NA, buoy_line_depth_ft_num),
+         soak_hr_num=ifelse(soak_hr_num==0, NA, soak_hr_num)) %>% 
   # Format original net type 1
   mutate(net_type_orig1=recode(net_type_orig1,
                                "67"="Set", # Large Mesh Set Gn based on gear codes
@@ -292,21 +336,49 @@ net_type_key <- data1 %>%
 # Depth
 sort(unique(data1$depth_fa)) # sometimes there are multiple entries
 range(data1$depth_fa_num, na.rm=T)
+depth_key <- data1 %>% 
+  select(depth_fa, depth_fa_num) %>% 
+  unique() %>% 
+  arrange(depth_fa_num)
 
 # Block id
 sort(unique(data1$block_id)) # sometimes there are multiple entries
+block_key <- data1 %>% 
+  select(block_id, block_id_num) %>% 
+  unique() %>% 
+  arrange(block_id_num)
 
-# Net characteristics
-sort(unique(data1$net_length_fa)) # sometimes there are multiple entries
+# Mesh size
 sort(unique(data1$mesh_size_in))  # sometimes there are multiple entries
-sort(unique(data1$buoy_line_depth_ft)) # sometimes there are multiple entries
-sort(unique(data1$soak_hr)) # sometimes there are multiple entries
-
-# Inspect net characteristics
-range(data1$net_length_fa_num, na.rm=T)
 range(data1$mesh_size_in_num, na.rm=T)
+mesh_key <- data1 %>% 
+  select(mesh_size_in, mesh_size_in_num) %>% 
+  unique() %>% 
+  arrange(mesh_size_in_num)
+
+# Net length
+sort(unique(data1$net_length_fa)) # sometimes there are multiple entries
+range(data1$net_length_fa_num, na.rm=T)
+net_length_key <- data1 %>% 
+  select(net_length_fa, net_length_fa_num) %>% 
+  unique() %>% 
+  arrange(net_length_fa_num)
+
+# Buoy line depth
+sort(unique(data1$buoy_line_depth_ft)) # sometimes there are multiple entries
 range(data1$buoy_line_depth_ft_num, na.rm=T)
+buoy_key <- data1 %>% 
+  select(buoy_line_depth_ft, buoy_line_depth_ft_num) %>% 
+  unique() %>% 
+  arrange(buoy_line_depth_ft_num)
+
+# Soak hour
+sort(unique(data1$soak_hr)) # sometimes there are multiple entries
 range(data1$soak_hr_num, na.rm=T)
+soak_key <- data1 %>% 
+  select(soak_hr, soak_hr_num) %>% 
+  unique() %>% 
+  arrange(soak_hr_num)
 
 # Status
 # 1, 2, 3, 4, 5 are all unknown
@@ -330,6 +402,13 @@ spp_key_orig$spp_code[is.na(spp_key_orig$comm_name)] %>% unique() %>% as.numeric
 
 # Build vessel key
 ################################################################################
+
+# Read PVNS with with vessel ids
+pvn_key <- read.csv("data/vessel_ids/processed/primary_vessel_number_key w_vessel_id.csv", as.is=T) %>% 
+  select(primary_id, vessel_id) %>% 
+  rename(vessel_id_pvn=vessel_id) %>% 
+  mutate(primary_id=as.character(primary_id),
+         vessel_id_pvn=as.character(vessel_id_pvn))
 
 # Here's the approach
 # The original data includes two vessel identifier columns: vessel_id, boat_num
@@ -382,6 +461,9 @@ vessel_key1 <- data1 %>%
                              dmv_id=="CF9388HD" ~ "37537", # ASHLEY NICOLE
                              dmv_id=="CF9713TK" ~ "3239", # T-BONE
                              T ~ vessel_id)) %>% 
+  # Add vessel id from PVN key
+  left_join(pvn_key, by="primary_id") %>% 
+  mutate(vessel_id=ifelse(is.na(vessel_id), vessel_id_pvn, vessel_id)) %>% 
   # Add vessel id use
   mutate(vessel_id_use=ifelse(!is.na(vessel_id), vessel_id,
                               ifelse(!is.na(primary_id), primary_id, dmv_id)),

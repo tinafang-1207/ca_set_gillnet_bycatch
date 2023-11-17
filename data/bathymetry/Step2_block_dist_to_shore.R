@@ -110,7 +110,21 @@ saveRDS(dist_df, file=file.path(datadir, "block_distance_to_shore.Rds"))
 
 # Build key
 block_key <- block_depths %>% 
-  left_join(dist_df)
+  # Fix weird column header problem
+  as.matrix() %>% 
+  as.data.frame() %>% 
+  setNames(c("block_id", "depth_m_min", "depth_m_max", "depth_m_med", "depth_m_avg")) %>% 
+  # Add distance from shore
+  left_join(dist_df) %>% 
+  # Convert units
+  rename(shore_m=dist_m) %>% 
+  mutate(shore_km=shore_m/1000, 
+         depth_fa_min=measurements::conv_unit(depth_m_min, "m", "fathom"),
+         depth_fa_max=measurements::conv_unit(depth_m_max, "m", "fathom"),
+         depth_fa_med=measurements::conv_unit(depth_m_med, "m", "fathom"),
+         depth_fa_avg=measurements::conv_unit(depth_m_avg, "m", "fathom")) %>% 
+  # Simplify
+  select(block_id, shore_km, depth_fa_min, depth_fa_max, depth_fa_med, depth_fa_avg)
 
 # Export
 saveRDS(block_key , file=file.path(datadir, "block_key.Rds"))
