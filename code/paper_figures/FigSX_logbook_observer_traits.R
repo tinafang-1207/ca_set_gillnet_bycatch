@@ -40,10 +40,7 @@ logs <- logs_orig %>%
   mutate(dataset="Logbooks",
          yday=lubridate::yday(date)) %>% 
   # Rename
-  select(-c(mesh_size_in, depth_fa, soak_hr)) %>% 
-  rename(mesh_size_in=mesh_size_in_num,
-         depth_fa=depth_fa_num,
-         soak_hr=soak_hr_num,
+  rename(mesh_size_in=mesh_in,
          lat_dd=block_lat_dd) %>% 
   # Simplify
   select(dataset, set_id, target_spp, yday, mesh_size_in, 

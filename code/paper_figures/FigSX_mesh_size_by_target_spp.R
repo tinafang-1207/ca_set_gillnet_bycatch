@@ -19,6 +19,7 @@ obs_orig <- readRDS(file=file.path(datadir1, "1983_2017_gillnet_observer_data_3.
 
 # Read logbook data
 logs_orig <- readRDS(file.path(datadir2, "CDFW_1981_2020_gillnet_logbook_data_use.Rds"))
+logs_orig_all <- readRDS(file.path(datadir2, "CDFW_1981_2020_gillnet_logbook_data_imputed.Rds"))
 
 
 # Build data
@@ -89,6 +90,38 @@ g
 # Export
 ggsave(g, filename=file.path(plotdir, "FigSX_mesh_size_by_target.png"), 
        width=4.5, height=2.5, units="in", dpi=600)
+
+
+
+# All set gillnet plot
+################################################################################
+
+# Build set key
+set_key <- logs_orig_all %>% 
+  select(year:target_spp) %>% 
+  unique()
+
+# Format set key
+set_key1 <- set_key %>% 
+  rowwise() %>% 
+  mutate(target_spp1 = str_split(target_spp, ",")[[1]][1])
+
+# Order
+stats <- set_key1 %>% 
+  group_by(target_spp1) %>% 
+  summarize(mesh_in=median(mesh_in, na.rm=T)) %>% 
+  ungroup() %>% 
+  arrange(desc(mesh_in))
+set_key2 <- set_key1 %>% 
+  mutate(target_spp1=factor(target_spp1, levels=stats$target_spp1))
+
+# Plot
+ggplot(set_key2, aes(y=target_spp1, x=mesh_in)) +
+  geom_boxplot() +
+  # Ref line
+  geom_vline(xintercept = 3.5) + 
+  # Theme
+  theme_bw()
 
 
 

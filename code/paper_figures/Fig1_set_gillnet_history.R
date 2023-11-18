@@ -17,6 +17,10 @@ gisdatadir <- "data/gis_data"
 datadir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/processed"
 data_orig <- readRDS(file.path(datadir, "CDFW_1981_2020_gillnet_logbook_data_use.Rds"))
 
+# Read landings reciepts
+datadir2 <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/landings_receipts/processed"
+receipts_orig <- readRDS(file=file.path(datadir2, "1980_2022_landings_receipts_set_gillnet_use.Rds"))
+
 # World
 usa <- rnaturalearth::ne_states(country = "United States of America", returnclass = "sf")
 mexico <- rnaturalearth::ne_countries(country="Mexico", returnclass = "sf")
@@ -33,7 +37,7 @@ state_waters <- readRDS(file.path(gisdatadir, "CA_state_waters_polyline.Rds"))
 ################################################################################
 
 # Inspect
-freeR::complete(data_orig)
+# freeR::complete(data_orig)
 
 # Reg years
 reg_years <- c(1987, 1994, 2002)
@@ -113,7 +117,17 @@ stats_blocks_sf <- stats_blocks %>%
 # Inspect year key
 count(data, period, year)
 
-
+# Format receipts
+spp_do <- c("California halibut", "White sea bass", "Pacific angel shark", "Other species")
+receipts <- receipts_orig %>% 
+  # Categorize species
+  mutate(spp_catg=ifelse(comm_name %in% spp_do, comm_name, "Other species")) %>% 
+  # Summarize
+  group_by(spp_catg, year) %>% 
+  summarize(value_usd=sum(value_usd, na.rm = T)) %>% 
+  ungroup() %>% 
+  # Format
+  mutate(spp_catg=factor(spp_catg, spp_do))
 
 # Plot data
 ################################################################################
@@ -137,8 +151,8 @@ reg_data <- tibble(year=reg_years,
 base_theme <- theme(axis.text=element_text(size=6),
                     axis.text.y = element_text(angle = 90, hjust = 0.5),
                     axis.title=element_text(size=7),
-                    legend.text=element_text(size=6),
-                    legend.title=element_text(size=7),
+                    legend.text=element_text(size=5),
+                    legend.title=element_text(size=6),
                     strip.text = element_text(size=7),
                     plot.tag =element_text(size=8),
                     plot.title=element_blank(),
@@ -204,7 +218,7 @@ g2 <- ggplot(stats_yr, aes(x=year, y=nvessels)) +
   theme(axis.title.x=element_blank())
 g2
 
-# Number of vessel daya
+# Number of vessel days
 g3 <- ggplot(stats_yr, aes(x=year, y=nvesseldays)) +
   # Reference lines
   geom_vline(xintercept=reg_years, linetype="dotted", color="grey70", linewidth=0.25) +
@@ -217,18 +231,35 @@ g3 <- ggplot(stats_yr, aes(x=year, y=nvesseldays)) +
   theme(axis.title.x=element_blank())
 g3
 
-# Number of sets
-g4 <- ggplot(stats_yr, aes(x=year, y=nsets)) +
+# Revenues
+g4 <- ggplot(receipts, aes(x=year, y=value_usd/1e6, fill=spp_catg)) +
   # Reference lines
   geom_vline(xintercept=reg_years, linetype="dotted", color="grey70", linewidth=0.25) +
   # Data
-  geom_line() +
+  geom_bar(stat="identity", color="grey30", linewidth=0.1) +
   # Labels
-  labs(x="Year", y="Number of sets", tag="D") +
+  labs(x="Year", y="Revenues (2022 USD millions)", tag="D") +
+  # Legend
+  scale_fill_ordinal(name="") +
   # Theme
   theme_bw() + base_theme +
-  theme(axis.title.x=element_blank())
+  theme(axis.title.x=element_blank(),
+        legend.position = c(0.73, 0.8),
+        legend.key.size = unit(0.15, "cm"))
 g4
+
+# Number of sets
+# g4 <- ggplot(stats_yr, aes(x=year, y=nsets)) +
+#   # Reference lines
+#   geom_vline(xintercept=reg_years, linetype="dotted", color="grey70", linewidth=0.25) +
+#   # Data
+#   geom_line() +
+#   # Labels
+#   labs(x="Year", y="Number of sets", tag="D") +
+#   # Theme
+#   theme_bw() + base_theme +
+#   theme(axis.title.x=element_blank())
+# g4
 
 
 # Merge plots
