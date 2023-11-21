@@ -42,11 +42,11 @@ g <- ggplot(data, aes(x=value, y=prob, color=species)) +
   # Labels
   labs(x="Variable value", y="Marginal effect") +
   # Legend
-  scale_color_discrete(name="") +
+  scale_color_discrete(name="Species") +
   # Theme
   theme_bw() + base_theme +
   theme(legend.key.size=unit(0.3, "cm"),
-        legend.position = c(0.9, 0.2))
+        legend.position = "right")
 g
 
 # Export
