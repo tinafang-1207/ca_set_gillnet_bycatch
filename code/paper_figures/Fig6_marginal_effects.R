@@ -12,49 +12,11 @@ library(tidyverse)
 plotdir <- "figures"
 
 
-# Simulate data
+# Read data
 ################################################################################
 
-# Species
-species <- c("California sea lion",
-             "Harbor porpoise",
-             "Harbor seal",
-             "Common murre",
-             "Brandt's cormorant",
-             "Northern elephant seal")
+data <- read.csv("model_result/marginal_effects.csv")
 
-# Variables
-variables <- c("Mesh size (cm)", 
-               "Latitude (°N)", 
-               "Temperature (°C)", 
-               "Julian day", 
-               "Depth (fa)",
-               "Shore distance (km)", 
-               "Soak time (hr)")
-
-# Generate grid
-spp_var <- expand.grid(species=species,
-                       variable=variables)
-
-# Loop through grid and simulate data
-data_orig <- purrr::map_df(1:nrow(spp_var), function(x){
-  
-  # Set the length of the random walk
-  walk_length <- 200
-  
-  # Generate random values from a normal distribution (you can adjust mean and standard deviation as needed)
-  random_values <- rnorm(walk_length, mean = 0, sd = 1)
-  
-  # Create the random walk by cumulatively summing the random values
-  random_walk <- cumsum(random_values)
-  
-  # Build data
-  data1 <- tibble(species=spp_var$species[x],
-                  variable=spp_var$variable[x],
-                  value=1:walk_length,
-                  effect=random_walk)
-  
-})
 
 # Plot data
 ################################################################################
@@ -74,8 +36,8 @@ base_theme <-  theme(axis.text=element_text(size=7),
                      legend.background = element_rect(fill=alpha('blue', 0)))
 
 # Plot
-g <- ggplot(data_orig, aes(x=value, y=effect, color=species)) +
-  facet_wrap(~variable, ncol=4, scales="free_y") +
+g <- ggplot(data, aes(x=value, y=prob, color=species)) +
+  facet_wrap(~variable, ncol=4, scales="free") +
   geom_line() +
   # Labels
   labs(x="Variable value", y="Marginal effect") +
