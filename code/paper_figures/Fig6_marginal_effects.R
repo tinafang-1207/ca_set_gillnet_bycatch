@@ -46,7 +46,7 @@ g <- ggplot(data, aes(x=value, y=prob, color=species)) +
   # Theme
   theme_bw() + base_theme +
   theme(legend.key.size=unit(0.3, "cm"),
-        legend.position = "right")
+        legend.position = "bottom")
 g
 
 # Export
