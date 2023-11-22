@@ -19,7 +19,8 @@ data_orig <- readRDS(file.path(datadir, "CDFW_1981_2020_gillnet_logbook_data_use
 
 # Read landings reciepts
 datadir2 <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/landings_receipts/processed"
-receipts_orig <- readRDS(file=file.path(datadir2, "1980_2022_landings_receipts_set_gillnet_use.Rds"))
+receipts_orig <- readRDS(file=file.path(datadir2, "1980_2022_set_gillnet_revenues_by_spp_catg_afi.Rds")) %>% 
+  filter(year!=2022)
 
 # World
 usa <- rnaturalearth::ne_states(country = "United States of America", returnclass = "sf")
@@ -117,17 +118,6 @@ stats_blocks_sf <- stats_blocks %>%
 # Inspect year key
 count(data, period, year)
 
-# Format receipts
-spp_do <- c("California halibut", "White sea bass", "Pacific angel shark", "Other species")
-receipts <- receipts_orig %>% 
-  # Categorize species
-  mutate(spp_catg=ifelse(comm_name %in% spp_do, comm_name, "Other species")) %>% 
-  # Summarize
-  group_by(spp_catg, year) %>% 
-  summarize(value_usd=sum(value_usd, na.rm = T)) %>% 
-  ungroup() %>% 
-  # Format
-  mutate(spp_catg=factor(spp_catg, spp_do))
 
 # Plot data
 ################################################################################
@@ -148,13 +138,13 @@ reg_data <- tibble(year=reg_years,
                            "2002\n60 fathom depth\nrestriction"))
 
 # Base theme
-base_theme <- theme(axis.text=element_text(size=6),
+base_theme <- theme(axis.text=element_text(size=7),
                     axis.text.y = element_text(angle = 90, hjust = 0.5),
-                    axis.title=element_text(size=7),
-                    legend.text=element_text(size=5),
-                    legend.title=element_text(size=6),
-                    strip.text = element_text(size=7),
-                    plot.tag =element_text(size=8),
+                    axis.title=element_text(size=8),
+                    legend.text=element_text(size=6),
+                    legend.title=element_text(size=7),
+                    strip.text = element_text(size=8),
+                    plot.tag =element_text(size=9),
                     plot.title=element_blank(),
                     # Gridlines
                     panel.grid.major = element_blank(),
@@ -181,9 +171,9 @@ g1 <- ggplot(data=stats_blocks_sf, mapping=aes(fill=prop)) +
   # Plot bay labels
   geom_text(data=bays_df, mapping = aes(x=long_dd, y=lat_dd, label=bay), 
             inherit.aes = F, color="grey30",fontface="italic",  
-            hjust=0, nudge_x=0.1, size=1.5, lineheight = 0.8) +
+            hjust=0, nudge_x=0.1, size=1.8, lineheight = 0.8) +
   # Labels
-  labs(x="", y=" ", tag="A") +
+  labs(x="", y=" ", tag="A") + #subtitle="Blocks visited by fewer than 3 vessels hidden to comply with rule-of-three") +
   # Crop
   coord_sf(xlim = c(-124, -117), ylim = c(32.3, 38.5)) +
   # Axes
@@ -197,9 +187,11 @@ g1 <- ggplot(data=stats_blocks_sf, mapping=aes(fill=prop)) +
   guides(fill = guide_colorbar(ticks.colour = "black", frame.colour = "black")) +
   # Theme
   theme_bw() + base_theme +
-  theme(axis.title.x=element_blank(),
+  theme(axis.text=element_text(size=6),
+        axis.title.x=element_blank(),
         legend.key.size = unit(0.25, "cm"),
-        legend.position = c(0.81, 0.25))
+        legend.position = c(0.81, 0.25),
+        plot.subtitle=element_text(size=4, face="italic"))
 g1
 
 # Number of vessels
@@ -207,7 +199,7 @@ g2 <- ggplot(stats_yr, aes(x=year, y=nvessels)) +
   # Reference lines
   geom_vline(xintercept=reg_years, linetype="dotted", color="grey70", linewidth=0.25) +
   geom_text(data=reg_data, mapping=aes(x=year, y=yval, label=label), 
-            color="grey50", vjust=1, hjust=0, size=1.8, nudge_x=1) +
+            color="grey30", vjust=1, hjust=0, size=1.8, nudge_x=1) +
   # Data
   geom_line() +
   # Labels
@@ -232,34 +224,24 @@ g3 <- ggplot(stats_yr, aes(x=year, y=nvesseldays)) +
 g3
 
 # Revenues
-g4 <- ggplot(receipts, aes(x=year, y=value_usd/1e6, fill=spp_catg)) +
+g4 <- ggplot(receipts_orig, aes(x=year, y=value_usd2022/1e6, fill=spp_catg)) +
   # Reference lines
   geom_vline(xintercept=reg_years, linetype="dotted", color="grey70", linewidth=0.25) +
   # Data
-  geom_bar(stat="identity", color="grey30", linewidth=0.1) +
+  geom_bar(stat="identity", color="grey30", linewidth=0.1,
+           position = position_stack(reverse = TRUE)) +
   # Labels
-  labs(x="Year", y="Revenues (2022 USD millions)", tag="D") +
+  labs(x="Year", y="Ex-vessel revenues\n(2022 USD millions)", tag="D") +
+  scale_y_continuous(breaks=seq(0,12,2)) +
   # Legend
-  scale_fill_ordinal(name="") +
+  scale_fill_manual(name="", values=RColorBrewer::brewer.pal(4, "Set3")) +
+  guides(fill = guide_legend(reverse=TRUE)) +
   # Theme
   theme_bw() + base_theme +
   theme(axis.title.x=element_blank(),
-        legend.position = c(0.73, 0.8),
-        legend.key.size = unit(0.15, "cm"))
+        legend.position = c(0.7, 0.8),
+        legend.key.size = unit(0.18, "cm"))
 g4
-
-# Number of sets
-# g4 <- ggplot(stats_yr, aes(x=year, y=nsets)) +
-#   # Reference lines
-#   geom_vline(xintercept=reg_years, linetype="dotted", color="grey70", linewidth=0.25) +
-#   # Data
-#   geom_line() +
-#   # Labels
-#   labs(x="Year", y="Number of sets", tag="D") +
-#   # Theme
-#   theme_bw() + base_theme +
-#   theme(axis.title.x=element_blank())
-# g4
 
 
 # Merge plots
