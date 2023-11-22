@@ -101,6 +101,7 @@ rf_final_sl <- finalize_workflow(rf_workflow, sl_best_model)
 
 rf_final_fit_sl <- fit(rf_final_sl, data = model_train)
 
+# variable importance
 
 sl_vi_df <- rf_final_fit_sl %>%
   extract_fit_parsnip %>%
@@ -109,6 +110,52 @@ sl_vi_df <- rf_final_fit_sl %>%
   mutate(species = "California sea lion") %>%
   rename(variable = Variable, importance = Importance) %>%
   select(species, variable, importance)
+
+# marginal effect
+
+explainer_rf_sl <- explain_tidymodels(
+  rf_final_fit_sl,
+  data = dplyr::select(model_train, -sl_response),
+  y = as.integer(model_train$sl_response),
+  verbose = FALSE
+)
+
+pdp_rf_sl <- model_profile(explainer_rf_sl, 
+                        N = NULL, 
+                        variables = c("net_mesh_size_in",
+                                      "sst",
+                                      "julian_day",
+                                      "haul_long_dd",
+                                      "haul_lat_dd",
+                                      "soak_hr",
+                                      "dist_km",
+                                      "haul_depth_fa"), 
+                        groups = NULL)
+
+
+pdp_rf_df_sl <- as.data.frame(pdp_rf_sl$agr_profiles) %>%
+  select(-"_label_",-"_ids_") %>%
+  rename(variable = "_vname_", value = "_x_", prob = "_yhat_") %>%
+  # Format variables
+  mutate(variable=recode_factor(variable, 
+                                "haul_long_dd"="Longitude (°W)",     
+                                "julian_day"="Julian day",      
+                                "sst"="Temperature (°C)",             
+                                "haul_lat_dd"="Latitude (°N)",
+                                "net_mesh_size_in"="Mesh size (cm)",
+                                "dist_km"="Shore distance (km)",
+                                "haul_depth_fa"="Depth (fathoms)",    
+                                "soak_hr"="Soak time (hr)")) %>% 
+  # Remove outlier values (BUT WE SHOULD DO THIS RIGHT SOMEWHERE)
+  filter(!(variable=="Depth (fathoms)" & value>100)) %>% 
+  filter(!(variable=="Shore distance (km)" & value>20)) %>% 
+  filter(!(variable=="Soak time (hr)" & value>96)) %>%
+  # add species column
+  mutate(species = "California sea lion")
+
+
+
+  
 
 
 
@@ -163,6 +210,8 @@ rf_final_hs <- finalize_workflow(rf_workflow, hs_best_model)
 
 rf_final_fit_hs <- fit(rf_final_hs, data = model_train)
 
+# variable importance
+
 hs_vi_df <- rf_final_fit_hs %>%
   extract_fit_parsnip %>%
   vi() %>%
@@ -170,6 +219,53 @@ hs_vi_df <- rf_final_fit_hs %>%
   mutate(species = "Harbor seal") %>%
   rename(variable = Variable, importance = Importance) %>%
   select(species, variable, importance)
+
+# marginal effect
+
+explainer_rf_hs <- explain_tidymodels(
+  rf_final_fit_hs,
+  data = dplyr::select(model_train, -hs_response),
+  y = as.integer(model_train$hs_response),
+  verbose = FALSE
+)
+
+pdp_rf_hs <- model_profile(explainer_rf_hs, 
+                           N = NULL, 
+                           variables = c("net_mesh_size_in",
+                                         "sst",
+                                         "julian_day",
+                                         "haul_long_dd",
+                                         "haul_lat_dd",
+                                         "soak_hr",
+                                         "dist_km",
+                                         "haul_depth_fa"), 
+                           groups = NULL)
+
+
+pdp_rf_df_hs <- as.data.frame(pdp_rf_hs$agr_profiles) %>%
+  select(-"_label_",-"_ids_") %>%
+  rename(variable = "_vname_", value = "_x_", prob = "_yhat_") %>%
+  # Format variables
+  mutate(variable=recode_factor(variable, 
+                                "haul_long_dd"="Longitude (°W)",     
+                                "julian_day"="Julian day",      
+                                "sst"="Temperature (°C)",             
+                                "haul_lat_dd"="Latitude (°N)",
+                                "net_mesh_size_in"="Mesh size (cm)",
+                                "dist_km"="Shore distance (km)",
+                                "haul_depth_fa"="Depth (fathoms)",    
+                                "soak_hr"="Soak time (hr)")) %>% 
+  # Remove outlier values (BUT WE SHOULD DO THIS RIGHT SOMEWHERE)
+  filter(!(variable=="Depth (fathoms)" & value>100)) %>% 
+  filter(!(variable=="Shore distance (km)" & value>20)) %>% 
+  filter(!(variable=="Soak time (hr)" & value>96)) %>%
+  # add species column
+  mutate(species = "Harbor seal")
+
+
+
+
+
 
 # soupfin shark
 
@@ -222,6 +318,8 @@ rf_final_ss <- finalize_workflow(rf_workflow, ss_best_model)
 
 rf_final_fit_ss <- fit(rf_final_ss, data = model_train)
 
+# variable importance
+
 ss_vi_df <- rf_final_fit_ss %>%
   extract_fit_parsnip %>%
   vi() %>%
@@ -230,9 +328,68 @@ ss_vi_df <- rf_final_fit_ss %>%
   rename(variable = Variable, importance = Importance) %>%
   select(species, variable, importance)
 
+# marginal effect
+
+explainer_rf_ss <- explain_tidymodels(
+  rf_final_fit_ss,
+  data = dplyr::select(model_train, -ss_response),
+  y = as.integer(model_train$ss_response),
+  verbose = FALSE
+)
+
+pdp_rf_ss <- model_profile(explainer_rf_ss, 
+                           N = NULL, 
+                           variables = c("net_mesh_size_in",
+                                         "sst",
+                                         "julian_day",
+                                         "haul_long_dd",
+                                         "haul_lat_dd",
+                                         "soak_hr",
+                                         "dist_km",
+                                         "haul_depth_fa"), 
+                           groups = NULL)
+
+
+pdp_rf_df_ss <- as.data.frame(pdp_rf_ss$agr_profiles) %>%
+  select(-"_label_",-"_ids_") %>%
+  rename(variable = "_vname_", value = "_x_", prob = "_yhat_") %>%
+  # Format variables
+  mutate(variable=recode_factor(variable, 
+                                "haul_long_dd"="Longitude (°W)",     
+                                "julian_day"="Julian day",      
+                                "sst"="Temperature (°C)",             
+                                "haul_lat_dd"="Latitude (°N)",
+                                "net_mesh_size_in"="Mesh size (cm)",
+                                "dist_km"="Shore distance (km)",
+                                "haul_depth_fa"="Depth (fathoms)",    
+                                "soak_hr"="Soak time (hr)")) %>% 
+  # Remove outlier values (BUT WE SHOULD DO THIS RIGHT SOMEWHERE)
+  filter(!(variable=="Depth (fathoms)" & value>100)) %>% 
+  filter(!(variable=="Shore distance (km)" & value>20)) %>% 
+  filter(!(variable=="Soak time (hr)" & value>96)) %>%
+  # add species column
+  mutate(species = "Soupfin shark")
+
+
+
+
+
+
+################# Final table ####################
+
+# variable importance
+
 vi_df_final <- rbind(sl_vi_df, hs_vi_df, ss_vi_df)
 
+me_df_final <- rbind(pdp_rf_df_sl, pdp_rf_df_hs, pdp_rf_df_ss)
+
+# marginal effect
+
 write.csv(vi_df_final, file = "model_result/variable_importance.csv")
+
+write.csv(me_df_final, file = "model_result/marginal_effects.csv")
+
+
 
 
 
