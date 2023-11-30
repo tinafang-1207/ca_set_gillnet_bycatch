@@ -28,27 +28,32 @@ slion_orig <- readxl::read_excel(file.path(indir, "california_sea_lion.xlsx"))
 eseal <- eseal_orig %>% 
   rename(n_mid=n_animals) %>% 
   mutate(species="Northern elephant seal",
+         stock="Central California",
          units="Number of births",
          type="Observed")
 hseal <- hseal_orig %>% 
   rename(n_mid=n_animals) %>% 
   mutate(species="Harbor seal",
+         stock="California",
          units="Number of animals",
          type="Observed")
 slion <- slion_orig %>% 
   mutate(species="California sea lion",
-         region="Statewide",
+         stock="US West Coast",
+         region="US West Coast",
          units="Number of animals",
          type="Observed") 
 porp_mont <- porp_mont_orig %>% 
   rename(n_mid=n_med) %>% 
   mutate(species="Harbor porpoise",
+         stock="Monterey Bay",
          region="Monterey Bay",
          units="Number of animals",
          type="Observed") 
 porp_morr <- porp_morr_orig %>% 
   rename(n_mid=n_med) %>% 
   mutate(species="Harbor porpoise",
+         stock="Morro Bay",
          region="Morro Bay",
          units="Number of animals",
          type="Observed") 
@@ -66,6 +71,7 @@ interpolate_n <- function(df){
   
   # Grab species, region, units
   spp <- df$species %>% unique()
+  stock <- df$stock %>% unique()
   reg <- df$region %>% unique()
   units <- df$units %>% unique()
   
@@ -74,6 +80,7 @@ interpolate_n <- function(df){
   
   # Create a template dataframe with all years
   template_df <- data.frame(species=spp,
+                            stock=stock,
                             region=reg,
                             units=units,
                             year = complete_years,
@@ -84,7 +91,7 @@ interpolate_n <- function(df){
     # Add a column to indicate obs/inter
     mutate(type=ifelse(is.na(n_mid), "Interpolated", type)) %>% 
     # Arrange
-    select(species, region, units, year, type, everything())
+    select(species, stock, region, units, year, type, everything())
   
   # Linearly interpolate missing values
   interpolated_df <- merged_df %>%
@@ -109,10 +116,9 @@ hseal_ci <- interpolate_n(hseal %>% filter(region=="Channel Islands"))
 # Merge
 data <- bind_rows(eseal_ci, eseal_ccal, hseal_main, hseal_ci, slion, porp_mont, porp_morr) %>% 
   # Add stock
-  mutate(stock=paste0(species, " (", region, ")")) %>% 
-  mutate(stock=ifelse(species=="Harbor porpoise", stock, species)) %>% 
+  mutate(stock_label=paste0(species, " (", stock, ")")) %>% 
   # Arrange
-  select(stock, species, region, year, units, type, n_mid, n_lo, n_hi)
+  select(species, stock, stock_label, region, year, units, type, n_mid, n_lo, n_hi)
 
 
 # Export
@@ -125,7 +131,7 @@ saveRDS(data, file=file.path(outdir, "stock_assessment_data.Rds"))
 # Plot data
 options(scipen = 999)
 g <- ggplot(data, aes(x=year, y=n_mid, fill=region, alpha=type)) +
-  facet_wrap(~stock, scale="free", ncol=3) +
+  facet_wrap(~stock_label, scale="free", ncol=3) +
   geom_bar(stat="identity") +
   geom_errorbar(mapping=aes(x=year, ymin=n_lo, ymax=n_hi), width=0) +
   # Labels

@@ -17,14 +17,15 @@ plotdir <- "figures"
 
 # Read data
 data <- readRDS(file=file.path(outdir, "stock_assessment_data.Rds")) %>% 
+  mutate(stock_label=gsub(" \\(", "\n(", stock_label)) %>% 
   mutate(type=recode_factor(type,
                             "Observed"="Reported",
                             "Interpolated"="Interpolated"))
+unique(data$stock_label)
 
 # Read PBRs 
 pbrs_orig <- readxl::read_excel(file.path(outdir, "pbrs.xlsx")) %>% 
-  rename(region=stock) %>% 
-  mutate(stock=ifelse(species=="Harbor porpoise", paste0(species, " (", region, ")"), species))
+  mutate(stock_label=paste0(species, "\n(", stock, ")"))
 
 
 # Build PBR key
@@ -33,25 +34,28 @@ pbrs_orig <- readxl::read_excel(file.path(outdir, "pbrs.xlsx")) %>%
 # PBR key
 pbr_key <- data %>% 
   # XY coord
-  group_by(stock, year) %>% 
+  group_by(stock_label, species, year) %>% 
   summarise(n_hi=sum(n_hi),
             n_mid=sum(n_mid)) %>% 
   ungroup() %>% 
-  group_by(stock) %>% 
+  group_by(stock_label, species) %>% 
   summarize(x=min(year),
             y1=max(n_hi),
             y2=max(n_mid),
-            y=pmax(y1, y2, na.rm = T) * 0.95) %>% 
+            y=pmax(y1, y2, na.rm = T) * 0.97) %>% 
   ungroup() %>% 
   select(-c(y1, y2)) %>% 
   # Add PBR
-  left_join(pbrs_orig %>% select(stock, pbr)) %>% 
-  mutate(pbr_label=paste0("PBR: ", pbr))
+  left_join(pbrs_orig %>% select(stock_label, pbr), by="stock_label") %>% 
+  mutate(pbr_label=paste0("PBR: ", prettyNum(pbr, ",")))
   
 
 
 # Plot data
 ################################################################################
+
+# Reg years
+reg_years <- c(1987, 1994, 2002)
 
 # Setup theme
 my_theme <-  theme(axis.text=element_text(size=7),
@@ -60,7 +64,7 @@ my_theme <-  theme(axis.text=element_text(size=7),
                    axis.title.x=element_blank(),
                    legend.text=element_text(size=7),
                    legend.title=element_blank(),
-                   strip.text=element_text(size=8),
+                   strip.text=element_text(size=7),
                    # Gridlines
                    panel.grid.major = element_blank(), 
                    panel.grid.minor = element_blank(),
@@ -72,13 +76,15 @@ my_theme <-  theme(axis.text=element_text(size=7),
                    legend.background = element_rect(fill=alpha('blue', 0)))
 
 # Sea lion
-data1 <- data %>% filter(stock=="California sea lion")
-pbr1 <- pbr_key %>% filter(stock=="California sea lion")
+data1 <- data %>% filter(species=="California sea lion")
+pbr1 <- pbr_key %>% filter(species=="California sea lion")
 g1 <- ggplot(data1, aes(x=year, y=n_mid)) +
-  facet_wrap(~stock, scale="free", ncol=3) +
+  facet_wrap(~stock_label, scale="free", ncol=3) +
   geom_bar(stat="identity", fill="grey70") +
   geom_errorbar(mapping=aes(x=year, ymin=n_lo, ymax=n_hi), 
                 width=0, color="grey30", linewidth=0.2) +
+  # Ref line
+  geom_vline(xintercept=reg_years-0.5, color="grey75", linetype="dotted", linewidth=0.2) +
   # PBR
   geom_text(data=pbr1, mapping=aes(x=x, y=y, label=pbr_label), 
             hjust=0, size=2.2, color="black") +
@@ -91,16 +97,18 @@ g1
 
 # Sea lion
 data2 <- data %>% 
-  filter(stock=="Northern elephant seal") %>% 
+  filter(species=="Northern elephant seal") %>% 
   mutate(region=recode_factor(region,
                               "Central California"="Mainland",
                               "Channel Islands"="Channel Islands"))
-pbr2 <- pbr_key %>% filter(stock=="Northern elephant seal")
+pbr2 <- pbr_key %>% filter(species=="Northern elephant seal")
 g2 <- ggplot(data2, aes(x=year, y=n_mid, fill=region, alpha=type)) +
-  facet_wrap(~stock, scale="free", ncol=3) +
+  facet_wrap(~stock_label, scale="free", ncol=3) +
   geom_bar(stat="identity", position=position_stack(reverse = TRUE)) +
   geom_errorbar(mapping=aes(x=year, ymin=n_lo, ymax=n_hi), 
                 width=0, color="grey30", linewidth=0.2) +
+  # Ref line
+  geom_vline(xintercept=reg_years-0.5, color="grey75", linetype="dotted", linewidth=0.2) +
   # PBR
   geom_text(data=pbr2, mapping=aes(x=x, y=y, label=pbr_label), 
             hjust=0, size=2.2, color="black", inherit.aes = F) +
@@ -112,17 +120,19 @@ g2 <- ggplot(data2, aes(x=year, y=n_mid, fill=region, alpha=type)) +
   scale_alpha_manual(name="", values=c(1,0.6)) +
   # Theme
   theme_bw() + my_theme +
-  theme(legend.position = c(0.28, 0.7))
+  theme(legend.position = c(0.28, 0.72))
 g2
 
 # Harbor seal
-data3 <- data %>% filter(stock=="Harbor seal") %>% 
+data3 <- data %>% filter(species=="Harbor seal") %>% 
   mutate(region=factor(region, levels=c("Mainland", "Channel Islands")))
-pbr3 <- pbr_key %>% filter(stock=="Harbor seal")
+pbr3 <- pbr_key %>% filter(species=="Harbor seal")
 g3 <- ggplot(data3, aes(x=year, y=n_mid, fill=region, alpha=type)) +
-  facet_wrap(~stock, scale="free", ncol=3) +
+  facet_wrap(~stock_label, scale="free", ncol=3) +
   geom_bar(stat="identity", position=position_stack(reverse = TRUE)) +
   geom_errorbar(mapping=aes(x=year, ymin=n_lo, ymax=n_hi), width=0) +
+  # Ref line
+  geom_vline(xintercept=reg_years-0.5, color="grey75", linetype="dotted", linewidth=0.2) +
   # PBR
   geom_text(data=pbr3, mapping=aes(x=x, y=y, label=pbr_label), 
             hjust=0, size=2.2, color="black", inherit.aes = F) +
@@ -138,30 +148,14 @@ g3 <- ggplot(data3, aes(x=year, y=n_mid, fill=region, alpha=type)) +
 g3
 
 # Harbor porpoise 
-data4 <- data %>% filter(stock=="Harbor porpoise (Monterey Bay)")
-pbr4 <- pbr_key %>% filter(stock=="Harbor porpoise (Monterey Bay)")
-g4 <- ggplot(data4, aes(x=year, y=n_mid)) +
-  facet_wrap(~stock, scale="free", ncol=3) +
-  geom_bar(stat="identity", fill="grey70") +
-  geom_errorbar(mapping=aes(x=year, ymin=n_lo, ymax=n_hi), 
-                width=0, color="grey30", linewidth=0.2) +
-  # PBR
-  geom_text(data=pbr4, mapping=aes(x=x, y=y, label=pbr_label), 
-            hjust=0, size=2.2, color="black") +
-  # Labels
-  labs(x="Year", y="Number of animals") +
-  scale_x_continuous(breaks=seq(1950,2020,10), lim=c(NA, 2020)) +
-  # Theme
-  theme_bw() + my_theme
-g4
-
-# Harbor porpoise 
-data5 <- data %>% filter(stock=="Harbor porpoise (Morro Bay)")
-pbr5 <- pbr_key %>% filter(stock=="Harbor porpoise (Morro Bay)")
+data5 <- data %>% filter(stock_label=="Harbor porpoise\n(Morro Bay)")
+pbr5 <- pbr_key %>% filter(stock_label=="Harbor porpoise\n(Morro Bay)")
 g5 <- ggplot(data5, aes(x=year, y=n_mid)) +
-  facet_wrap(~stock, scale="free", ncol=3) +
+  facet_wrap(~stock_label, scale="free", ncol=3) +
   geom_bar(stat="identity", fill="grey70") +
   geom_errorbar(mapping=aes(x=year, ymin=n_lo, ymax=n_hi), width=0, color="grey30", linewidth=0.2) +
+  # Ref line
+  geom_vline(xintercept=reg_years-0.5, color="grey75", linetype="dotted", linewidth=0.2) +
   # PBR
   geom_text(data=pbr5, mapping=aes(x=x, y=y, label=pbr_label), 
             hjust=0, size=2.2, color="black") +
@@ -172,8 +166,28 @@ g5 <- ggplot(data5, aes(x=year, y=n_mid)) +
   theme_bw() + my_theme
 g5
 
+# Harbor porpoise 
+data4 <- data %>% filter(stock_label=="Harbor porpoise\n(Monterey Bay)")
+pbr4 <- pbr_key %>% filter(stock_label=="Harbor porpoise\n(Monterey Bay)")
+g4 <- ggplot(data4, aes(x=year, y=n_mid)) +
+  facet_wrap(~stock_label, scale="free", ncol=3) +
+  geom_bar(stat="identity", fill="grey70") +
+  geom_errorbar(mapping=aes(x=year, ymin=n_lo, ymax=n_hi), 
+                width=0, color="grey30", linewidth=0.2) +
+  # Ref line
+  geom_vline(xintercept=reg_years-0.5, color="grey75", linetype="dotted", linewidth=0.2) +
+  # PBR
+  geom_text(data=pbr4, mapping=aes(x=x, y=y, label=pbr_label), 
+            hjust=0, size=2.2, color="black") +
+  # Labels
+  labs(x="Year", y="Number of animals") +
+  scale_x_continuous(breaks=seq(1950,2020,10), lim=c(NA, 2020)) +
+  # Theme
+  theme_bw() + my_theme
+g4
+
 # Merge plots
-g <- gridExtra::grid.arrange(g1, g2, g3, g4, g5, ncol=3)
+g <- gridExtra::grid.arrange(g1, g2, g3, g5, g4, ncol=3)
 g
 
 # Export plot
