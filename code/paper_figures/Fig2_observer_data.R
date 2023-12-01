@@ -24,14 +24,13 @@ spp_key <- read.csv("data/keys/species_key_final.csv", as.is=T)
 effort_df <- read.csv(file=file.path(datadir2, "CA_3.5in_set_gillnet_effort_by_year.csv")) %>% 
   rename(ntrips_tot=nvesseldays)
 
+# Read block key
+block_key <- readRDS("data/strata/block_strata_key.Rds")
+
 
 
 # Build data
 ################################################################################
-
-# Block ids
-ci_blocks <- c(684:690, 707:713, 813:814, 760:762, 806:807, 829, 850, 849, 867, 765)
-ventura_blocks <- c(651:663, 664:677, 697, 776, 691:696, 714:717, 701:706, 678:683) 
 
 # Format data
 data <- data_orig %>% 
@@ -45,13 +44,18 @@ data <- data_orig %>%
                            month %in% c(9,10,11) ~ "4",
                            T ~ "Unknown")) %>% 
   # Add strata
-  mutate(strata=case_when(block_id %in% ci_blocks ~ "Channel Isl.",
-                          block_id %in% ventura_blocks ~ "Ventura",
-                          block_id <= 650 ~ "Central CA",
-                          T ~ "Southern CA")) %>% 
+  left_join(block_key, by="block_id") %>% 
   # Order strata
-  mutate(strata=factor(strata, levels=c("Central CA", "Ventura", 
-                                        "Channel Isl.", "Southern CA")))
+  mutate(strata=ifelse(is.na(strata), "Unassigned", strata)) %>% 
+  mutate(strata=recode_factor(strata,
+                              "Northern California"="Northern\nCalifornia", 
+                              "San Francisco"="San\nFrancisco",       
+                              "Monterey Bay"="Monterey\nBay",         
+                              "Morro Bay"="Morro\nBay",            
+                              "Ventura"="Ventura",              
+                              "Channel Islands"="Channel\nIslands",     
+                              "Southern California"="Southern\nCalifornia",
+                              "Unassigned"="Unassigned\n(no GPS coords)"))
 
 # Totals
 stats_tots <- data %>%
@@ -104,8 +108,9 @@ ggplot(stats_trip,  aes(x=year, y=nsets1, group=year)) +
 # Stats by strata
 stats_strata <- data %>% 
   group_by(year, strata, quarter) %>% 
-  mutate(nsets=n_distinct(set_id),
-         ntrips=n_distinct(trip_id))
+  summarize(nsets=n_distinct(set_id),
+            ntrips=n_distinct(trip_id)) %>% 
+  filter(strata!="Unassigned\n(no GPS coords)")
 
 # Year borrowing key
 year_key <- tibble(year=c(1995:1998, 2001:2005,2008,2009, 2014:2016)) %>% 
@@ -143,7 +148,7 @@ my_theme <-  theme(axis.text=element_text(size=6),
                    # Legend
                    legend.background = element_rect(fill=alpha('blue', 0)))
 
-# Plot observer countss
+# Plot observer counts
 g1 <- ggplot(stats_tots, aes(y=reorder(comm_name, n), x=n, fill=type)) +
   geom_bar(stat="identity") +
   # Labels
@@ -169,7 +174,7 @@ g2 <- ggplot(stats_nsets, aes(x=year, y=ntrips)) +
   # Plot perc obs labels
   geom_text(mapping=aes(label=prop_obs_label), color="grey30", size=1.7, angle=90, hjust=-0.1) +
   # Plot borrowed year labels
-  geom_text(data=year_key, mapping=aes(x=year, y=0, label=year_use), color="grey70", size=1.7, angle=90, hjust=0) +
+  # geom_text(data=year_key, mapping=aes(x=year, y=0, label=year_use), color="grey70", size=1.7, angle=90, hjust=0) +
   # Labels
   labs(x="", y="Number of observed trips", tag="B") +
   # Axes
