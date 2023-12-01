@@ -10,12 +10,16 @@ Please contact Yutian Fang (yutianfang@ucsb.edu) with any questions about this p
 
 The repository is structured as follows:
 
-1. **code:** code used to perform the analysis
-  + Item 1a data_cleaning
-  + Item 1a paper_figures
-3. **data:** non-confidential data used in the analysis
-4. **literature_analysis:** relevant references for the project
-5. **model_result:** output from the modeling analysis
+* **code:** code used to perform the analysis
+  - data_cleaning: code to clean confidential data
+  - paper_figures: code to make figures included in paper
+  - modelling: code to run modeling analysis
+  - function: functions to support modelling analyes (move to modelling)
+  - exploration_figure: exploratory analyses
+  - TO BE DELETED: process_CDFW_logbook, process_observer_data
+* **data:** non-confidential data used in the analysis
+* **literature_analysis:** relevant references for the project
+* **model_result:** output from the modeling analysis
 
 # Acknowledgements
 
