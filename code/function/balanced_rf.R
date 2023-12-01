@@ -1,5 +1,5 @@
 
-# Balanced random forest Function
+# Balance random forest Function
 
 #############################################################################
 ######################### Balanced random forest ############################
@@ -153,9 +153,27 @@ fit_balanced_rf_model <- function(spp, model_orig) {
                       model_down_best=model_down_best,
                       model_smote_best=model_smote_best)
   
+  #Finalize workflow
+  model_down_final_workflow <- finalize_workflow(rf_workflow_down, model_down_best)
+  model_up_final_workflow <- finalize_workflow(rf_workflow_up, model_up_best)
+  model_smote_final_workflow <- finalize_workflow(rf_workflow_smote,model_smote_best)
+  
+  # fit training data in the best model
+  model_down_final_fit <- fit(model_down_final_workflow, data = model_train_balance)
+  model_up_final_fit <- fit(model_up_final_workflow, data = model_train_balance)
+  model_smote_final_fit <- fit(model_smote_final_workflow, data = model_train_balance)
+  
+  # Merge final fit result
+  # we need the final fit object to make variable importance plot and marginal effects plot
+  final_fit <- list(model_down_final_fit = model_down_final_fit,
+                    model_up_final_fit = model_up_final_fit,
+                    model_smote_final_fit = model_smote_final_fit)
+  
+  
   # Merge outputs
   output <- list(rf_all_df=rf_all_df, # tuning results - a dataframe
                  best_models = best_models, # best models - list of model objects
+                 final_fit = final_fit, # final fit of the best model - list of model objects
                  data_train=model_train_balance, # training data
                  data_test=model_test_balance # test data
   )
