@@ -15,7 +15,7 @@ gisdatadir <- "data/gis_data"
 
 # Read data
 datadir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/processed"
-data_orig <- readRDS(file.path(datadir, "CDFW_1981_2020_gillnet_logbook_data.Rds"))
+data_orig <- readRDS(file.path(datadir, "CDFW_1981_2020_gillnet_logbook_data_use.Rds"))
 outdir <- "data/effort_for_jim"
 
 # Build data
@@ -26,10 +26,10 @@ data <- data_orig %>%
   # Set gillnet
   filter(net_type=="Set" & year!=2022) %>% 
   # Add vessel days
-  mutate(vessel_day=paste(vessel_id_use, date, sep="-")) %>% 
+  mutate(vessel_day=paste(vessel_id, date, sep="-")) %>% 
   # Summarize by year
   group_by(year) %>% 
-  summarize(n_vessels=n_distinct(vessel_id_use),
+  summarize(n_vessels=n_distinct(vessel_id),
             n_vessel_days=n_distinct(vessel_day)) %>% 
   ungroup()
 
@@ -37,7 +37,7 @@ data <- data_orig %>%
 sum(data$n_vessels<3)
 
 # Export data
-write.csv(data, file=file.path(outdir, "1981_2022_ca_set_gillnet_effort.csv"), row.names=F)
+write.csv(data, file=file.path(outdir, "1981_2021_ca_set_gillnet_effort.csv"), row.names=F)
 
 
 # Build data
