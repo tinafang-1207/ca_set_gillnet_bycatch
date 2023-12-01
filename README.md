@@ -4,6 +4,8 @@ This is the Github repository for the following paper in progress:
 
 Fang Y, Carretta JV, Free CM (in prep) Estimates and drivers of protected species bycatch in the California set gillnet fishery. _In prep._
 
+Please contact Yutian Fang (yutianfang@ucsb.edu) with any questions about this project or repository.
+
 # Respository structure
 
 The repository is structured as follows:
