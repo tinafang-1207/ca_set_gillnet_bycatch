@@ -10,10 +10,12 @@ Please contact Yutian Fang (yutianfang@ucsb.edu) with any questions about this p
 
 The repository is structured as follows:
 
-1. **code:** code
-2. **data:** data
-3. **literature_analysis:** relevant references for the project
-4. **model_result:** output from the modeling analysis
+1. **code:** code used to perform the analysis
+  + Item 1a data_cleaning
+  + Item 1a paper_figures
+3. **data:** non-confidential data used in the analysis
+4. **literature_analysis:** relevant references for the project
+5. **model_result:** output from the modeling analysis
 
 # Acknowledgements
 
