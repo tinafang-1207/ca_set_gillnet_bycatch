@@ -1,4 +1,4 @@
-# Bycatch in the CA set gillnet fishery
+# Bycatch in the California set gillnet fishery
 
 This is the Github repository for the following paper in progress:
 
