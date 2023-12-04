@@ -43,6 +43,9 @@ fit_weighted_rf_model <- function(spp, model_orig) {
   # create the best model list
   best_model_list <- list()
   
+  # create the final model fit list
+  model_fit_list <- list()
+  
   for(i in 1:length(wt_vec)){
     
     #set up wt_do
@@ -108,13 +111,21 @@ fit_weighted_rf_model <- function(spp, model_orig) {
     # Extract the best model via cross-validation from each weight
     model_weighted_best <- select_best(rf_res_weighted, metric = "kap")
     
+    # finalize the best model workflow for each weight
+    model_weighted_final_workflow <- finalize_workflow(rf_workflow_weighted, model_weighted_best)
+    
+    # finalize the best fit for each weight
+    model_weighted_final_fit <- fit(model_weighted_final_workflow, data = model_train_weighted)
+    
     
     if(i == 1) {
       df_out_weighted <- rf_res_weighted_df
       best_model_list <- list(model_weighted_best)
+      model_fit_list <- list(model_weighted_final_fit)
     }else{
       df_out_weighted <- rbind(df_out_weighted, rf_res_weighted_df)
       best_model_list <- append(best_model_list, list(model_weighted_best))
+      model_fit_list <- append(model_fit_list, list(model_weighted_final_fit))
     }
     
   }
@@ -125,9 +136,13 @@ fit_weighted_rf_model <- function(spp, model_orig) {
   # Extract the best model list
   best_model_list <- best_model_list
   
+  # Extract the final model fit for each weight
+  model_fit_list <- model_fit_list
+  
   # format the output to return
   output_weighted <- list(rf_weighted_final = df_out_weighted_final, # tuning results - a dataframe
-                          best_model = best_model_list, # best models - list of model objects
+                          best_models = best_model_list, # best models - list of model objects
+                          final_fit = model_fit_list, # model fit for each model under best weight
                           data_train=model_train_weighted, # training data
                           data_test=model_test_weighted # test data
   )
