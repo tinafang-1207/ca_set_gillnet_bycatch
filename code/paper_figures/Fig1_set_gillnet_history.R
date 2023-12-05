@@ -30,6 +30,9 @@ mexico <- rnaturalearth::ne_countries(country="Mexico", returnclass = "sf")
 blocks <- wcfish::blocks
 blocks_df <- blocks %>% sf::st_drop_geometry()
 
+# Strata 
+block_key <- readRDS("data/strata/block_strata_key.Rds")
+
 # State waters
 state_waters <- readRDS(file.path(gisdatadir, "CA_state_waters_polyline.Rds"))
 
@@ -42,6 +45,9 @@ state_waters <- readRDS(file.path(gisdatadir, "CA_state_waters_polyline.Rds"))
 
 # Reg years
 reg_years <- c(1987, 1994, 2002)
+reg_dates <- lubridate::ymd(c("1987-05-14",
+                              "1994-01-01",
+                              "2002-04-26"))
 
 # Block ids
 ci_blocks <- c(684:690, 707:713, 813:814, 760:762, 806:807, 829, 850, 849, 867, 765)
@@ -50,7 +56,9 @@ ventura_blocks <- c(651:663, 664:677, 697, 776, 691:696, 714:717, 701:706, 678:6
 # Build data
 data <- data_orig %>%
   # Add period
-  mutate(period=cut(year, breaks=c(1980, reg_years, 2023), 
+  # mutate(period=cut(year, breaks=c(1980, reg_years, 2023), 
+  #                   labels=c("1. 1981-1986", "2. 1987-1993", "3. 1994-2001", "4. 2002-present"), right=F)) %>% 
+  mutate(period=cut(date, breaks=c(lubridate::ymd("1980-01-01"), reg_dates, lubridate::ymd("2023-12-31")), 
                     labels=c("1. 1981-1986", "2. 1987-1993", "3. 1994-2001", "4. 2002-present"), right=F)) %>% 
   # Add quarter
   mutate(month=lubridate::month(date),
@@ -60,13 +68,9 @@ data <- data_orig %>%
                            month %in% c(9,10,11) ~ "Fall",
                            T ~ "Unknown")) %>% 
   # Add strata
-  mutate(strata=case_when(block_id %in% ci_blocks ~ "Channel Islands",
-                          block_id %in% ventura_blocks ~ "Ventura",
-                          block_id <= 650 ~ "Central California",
-                          T ~ "Southern California")) %>% 
-  # Order strata
-  mutate(strata=factor(strata, levels=c("Central California", "Ventura", 
-                                        "Channel Islands", "Southern California")))
+  left_join(block_key) %>% 
+  # Filter
+  filter(year<=2021)
 
 # Inspect period key
 period_key <- data %>% 
@@ -75,11 +79,31 @@ period_key <- data %>%
 # Build annual time series
 stats_yr <- data %>%
   # Summarize
-  group_by(period, year) %>%
+  group_by(year) %>%
   summarize(nsets=n_distinct(set_id),
             nvesseldays=n_distinct(trip_id),
             nvessels=n_distinct(vessel_id))  %>%
   ungroup()
+
+# Build annual effort by strata
+stats_yr_strata <- data %>%
+  # Summarize
+  group_by(year, strata) %>% 
+  summarize(nsets=n_distinct(set_id),
+            nvesseldays=n_distinct(trip_id),
+            nvessels=n_distinct(vessel_id))  %>%
+  ungroup() %>% 
+  # Make sure non-confidential 
+  filter(nvessels>=3) %>% 
+  # Format strata
+  mutate(strata=ifelse(is.na(strata), "Unknown", strata),
+         strata=factor(strata, levels=c("Southern California",
+                                        "Channel Islands",
+                                        "Ventura",
+                                        "Morro Bay",
+                                        "Monterey Bay",
+                                        "San Francisco",
+                                        "Unknown")))
 
 # Export data
 write.csv(stats_yr, file=file.path(datadir, "CA_3.5in_set_gillnet_effort_by_year.csv"), row.names=F)
@@ -123,12 +147,16 @@ count(data, period, year)
 ################################################################################
 
 # Bays
-bays_df <- matrix(c("SF\nBay", 37.840267, -122.143795,
-                    "Monterey\nBay", 36.822049, -121.726172,
-                    "Morro\nBay", 35.383806, -120.818686), ncol=3, byrow = T) %>% 
+bays_df <- matrix(c("San\nFrancisco", 37.8, -122.1,
+                    "Monterey\nBay", 36.8, -121.7,
+                    "Morro\nBay", 35.4, -120.7,
+                    "Ventura", 34.7, -120,
+                    "Southern\nCalifornia", 34.2,  -118.5), ncol=3, byrow = T) %>% 
   as.data.frame() %>% setNames(c("bay", "lat_dd", "long_dd")) %>% 
   mutate(lat_dd=as.numeric(lat_dd),
-         long_dd=as.numeric(long_dd))
+         long_dd=as.numeric(long_dd)) %>% 
+  # Add period
+  mutate(period="1. 1981-1986" %>% factor(levels=levels(data$period)))
 
 # Reg data
 reg_data <- tibble(year=reg_years,
@@ -155,6 +183,14 @@ base_theme <- theme(axis.text=element_text(size=7),
                     legend.key = element_rect(fill = NA),
                     legend.background = element_rect(fill=alpha('blue', 0)))
 
+# Strata lines
+lats <- c(33.84, 34.5, 35.66, 37.33, 38.84)
+xends <- c(-121.5, -122, -122.5, -124, -125)
+lat_df <- tibble(x=-117,
+                 xend=xends,
+                 y=lats,
+                 yend=lats)
+
 # Plot map
 g1 <- ggplot(data=stats_blocks_sf, mapping=aes(fill=prop)) +
   facet_wrap(~period, nrow=1) +
@@ -164,7 +200,8 @@ g1 <- ggplot(data=stats_blocks_sf, mapping=aes(fill=prop)) +
   geom_sf(data=state_waters, color="grey30", linewidth=0.2, inherit.aes = F) +
   # Plot Point Arguello
   # geom_hline(yintercept = 34.577201, linewidth=0.2) +
-  geom_segment(x=-122.5, xend=-117, y=34.577201, yend=34.577201, linewidth=0.2) +
+  # geom_segment(x=-122.5, xend=-117, y=34.577201, yend=34.577201, linewidth=0.2) +
+  geom_segment(data=lat_df, mapping=aes(y=y, yend=yend, x=x, xend=xend), inherit.aes = F, linewidth=0.2) +
   # Land
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data=mexico, fill="grey85", col="white", linewidth=0.2, inherit.aes = F) +
@@ -210,17 +247,36 @@ g2 <- ggplot(stats_yr, aes(x=year, y=nvessels)) +
   theme(axis.title.x=element_blank())
 g2
 
-# Number of vessel days
-g3 <- ggplot(stats_yr, aes(x=year, y=nvesseldays)) +
+# # Number of vessel days (line graph version)
+# g3 <- ggplot(stats_yr, aes(x=year, y=nvesseldays)) +
+#   # Reference lines
+#   geom_vline(xintercept=reg_years, linetype="dotted", color="grey70", linewidth=0.25) +
+#   # Data
+#   geom_line() +
+#   # Labels
+#   labs(x="Year", y="Number of vessel days", tag="C") +
+#   # Theme
+#   theme_bw() + base_theme +
+#   theme(axis.title.x=element_blank())
+# g3
+
+# Number of vessel days (bar graph version)
+g3 <- ggplot(stats_yr_strata, aes(x=year, y=nvesseldays, fill=strata)) +
   # Reference lines
   geom_vline(xintercept=reg_years, linetype="dotted", color="grey70", linewidth=0.25) +
   # Data
-  geom_line() +
+  geom_bar(stat="identity", color="grey30", linewidth=0.1,
+           position = position_stack(reverse = TRUE)) +
   # Labels
   labs(x="Year", y="Number of vessel days", tag="C") +
+  # Legend
+  scale_fill_ordinal(name="") +
+  guides(fill = guide_legend(reverse=TRUE)) +
   # Theme
   theme_bw() + base_theme +
-  theme(axis.title.x=element_blank())
+  theme(axis.title.x=element_blank(),
+        legend.position = c(0.7, 0.8),
+        legend.key.size = unit(0.18, "cm"))
 g3
 
 # Revenues

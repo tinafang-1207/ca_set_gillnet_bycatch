@@ -29,6 +29,9 @@ block_key <- readRDS(file="data/strata/block_strata_key.Rds")
 # Build data
 ################################################################################
 
+# Reference lines
+lats <- c(34, 36, 37)
+
 # Build data
 blocks <-  blocks_orig %>% 
   # California
@@ -68,12 +71,17 @@ my_theme <- theme(axis.text=element_text(size=6),
                   legend.key.size = unit(0.5, "cm"),
                   legend.background = element_rect(fill=alpha('blue', 0)))
 
+# Reference lines
+lats <- c(33.84, 34.5, 35.66, 37.33, 38.84)
+
 # Plot data
 g <- ggplot() +
   # Blocks
   geom_sf(data=blocks, mapping=aes(fill=strata), color="grey85") +
   # Plot Point Arguello
   # geom_hline(yintercept = 34.577201, lwd=0.2) +
+  # Plot reference lines
+  geom_segment(mapping=aes(y=lats, yend=lats, xend=rep(-117, 5), x=c(-122, -122.2, -123.2, -124, -125.2))) +
   # Land
   geom_sf(data = usa, fill = "grey85", col = "white", size = 0.2) +
   geom_sf(data=mexico, fill="grey85", col="white", size=0.2) +
