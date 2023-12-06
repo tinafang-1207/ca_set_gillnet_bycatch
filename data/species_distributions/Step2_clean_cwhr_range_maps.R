@@ -36,12 +36,15 @@ eseal <- sf::st_read(file.path(mammaldir, "m173.shp"))
 brco <- sf::st_read(file.path(birddir, "b046.shp"))
 comu <- sf::st_read(file.path(birddir, "b237.shp"))
 
-# Merge data
-data_orig <- bind_rows(slion, hseal, eseal, brco, comu)
+# Projections
+wgs84 <- sf::st_crs("+proj=longlat +datum=WGS84")
 
 
 # Format data
 ################################################################################
+
+# Merge data
+data_orig <- bind_rows(slion, hseal, eseal, brco, comu)
 
 # Format data
 data <- data_orig %>% 
@@ -65,19 +68,25 @@ data <- data_orig %>%
 # Inspect
 head(data)
 
+# Project
+data_wgs84 <- data %>% 
+  sf::st_transform(wgs84)
+
 # Export
-saveRDS(data, file=file.path(outdir, "cwhr_ranges.Rds"))
+saveRDS(data_wgs84, file=file.path(outdir, "cwhr_ranges.Rds"))
 
 
 # Simplify data
 ################################################################################
 
-wgs84 <- sf::st_crs("+proj=longlat +datum=WGS84")
-
+# Simplify data
 data_simple <- data %>% 
   sf::st_simplify(dTolerance=1000) %>% # 1000 m
   sf::st_transform(wgs84)
-  
+
+# Export
+saveRDS(data_simple, file=file.path(outdir, "cwhr_ranges_simplified.Rds"))
+
 
 # Plot data
 ################################################################################
