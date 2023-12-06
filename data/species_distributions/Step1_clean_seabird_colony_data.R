@@ -17,6 +17,8 @@ outdir <- "data/species_distributions/processed"
 # Read data
 data_orig <- sf::st_read(file.path(indir, "fw274np8584.shp"))
 
+# Data: https://purl.stanford.edu/fw274np8584
+# Meta-data: https://databasin.org/datasets/068e2ed72f264851b14dfc4c151607f2/
 
 # Format data
 ################################################################################

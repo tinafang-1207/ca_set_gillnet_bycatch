@@ -16,7 +16,12 @@ datadir <- "data/species_distributions/processed"
 haulouts <- readRDS(file.path(datadir, "2001_2003_harbor_seal_haulouts.Rds"))
 colonies <- readRDS(file.path(datadir,  "2010_seabird_colony_database.Rds" ))
 ranges <- readRDS(file.path(datadir, "cwhr_ranges_simplified.Rds"))
+hporp_ras <- raster::raster(file.path(datadir, "harbor_porpoise_range.tiff"))
 
+# Convert raster
+hporp_ras_df <- hporp_ras %>% 
+  raster::as.data.frame(xy=T) %>% 
+  filter(layer==1)
 
 # Plot data
 ################################################################################
@@ -144,6 +149,8 @@ hporp_lats <- tibble(comm_name="Harbor porpoise",
 # Harbor porpoise
 g6 <- ggplot(hporp_lats) +
   facet_wrap(~comm_name) +
+  # Plot raster
+  geom_tile(data=hporp_ras_df, mapping=aes(x=x, y=y), fill="lightblue") +
   # Stock lines
   geom_hline(mapping=aes(yintercept=lat_dd), linetype="dashed", linewidth=0.3, color="grey30") +
   annotate(geom="text", 
