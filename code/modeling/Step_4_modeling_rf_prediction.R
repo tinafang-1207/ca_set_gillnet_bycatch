@@ -82,6 +82,8 @@ predict_best_model <- function(best_model_fit, predict_data){
   preds_fac <- predict(best_model_fit, predict_data)
   preds_prob <- predict(best_model_fit, predict_data, type = "prob")
   
+  # weight will be vessel-day (will be the trip-id, use n_distinct(trip_id))
+  
   # combine columns
   predict_final <- predict_data %>%
     bind_cols(preds_fac) %>%
@@ -135,6 +137,8 @@ saveRDS(preds_hs_final, file.path("model_result/rf_prediction/rf_hs_spatial_pred
 
 # soupfin shark
 saveRDS(preds_ss_final, file.path("model_result/rf_prediction/rf_ss_spatial_pred.Rds") )
+
+readRDS()
 
 ###########################################################
 ################### Figure making ######################
