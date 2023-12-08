@@ -16,8 +16,11 @@ library(randomForest)
 # notice: this is the fake data to show the spatial pattern
 
 # The SST needs to fix in the future (we want to have average SST from 2010 rather than 2000)
-
 data_predict <- readRDS("data/confidential/processed/pre_model/sealion/fake_spatial_pre_model.Rds")
+
+# read in the logbook data
+logbook <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/processed/CDFW_1981_2020_gillnet_logbook_data_use.Rds") 
+
 
 # read in model results
 
@@ -36,22 +39,23 @@ output_ss_weighted <- readRDS("model_result/weighted_rf/soupfin_shark_model_weig
 ### Extract the model best fit (to training data)
 
 # sealion - weight - 75
-sl <- output_sl_weighted[["final_fit"]][[3]]
+sl_best_fit <- output_sl_weighted[["final_fit"]][[3]]
 
 # harbor seal - SMOTE
-hs <- output_hs_balanced[["final_fit"]][["model_smote_final_fit"]]
+hs_best_fit <- output_hs_balanced[["final_fit"]][["model_smote_final_fit"]]
 
 # soupfin shark - SMOTE
-ss <- output_ss_balanced[["final_fit"]][["model_smote_final_fit"]]
+ss_best_fit <- output_ss_balanced[["final_fit"]][["model_smote_final_fit"]]
+
+# source the spatial risk predict function
+source("code/function/predict_rf.R")
 
 ###########################################################
 ################### model prediction ######################
 ###########################################################
 
 
-
 # Format the predict data
-
 predict_data_format <- data_predict %>%
   rename(haul_lat_dd = lats,
          haul_long_dd = longs,
@@ -65,100 +69,107 @@ predict_data_format <- data_predict %>%
   drop_na()
 
 
-#### list of the best model fit ####
+# make prediction
 
-best_model_fit <- list(sl, hs, ss)
+sealion_spatial_risk <- predict_spatial_risk(best_model_fit = sl_best_fit, predict_data = predict_data_format, spp = "California sea lion")
+seal_spatial_risk <- predict_spatial_risk(best_model_fit = hs_best_fit, predict_data = predict_data_format, spp = "Harbor seal")
+soupfin_spatial_risk <- predict_spatial_risk(best_model_fit = ss_best_fit, predict_data = predict_data_format, spp = "Soupfin shark")
 
+# combine the dataframe
+spatial_risk_final <- rbind(sealion_spatial_risk,
+                            seal_spatial_risk,
+                            soupfin_spatial_risk) %>%
+  rename(Latitude = haul_lat_dd, Longitude = haul_long_dd)
 
-best_model_fit = sl
+# save the combined dataframe
+saveRDS(spatial_risk_final, file.path("model_result/rf_prediction/spatial_risk_final.Rds"))
 
-best_model_fit_run = sl
-
-predict_data = predict_data_format
-  
-# function to predict model
-predict_best_model <- function(best_model_fit, predict_data){
-  
-  preds_fac <- predict(best_model_fit, predict_data)
-  preds_prob <- predict(best_model_fit, predict_data, type = "prob")
-  
-  # weight will be vessel-day (will be the trip-id, use n_distinct(trip_id))
-  
-  # combine columns
-  predict_final <- predict_data %>%
-    bind_cols(preds_fac) %>%
-    bind_cols(preds_prob) %>%
-    rename(!!(paste0(gsub(best_model_fit), "_bycatch_class" )) := .pred_class, 
-           !!(paste0(gsub(best_model_fit), "_bycatch_prob_no")) := .pred_0,
-           !!(paste0(gsub(best_model_fit), "_bycatch_prob_yes")) := .pred_1)
-  
-  return(predict_final)
-
-}
-
-
-# this does not work now (need to change the column names!)
-
-# so I will just predict one by one (this will change later!)
-
-# sealion
-
-preds_fac_sl <- predict(sl, predict_data_format)
-preds_prob_sl <- predict(sl, predict_data_format, type = "prob")
-preds_sl_final <-  predict_data_format %>%
-  bind_cols(preds_fac_sl) %>%
-  bind_cols(preds_prob_sl) %>%
-  rename(sl_bycatch_class = .pred_class, sl_bycatch_prob_no = .pred_0, sl_bycatch_prob_yes = .pred_1)
-
-
-# seal
-preds_fac_hs <- predict(hs, predict_data_format)
-preds_prob_hs <- predict(hs, predict_data_format, type = "prob")
-preds_hs_final <- predict_data_format %>%
-  bind_cols(preds_fac_hs) %>%
-  bind_cols(preds_prob_hs) %>%
-  rename(hs_bycatch_class = .pred_class, hs_bycatch_prob_no = .pred_0, hs_bycatch_prob_yes = .pred_1)
-
-# soupfin shark
-preds_fac_ss <- predict(ss, predict_data_format)
-preds_prob_ss <- predict(ss, predict_data_format, type = "prob")
-preds_ss_final <- predict_data_format %>%
-  bind_cols(preds_fac_ss) %>%
-  bind_cols(preds_prob_ss) %>%
-  rename(ss_bycatch_class = .pred_class, ss_bycatch_prob_no = .pred_0, ss_bycatch_prob_yes = .pred_1)
-
-# save the result
-
-# sealion
-saveRDS(preds_sl_final, file.path("model_result/rf_prediction/rf_sl_spatial_pred.Rds"))
-
-# seal
-saveRDS(preds_hs_final, file.path("model_result/rf_prediction/rf_hs_spatial_pred.Rds"))
-
-# soupfin shark
-saveRDS(preds_ss_final, file.path("model_result/rf_prediction/rf_ss_spatial_pred.Rds") )
-
-readRDS()
 
 ###########################################################
 ################### Figure making ######################
 ###########################################################
 
-# Step 1: we want to have the set numbers after 2010
 
-logbook <- readRDS("data/confidential/processed/processed_CDFW_logbook/CDFW_1980_2022_gillnet_logbook_new_final.Rds")
+# read in geographical reference data
 
-# wait should we weighted by sets? as we agree we can't identify sets from the logbook (but I'll keep going for now)
+usa <- rnaturalearth::ne_states(country = "United States of America", returnclass = "sf")
+mexico <- rnaturalearth::ne_countries(country="Mexico", returnclass = "sf")
 
-# Step 2: calculate the weighted mean
+# base theme
+base_theme <- theme(axis.text=element_text(size=7),
+                    axis.text.y = element_text(angle = 90, hjust = 0.5),
+                    axis.title=element_text(size=8),
+                    legend.text=element_text(size=6),
+                    legend.title=element_text(size=7),
+                    strip.text = element_text(size=8),
+                    plot.tag =element_text(size=9),
+                    plot.title=element_blank(),
+                    # Gridlines
+                    panel.grid.major = element_blank(),
+                    panel.grid.minor = element_blank(),
+                    panel.background = element_blank(),
+                    axis.line = element_line(colour = "black"),
+                    # Legend
+                    legend.key = element_rect(fill = NA),
+                    legend.background = element_rect(fill=alpha('blue', 0)))
 
-# Step 3: make figure
+ggplot() +
+  geom_tile(data = spatial_risk_final, aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
+  geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "RdYlGn") %>% rev()) +
+  coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
+  scale_x_continuous(breaks=seq(-122, -118, 1)) +
+  scale_y_continuous(breaks=seq(32, 35, 1)) +
+  facet_wrap(.~species) +
+  theme_bw() + base_theme
 
+g1 <- ggplot() +
+  geom_tile(data = spatial_risk_final %>% filter(species == "California sea lion"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
+  geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
+  coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
+  scale_x_continuous(breaks=seq(-122, -118, 1)) +
+  scale_y_continuous(breaks=seq(32, 35, 1)) +
+  facet_wrap(.~species) +
+  theme_bw() + base_theme
 
+g1
 
+g2 <- ggplot() +
+  geom_tile(data = spatial_risk_final %>% filter(species == "Harbor seal"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
+  geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
+  coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
+  scale_x_continuous(breaks=seq(-122, -118, 1)) +
+  scale_y_continuous(breaks=seq(32, 35, 1)) +
+  facet_wrap(.~species) +
+  theme_bw() + base_theme
 
+g2
 
+g3 <- ggplot() +
+  geom_tile(data = spatial_risk_final %>% filter(species == "Soupfin shark"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
+  geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
+  coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
+  scale_x_continuous(breaks=seq(-122, -118, 1)) +
+  scale_y_continuous(breaks=seq(32, 35, 1)) +
+  facet_wrap(.~species) +
+  theme_bw() + base_theme
 
+g3
 
+g <- gridExtra::grid.arrange(g1, g2, g3, ncol = 3)
+
+g
+
+plotdir <- "figures"
+
+ggsave(g, filename=file.path(plotdir, "Fig7_spatial_prediction.png"), 
+       width=7, height=6.5, units="in", dpi=600)
 
 
