@@ -29,10 +29,17 @@ obs_hist_orig <- readRDS(file=file.path(datadir2, "ca_set_gillnet_bycatch_estima
 # Build data
 ################################################################################
 
+# 1990 partial effort
+effort_1990perk <- effort_hist_orig %>% 
+  filter(year==1990 & reference=="Perkins et al. 1994")
+
+effort_hist_use <- effort_hist_orig %>% 
+  filter(!(year==1990 & reference=="Perkins et al. 1994"))
+
 # Expand historical effort data to include NAs for missing years
 effort_hist <- effort_df %>% 
   select(year) %>% 
-  left_join(effort_hist_orig %>% select(year, nvesseldays, nsets, nvesseldays_obs))
+  left_join(effort_hist_use %>% select(year, nvesseldays, nsets, nvesseldays_obs))
 
 # Format our observer data
 obs <- obs_orig %>% 
@@ -84,6 +91,8 @@ g1 <- ggplot(data=effort_df, mapping=aes(x=year, y=nvesseldays)) +
   # Historical estimates
   geom_path(data=effort_hist, linewidth=0.3) +
   geom_point(data=effort_hist, size=0.6) +
+  geom_text(data=effort_hist %>% filter(year==1989), mapping=aes(x=year, y=nvesseldays), 
+            label="Apr-Dec\nonly", hjust=1, nudge_x=-1, size=2.1) +
   geom_text(data=effort_hist %>% filter(year==1990), mapping=aes(x=year, y=nvesseldays), 
             label="Jan-Jun\nonly", hjust=1, nudge_x=-1, size=2.1) +
   # Labels
@@ -124,6 +133,7 @@ layout_matrix <- matrix(data=c(1,3,
 g <- gridExtra::grid.arrange(g1, g2, g3, 
                              widths=c(0.3, 0.7),
                              layout_matrix=layout_matrix)
+g
 
 # Export
 ggsave(g, filename=file.path(plotdir, "FigSX_historical_vs_our_inputs.png"), 
