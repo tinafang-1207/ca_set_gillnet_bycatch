@@ -29,7 +29,57 @@ car11_orig <- readxl::read_excel(file.path(indir, "Carretta_Enriquez_2012b.xlsx"
 car12_orig <- readxl::read_excel(file.path(indir, "Carretta_etal_2014.xlsx"))
 
 
-# Format data
+
+# Format Perkins data
+################################################################################
+
+# Read data
+perk1 <- readxl::read_excel(file.path(indir, "Perkins_etal_1994_Tables1_8.xlsx"), 1)
+perk2 <- readxl::read_excel(file.path(indir, "Perkins_etal_1994_Tables1_8.xlsx"), 2)
+perk3 <- readxl::read_excel(file.path(indir, "Perkins_etal_1994_Tables1_8.xlsx"), 3)
+perk4 <- readxl::read_excel(file.path(indir, "Perkins_etal_1994_Tables1_8.xlsx"), 4)
+perk5 <- readxl::read_excel(file.path(indir, "Perkins_etal_1994_Tables1_8.xlsx"), 5)
+perk6 <- readxl::read_excel(file.path(indir, "Perkins_etal_1994_Tables1_8.xlsx"), 6)
+perk7 <- readxl::read_excel(file.path(indir, "Perkins_etal_1994_Tables1_8.xlsx"), 7)
+perk8 <- readxl::read_excel(file.path(indir, "Perkins_etal_1994_Tables1_8.xlsx"), 8)
+
+# Merge ones w/out parentheses
+perkA <- bind_rows(perk2, perk5)
+
+# Merge ones w/ parentheses (all mortalities)
+perkB_orig <- bind_rows(perk6, perk7, perk8)
+
+# Clean B
+perkB <- perkB_orig %>% 
+  # Clean species
+  mutate(species=stringr::str_to_sentence(species),
+         species=recode(species, 
+                        "Da11's porpoise"="Dall's porpoise",
+                        "N. Right whale dolphin"="Northern right whale dolphin",    
+                        "Northern elephant seals"="Northern elephant seal",    
+                        "Pac. Whited-sided dolphin"="Pacific white-sided dolphin",  
+                        "Par.. Whited-sided dolphin"="Pacific white-sided dolphin", 
+                        "Paw.. Whited-sided dolphin"="Pacific white-sided dolphin")) %>% 
+  # Gather
+  gather(key="fishery", value="mort_orig", 6:ncol(.)) %>% 
+  # Seperate
+  mutate(mort_orig=gsub("\\.", "x", mort_orig)) %>% 
+  separate(col="mort_orig", into=c("mort", "mort_se", sep=" \\("), remove = F) %>% 
+  mutate(mort=as.numeric(mort),
+         mort_se=gsub("x", ".", mort_se) %>% as.numeric()) %>% 
+  select(reference:mort_se) %>% 
+  # Reduce to total set fishery
+  filter(fishery=="set_total") %>% 
+  select(-c(fishery, mort_orig)) %>% 
+  # Reduce
+  filter(!is.na(mort))
+  
+# Inspect
+sort(unique(perkB$species))
+
+
+
+# Format other data
 ################################################################################
 
 # Format Barlow et al. 1994
@@ -63,7 +113,9 @@ jb <- jb_orig %>%
   # Rename
   rename(mort=est, mort_cv=cv) %>% 
   # Reduce
-  filter(!is.na(mort) & mort!=0)
+  filter(!is.na(mort) & mort!=0) %>% 
+  # Don't use 1990 estimates for species with 1990 data in Perkins et al 1994
+  filter(!(year == 1990 & species %in% perkB$species))
 
 # Format Cameron 1999
 cam99 <- cam99_orig %>% 
@@ -79,6 +131,10 @@ cam00 <- cam00_orig %>%
 
 # Format Carretta 2001
 car01 <- car01_orig %>% 
+  # Format species
+  mutate(species=recode(species, 
+                        "Elephant seal"="Northern elephant seal",
+                        "Unid. pinniped"="Unidentified pinniped")) %>% 
   # Merge regions
   group_by(reference, species, year) %>% 
   summarise(mort_sum=sum(mort),
@@ -121,7 +177,7 @@ car12 <- car12_orig %>%
 ################################################################################
 
 # Merge data
-data_merge <- bind_rows(bar83, jb, cam99, cam00, car01, car02, car03, car07, car10, car11, car12)
+data_merge <- bind_rows(bar83, perkB, jb, cam99, cam00, car01, car02, car03, car07, car10, car11, car12)
 
 # Format data
 data <- data_merge %>% 

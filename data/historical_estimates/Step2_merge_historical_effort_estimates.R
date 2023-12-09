@@ -17,6 +17,7 @@ plotdir <- "data/historical_estimates/figures"
 
 # Read data
 bar83_orig <- readxl::read_excel(file.path(indir, "Barlow_etal_1994_Table3.xlsx"))
+perk_orig <- readxl::read_excel(file.path(indir, "Perkins_etal_1994_Tables1_8.xlsx"), 4)
 jb_orig <- readxl::read_excel(file.path(indir, "Julian_Beeson_1998_Tables4_5.xlsx"), sheet="Effort")
 cam99_orig <- readxl::read_excel(file.path(indir, "Cameron_Forney_1999.xlsx"), sheet="Effort")
 cam00_orig <- readxl::read_excel(file.path(indir, "Cameron_Forney_2000.xlsx"), sheet="Effort")
@@ -51,6 +52,10 @@ bar83 <- bar83_orig %>%
   # Exclude >1990 (in Julian & Beeson 1999)
   filter(year<1990)
 
+# Format Perkins et al. 1994
+perk <- perk_orig %>% 
+  select(reference, table, year, set_total) %>% 
+  rename(nvesseldays=set_total)
 
 # Format Julian & Beeson 1995
 jb <- jb_orig %>% 
@@ -101,7 +106,7 @@ car12 <- car12_orig
 ################################################################################
 
 # Merge data
-data_merge <- bind_rows(bar83, jb, cam99, cam00, car01, car02, car03, car07, car10, car11, car12)
+data_merge <- bind_rows(bar83, perk, jb, cam99, cam00, car01, car02, car03, car07, car10, car11, car12)
 
 # Format data
 data <- data_merge %>% 
