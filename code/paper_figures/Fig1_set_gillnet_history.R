@@ -161,7 +161,7 @@ bays_df <- matrix(c("San\nFrancisco", 37.8, -122.1,
 # Reg data
 reg_data <- tibble(year=reg_years,
                    yval=c(380, 280, 180),
-                   label=c("1987\n40 fathom depth restrition",
+                   label=c("1987\n40 fathom depth restriction",
                            "1994\nMainland state waters exclusion",
                            "2002\n60 fathom depth\nrestriction"))
 

@@ -82,6 +82,9 @@ data_interpolated <- purrr::map_df(colonies, function(x){
   
 })
 
+# Export
+saveRDS(data_interpolated, file=file.path(outdir, "Capitola_et_2012_brandts_cormorant_data.Rds"))
+
 # Plot data
 ################################################################################
 

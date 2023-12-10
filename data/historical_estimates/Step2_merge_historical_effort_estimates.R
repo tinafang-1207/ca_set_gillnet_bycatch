@@ -23,7 +23,8 @@ cam99_orig <- readxl::read_excel(file.path(indir, "Cameron_Forney_1999.xlsx"), s
 cam00_orig <- readxl::read_excel(file.path(indir, "Cameron_Forney_2000.xlsx"), sheet="Effort")
 car01_orig <- readxl::read_excel(file.path(indir, "Carretta_2001.xlsx"), sheet="Effort")
 car02_orig <- readxl::read_excel(file.path(indir, "Carretta_2002.xlsx"), sheet="Effort")
-car03_orig <- readxl::read_excel(file.path(indir, "Carretta_Chivers_2004.xlsx"), sheet="Effort")
+car03_orig <- readxl::read_excel(file.path(indir, "Carretta_Chivers_2003.xlsx"), sheet="Table 4a")
+car04_orig <- readxl::read_excel(file.path(indir, "Carretta_Chivers_2004.xlsx"), sheet="Effort")
 car07_orig <- readxl::read_excel(file.path(indir, "Carretta_Enriquez_2009.xlsx"), sheet="Effort")
 car10_orig <- readxl::read_excel(file.path(indir, "Carretta_Enriquez_2012a.xlsx"), sheet="Effort") 
 car11_orig <- readxl::read_excel(file.path(indir, "Carretta_Enriquez_2012b.xlsx"), sheet="Effort")
@@ -88,6 +89,10 @@ car02 <- car02_orig
 
 # Format Carretta 2003
 car03 <- car03_orig
+
+# Format Carretta 2004
+car04 <- car04_orig
+
 
 # Format Carretta 2007
 car07 <- car07_orig

@@ -13,12 +13,17 @@ library(tidyverse)
 indir <- "data/stock_assessments/raw"
 outdir <- "data/stock_assessments/processed"
 
-# Read data
-eseal_orig <- readxl::read_excel(file.path(indir, "northern_elephant_seal.xlsx"))
-hseal_orig <- readxl::read_excel(file.path(indir, "harbor_seal.xlsx"))
-porp_mont_orig <- readxl::read_excel(file.path(indir, "harbor_porpoise_monterey.xlsx"))
-porp_morr_orig <- readxl::read_excel(file.path(indir, "harbor_porpoise_morro_bay.xlsx"))
-slion_orig <- readxl::read_excel(file.path(indir, "california_sea_lion.xlsx"))
+# Read data thief data
+eseal_orig <- readxl::read_excel(file.path(indir, "northern_elephant_seal_datathief.xlsx"))
+hseal_orig <- readxl::read_excel(file.path(indir, "harbor_seal_datathief.xlsx"))
+slion_orig <- readxl::read_excel(file.path(indir, "california_sea_lion_datathief.xlsx"))
+
+# Read original data
+porp_orig <- readxl::read_excel(file.path(indir, "Porpoise_AbundSummary_by_Stock.xlsx"), sheet="Format")
+
+# Read bird data
+brandt_orig <- readRDS(file=file.path(outdir, "Capitola_et_2012_brandts_cormorant_data.Rds"))
+murre_orig <- readRDS(file=file.path(outdir, "Carter_et_2001_common_murre_data.Rds"))
 
 
 # Format data
@@ -43,20 +48,36 @@ slion <- slion_orig %>%
          region="US West Coast",
          units="Number of animals",
          type="Observed") 
-porp_mont <- porp_mont_orig %>% 
-  rename(n_mid=n_med) %>% 
+
+# Format porpoise data
+porp <- porp_orig %>% 
+  mutate(stock=region) %>% 
   mutate(species="Harbor porpoise",
-         stock="Monterey Bay",
-         region="Monterey Bay",
          units="Number of animals",
          type="Observed") 
-porp_morr <- porp_morr_orig %>% 
-  rename(n_mid=n_med) %>% 
-  mutate(species="Harbor porpoise",
-         stock="Morro Bay",
-         region="Morro Bay",
-         units="Number of animals",
-         type="Observed") 
+
+# Format Brandt data
+brandt <- brandt_orig %>% 
+  # Summarize across colonies
+  group_by(region, year, type) %>% 
+  summarize(n_mid=sum(nests_n)) %>% 
+  ungroup() %>% 
+  # Add
+  mutate(stock="Central California") %>% 
+  mutate(species="Brandt's cormorant",
+         units="Number of nests")
+
+# Format murre data
+murre <- murre_orig %>% 
+  # Summarize across colonies
+  group_by(region, year, type) %>% 
+  summarize(n_mid=sum(count)) %>% 
+  ungroup() %>% 
+  # Add
+  mutate(stock="Central California") %>% 
+  mutate(species="Common murre",
+         units="Number of animals")
+
 
 
 # Interpolate data
@@ -114,11 +135,13 @@ hseal_ci <- interpolate_n(hseal %>% filter(region=="Channel Islands"))
 ################################################################################
 
 # Merge
-data <- bind_rows(eseal_ci, eseal_ccal, hseal_main, hseal_ci, slion, porp_mont, porp_morr) %>% 
+data <- bind_rows(eseal_ci, eseal_ccal, hseal_main, hseal_ci, slion, porp, brandt, murre) %>% 
   # Add stock
   mutate(stock_label=paste0(species, " (", stock, ")")) %>% 
   # Arrange
-  select(species, stock, stock_label, region, year, units, type, n_mid, n_lo, n_hi)
+  select(species, stock, stock_label, region, year, units, type, n_mid, n_lo, n_hi) %>% 
+  # Filter
+  filter(!is.na(n_mid))
 
 
 # Export
@@ -137,6 +160,7 @@ g <- ggplot(data, aes(x=year, y=n_mid, fill=region, alpha=type)) +
   # Labels
   labs(x="Year", y="Population size") +
   scale_x_continuous(lim=c(NA, 2020)) +
+  scale_alpha_manual(values=c(0.7, 1)) +
   # Legend 0.7)) +
   # Theme
   theme_bw() +
