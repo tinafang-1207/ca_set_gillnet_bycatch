@@ -17,6 +17,11 @@ plotdir <- "figures"
 
 # Read data
 data <- readRDS(file=file.path(outdir, "stock_assessment_data.Rds")) %>% 
+  mutate(region=recode(region, 
+                       "North of Piedras Blancas"="North of PB",
+                       "South of Piedras Blancas"="South of PB")) %>% 
+  mutate(stock_label=recode(stock_label,
+                            "Harbor porpoise (San Francisco-Russian River)"="Harbor porpoise (SF-Russian River)")) %>% 
   mutate(stock_label=gsub(" \\(", "\n(", stock_label)) %>% 
   mutate(type=recode_factor(type,
                             "Observed"="Reported",
@@ -25,6 +30,8 @@ unique(data$stock_label)
 
 # Read PBRs 
 pbrs_orig <- readxl::read_excel(file.path(outdir, "pbrs.xlsx")) %>% 
+  mutate(stock=recode(stock,
+                     "San Francisco-Russian River"="SF-Russian River")) %>% 
   mutate(stock_label=paste0(species, "\n(", stock, ")"))
 
 
@@ -58,13 +65,14 @@ pbr_key <- data %>%
 reg_years <- c(1987, 1994, 2002)
 
 # Setup theme
-my_theme <-  theme(axis.text=element_text(size=7),
+my_theme <-  theme(axis.text=element_text(size=6),
+                   axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
                    axis.text.y = element_text(angle = 90, hjust = 0.5),
-                   axis.title=element_text(size=8),
+                   axis.title=element_text(size=7),
                    axis.title.x=element_blank(),
-                   legend.text=element_text(size=7),
+                   legend.text=element_text(size=5),
                    legend.title=element_blank(),
-                   strip.text=element_text(size=7),
+                   strip.text=element_text(size=6),
                    # Gridlines
                    panel.grid.major = element_blank(), 
                    panel.grid.minor = element_blank(),
@@ -87,7 +95,7 @@ g1 <- ggplot(data1, aes(x=year, y=n_mid)) +
   geom_vline(xintercept=reg_years-0.5, color="grey75", linetype="dotted", linewidth=0.2) +
   # PBR
   geom_text(data=pbr1, mapping=aes(x=x, y=y, label=pbr_label), 
-            hjust=0, size=2.2, color="black") +
+            hjust=0, size=2.0, color="black") +
   # Labels
   labs(x="Year", y="Number of animals") +
   scale_x_continuous(breaks=seq(1950,2020,10), lim=c(NA, 2020)) +
@@ -111,7 +119,7 @@ g2 <- ggplot(data2, aes(x=year, y=n_mid, fill=region, alpha=type)) +
   geom_vline(xintercept=reg_years-0.5, color="grey75", linetype="dotted", linewidth=0.2) +
   # PBR
   geom_text(data=pbr2, mapping=aes(x=x, y=y, label=pbr_label), 
-            hjust=0, size=2.2, color="black", inherit.aes = F) +
+            hjust=0, size=2.0, color="black", inherit.aes = F) +
   # Labels
   labs(x="Year", y="Number of births") +
   scale_x_continuous(breaks=seq(1950,2020,10), lim=c(NA, 2020)) +
@@ -120,7 +128,7 @@ g2 <- ggplot(data2, aes(x=year, y=n_mid, fill=region, alpha=type)) +
   scale_alpha_manual(name="", values=c(1,0.6)) +
   # Theme
   theme_bw() + my_theme +
-  theme(legend.position = c(0.28, 0.72))
+  theme(legend.position = c(0.31, 0.72))
 g2
 
 # Harbor seal
@@ -135,7 +143,7 @@ g3 <- ggplot(data3, aes(x=year, y=n_mid, fill=region, alpha=type)) +
   geom_vline(xintercept=reg_years-0.5, color="grey75", linetype="dotted", linewidth=0.2) +
   # PBR
   geom_text(data=pbr3, mapping=aes(x=x, y=y, label=pbr_label), 
-            hjust=0, size=2.2, color="black", inherit.aes = F) +
+            hjust=0, size=2.0, color="black", inherit.aes = F) +
   # Labels
   labs(x="Year", y="Number of animals") +
   scale_x_continuous(breaks=seq(1950,2020,10), lim=c(NA, 2020)) +
@@ -148,17 +156,37 @@ g3 <- ggplot(data3, aes(x=year, y=n_mid, fill=region, alpha=type)) +
 g3
 
 # Harbor porpoise 
-data5 <- data %>% filter(stock_label=="Harbor porpoise\n(Morro Bay)")
-pbr5 <- pbr_key %>% filter(stock_label=="Harbor porpoise\n(Morro Bay)")
-g5 <- ggplot(data5, aes(x=year, y=n_mid)) +
+data4 <- data %>% filter(stock_label=="Harbor porpoise\n(Morro Bay)")
+pbr4 <- pbr_key %>% filter(stock_label=="Harbor porpoise\n(Morro Bay)")
+g4 <- ggplot(data4, aes(x=year, y=n_mid)) +
   facet_wrap(~stock_label, scale="free", ncol=3) +
   geom_bar(stat="identity", fill="grey70") +
   geom_errorbar(mapping=aes(x=year, ymin=n_lo, ymax=n_hi), width=0, color="grey30", linewidth=0.2) +
   # Ref line
   geom_vline(xintercept=reg_years-0.5, color="grey75", linetype="dotted", linewidth=0.2) +
   # PBR
+  geom_text(data=pbr4, mapping=aes(x=x, y=y, label=pbr_label), 
+            hjust=0, size=2.0, color="black") +
+  # Labels
+  labs(x="Year", y="Number of animals") +
+  scale_x_continuous(breaks=seq(1950,2020,10), lim=c(NA, 2020)) +
+  # Theme
+  theme_bw() + my_theme
+g4
+
+# Harbor porpoise 
+data5 <- data %>% filter(stock_label=="Harbor porpoise\n(Monterey Bay)")
+pbr5 <- pbr_key %>% filter(stock_label=="Harbor porpoise\n(Monterey Bay)")
+g5 <- ggplot(data5, aes(x=year, y=n_mid)) +
+  facet_wrap(~stock_label, scale="free", ncol=3) +
+  geom_bar(stat="identity", fill="grey70") +
+  geom_errorbar(mapping=aes(x=year, ymin=n_lo, ymax=n_hi), 
+                width=0, color="grey30", linewidth=0.2) +
+  # Ref line
+  geom_vline(xintercept=reg_years-0.5, color="grey75", linetype="dotted", linewidth=0.2) +
+  # PBR
   geom_text(data=pbr5, mapping=aes(x=x, y=y, label=pbr_label), 
-            hjust=0, size=2.2, color="black") +
+            hjust=0, size=2.0, color="black") +
   # Labels
   labs(x="Year", y="Number of animals") +
   scale_x_continuous(breaks=seq(1950,2020,10), lim=c(NA, 2020)) +
@@ -167,9 +195,9 @@ g5 <- ggplot(data5, aes(x=year, y=n_mid)) +
 g5
 
 # Harbor porpoise 
-data4 <- data %>% filter(stock_label=="Harbor porpoise\n(Monterey Bay)")
-pbr4 <- pbr_key %>% filter(stock_label=="Harbor porpoise\n(Monterey Bay)")
-g4 <- ggplot(data4, aes(x=year, y=n_mid)) +
+data6 <- data %>% filter(stock_label=="Harbor porpoise\n(SF-Russian River)")
+pbr6 <- pbr_key %>% filter(stock_label=="Harbor porpoise\n(SF-Russian River)")
+g6 <- ggplot(data6, aes(x=year, y=n_mid)) +
   facet_wrap(~stock_label, scale="free", ncol=3) +
   geom_bar(stat="identity", fill="grey70") +
   geom_errorbar(mapping=aes(x=year, ymin=n_lo, ymax=n_hi), 
@@ -177,21 +205,64 @@ g4 <- ggplot(data4, aes(x=year, y=n_mid)) +
   # Ref line
   geom_vline(xintercept=reg_years-0.5, color="grey75", linetype="dotted", linewidth=0.2) +
   # PBR
-  geom_text(data=pbr4, mapping=aes(x=x, y=y, label=pbr_label), 
-            hjust=0, size=2.2, color="black") +
+  geom_text(data=pbr6, mapping=aes(x=x, y=y, label=pbr_label), 
+            hjust=0, size=2.0, color="black") +
   # Labels
   labs(x="Year", y="Number of animals") +
   scale_x_continuous(breaks=seq(1950,2020,10), lim=c(NA, 2020)) +
   # Theme
   theme_bw() + my_theme
-g4
+g6
+
+# Brandt's cormorant
+data7 <- data %>% filter(stock_label=="Brandt's cormorant\n(Central California)")
+pbr7 <- pbr_key %>% filter(stock_label=="Brandt's cormorant\n(Central California)")
+g7 <- ggplot(data7, aes(x=year, y=n_mid, fill=region, alpha=type)) +
+  facet_wrap(~stock_label, scale="free", ncol=3) +
+  geom_bar(stat="identity") +
+  geom_errorbar(mapping=aes(x=year, ymin=n_lo, ymax=n_hi), 
+                width=0, color="grey30", linewidth=0.2) +
+  # Ref line
+  geom_vline(xintercept=reg_years-0.5, color="grey75", linetype="dotted", linewidth=0.2) +
+  # PBR
+  # geom_text(data=pbr7, mapping=aes(x=x, y=y, label=pbr_label), 
+  #           hjust=0, size=2.0, color="black", inherit.aes = F) +
+  # Labels
+  labs(x="Year", y="Number of nests") +
+  scale_x_continuous(breaks=seq(1950,2020,10), lim=c(NA, 2020)) +
+  # Legend
+  scale_fill_manual(name="", values=RColorBrewer::brewer.pal(2, "Set1")) +
+  scale_alpha_manual(name="", values=c(1,0.6), guide="none") +
+  # Theme
+  theme_bw() + my_theme +
+  theme(legend.position = c(0.26, 0.92))
+g7
+
+# Common murre
+data8 <- data %>% filter(stock_label=="Common murre\n(Central California)")
+g8 <- ggplot(data8, aes(x=year, y=n_mid, alpha=type)) +
+  facet_wrap(~stock_label, scale="free", ncol=3) +
+  geom_bar(stat="identity", position = position_stack(reverse = TRUE)) +
+  geom_errorbar(mapping=aes(x=year, ymin=n_lo, ymax=n_hi), 
+                width=0, color="grey30", linewidth=0.2) +
+  # Ref line
+  geom_vline(xintercept=reg_years-0.5, color="grey75", linetype="dotted", linewidth=0.2) +
+  # Labels
+  labs(x="Year", y="Number of nests") +
+  scale_x_continuous(breaks=seq(1950,2020,10), lim=c(NA, 2020)) +
+  # Legend
+  scale_alpha_manual(name="", values=c(1,0.6), guide="none") +
+  # Theme
+  theme_bw() + my_theme +
+  theme(legend.position = c(0.26, 0.92))
+g8
 
 # Merge plots
-g <- gridExtra::grid.arrange(g1, g2, g3, g5, g4, ncol=3)
+g <- gridExtra::grid.arrange(g1, g2, g3, g7, g6, g4, g5, g8, ncol=4)
 g
 
 # Export plot
 ggsave(g, filename=file.path(plotdir, "Fig8_population_sizes.png"), 
-       width=6.5, height=4, units="in", dpi=600)
+       width=6.5, height=3.7, units="in", dpi=600)
 
 

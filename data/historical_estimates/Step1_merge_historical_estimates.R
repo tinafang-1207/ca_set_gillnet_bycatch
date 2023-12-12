@@ -22,7 +22,8 @@ cam99_orig <- readxl::read_excel(file.path(indir, "Cameron_Forney_1999.xlsx"))
 cam00_orig <- readxl::read_excel(file.path(indir, "Cameron_Forney_2000.xlsx"))
 car01_orig <- readxl::read_excel(file.path(indir, "Carretta_2001.xlsx"))
 car02_orig <- readxl::read_excel(file.path(indir, "Carretta_2002.xlsx"), sheet="Table 3")
-car03_orig <- readxl::read_excel(file.path(indir, "Carretta_Chivers_2004.xlsx"))
+car03_orig <- readxl::read_excel(file.path(indir, "Carretta_Chivers_2003.xlsx"), sheet = "Table 3")
+car04_orig <- readxl::read_excel(file.path(indir, "Carretta_Chivers_2004.xlsx"))
 car07_orig <- readxl::read_excel(file.path(indir, "Carretta_Enriquez_2009.xlsx"))
 car10_orig <- readxl::read_excel(file.path(indir, "Carretta_Enriquez_2012a.xlsx")) 
 car11_orig <- readxl::read_excel(file.path(indir, "Carretta_Enriquez_2012b.xlsx"))
@@ -78,6 +79,22 @@ perkB <- perkB_orig %>%
 sort(unique(perkB$species))
 
 
+# Format Forney data
+################################################################################
+
+# Read data
+forn01_orig <- readxl::read_excel(file.path(indir, "Forney_etal_2001.xlsx"))
+
+# Format data
+forn01 <- forn01_orig %>% 
+  gather(key="metric", value="value", 3:ncol(.)) %>% 
+  separate(metric, into=c("year", "metric"), sep="_") %>% 
+  spread(key="metric", value="value") 
+
+ggplot(forn01, aes(x=year, y=est, color=analysis, group=analysis)) +
+  facet_wrap(~species, scale="free_y") +
+  geom_line() +
+  theme_bw()
 
 # Format other data
 ################################################################################
@@ -150,10 +167,28 @@ car02 <- car02_orig %>%
   select(-mort_2000) %>% 
   # Rename 2001
   rename(mort=mort_2001) %>% 
-  mutate(year=2001)
+  mutate(year=2001) 
 
 # Format Carretta 2003
-car03 <- car03_orig
+car03 <- car03_orig %>% 
+  # Simplify
+  select(-mort_2001) %>% 
+  # Rename
+  rename(mort=mort_2002,
+         mort_var=mort_2002_var,
+         mort_se=mort_2002_se,
+         mort_cv=mort_2002_cv) %>% 
+  # Add 
+  mutate(year=2002) %>% 
+  # Format species
+  mutate(species=recode(species,
+                        "Unid. Common dolphin"="Unidentified common dolphin", 
+                        "N. elephant seal"="Northern elephant seal",
+                        "Unid. pinniped"="Unidentified pinniped"))
+  
+
+# Format Carretta 2004
+car04 <- car04_orig
 
 # Format Carretta 2007
 car07 <- car07_orig %>% 
@@ -177,7 +212,7 @@ car12 <- car12_orig %>%
 ################################################################################
 
 # Merge data
-data_merge <- bind_rows(bar83, perkB, jb, cam99, cam00, car01, car02, car03, car07, car10, car11, car12)
+data_merge <- bind_rows(bar83, perkB, jb, cam99, cam00, car01, car02, car03, car04, car07, car10, car11, car12)
 
 # Format data
 data <- data_merge %>% 
