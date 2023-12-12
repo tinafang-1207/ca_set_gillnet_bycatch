@@ -202,13 +202,13 @@ data3 <- data_orig3 %>%
          target2_spp_code=secondary_target_species_code,
          target2_spp=secondary_target_species_name,
          date_haul2=begin_haul_date_time,
-         haul_temp_device=begin_haul_temp_device,
-         haul_pos_code=begin_haul_position_code,
-         haul_lat_dd=begin_haul_latitude,
-         haul_long_dd=begin_haul_longitude,
-         haul_depth_fa=begin_haul_depth,
-         haul_sst_f=begin_haul_surface_temp,
-         haul_beauf=begin_haul_beaufort_number) %>%
+         temp_device_haul=begin_haul_temp_device,
+         pos_code_haul=begin_haul_position_code,
+         lat_dd_haul=begin_haul_latitude,
+         long_dd_haul=begin_haul_longitude,
+         depth_fa_haul=begin_haul_depth,
+         sst_f_haul=begin_haul_surface_temp,
+         beaufort_haul=begin_haul_beaufort_number) %>%
   # Format ports
   mutate(port_depart=stringr::str_to_title(port_depart),
          port_return=stringr::str_to_title(port_return)) %>%
@@ -274,9 +274,20 @@ data3 <- data_orig3 %>%
   select(-c(set_net_percent_described:float_net_net_mat_strength_unit_code)) %>%
   # Add set id
   mutate(set_id=paste(trip_id, set_num, sep="-")) %>%
+  # Add year
+  mutate(year=lubridate::year(date_haul1)) %>% 
   # Arrange
-  select(season, trip_id, set_num, set_id, everything()) %>%
-  arrange(season, trip_id, set_num, set_id)
+  select(year, season, trip_id, set_num, set_id, 
+         vessel, vessel_plate, vessel_permit,
+         port_depart, port_return,
+         date_haul1, date_haul2, 
+         soak_hr, soak_hr_est, 
+         target1_spp_code, target1_spp, 
+         target2_spp_code, target2_spp, 
+         pos_code_haul, lat_dd_haul, long_dd_haul, depth_fa_haul,
+         temp_device_haul, sst_f_haul, beaufort_haul, 
+         everything()) %>%
+  arrange(year, season, trip_id, set_num, set_id)
 
 # Inspect
 str(data3)
@@ -284,14 +295,19 @@ freeR::complete(data3)
 
 # Dates
 range(data3$date_haul1)
+range(data3$date_haul2)
+sum(data3$date_haul1!=data3$date_haul2) # haul dates are identical so you can remove
+
+# Are season and year identical?
+sum(data3$season!=data3$year) # no, remove season since you could derive later?
 
 # Ports
 table(data3$port_depart)
 table(data3$port_return)
 
 # SST/GPS devices
-table(data3$haul_temp_device) # don't know what these codes mean
-table(data3$haul_pos_code) # don't know what these codes mean
+table(data3$temp_device_haul) # don't know what these codes mean
+table(data3$pos_code_haul) # don't know what these codes mean
 
 # Target species
 table(data3$target1_spp)
@@ -301,12 +317,12 @@ table(data3$target2_spp)
 table(data3$net_type)
 
 # Coordinates
-range(data3$haul_lat_dd, na.rm=T)
-range(data3$haul_long_dd, na.rm=T)
+range(data3$lat_dd_haul, na.rm=T)
+range(data3$long_dd_haul, na.rm=T)
 
 # Map coordinates
 usa <- rnaturalearth::ne_states(country="United States of America", returnclass = "sf")
-g <- ggplot(data3, aes(x=haul_long_dd, y=haul_lat_dd)) +
+g <- ggplot(data3, aes(x=long_dd_haul, y=lat_dd_haul)) +
   geom_sf(data=usa, fill="grey90", color="white", inherit.aes = F) +
   geom_point() +
   coord_sf(xlim=c(-122, -117), ylim=c(32, 36)) +
@@ -329,41 +345,46 @@ freeR::which_duplicated(vessel_key$vessel_plate) # unique identifier
 saveRDS(vessel_key, file=file.path(outdir, "SWFSC_observer_vessel_key.Rds"))
 
 
-# Add block id
-################################################################################
-
-# Blocks
-blocks <- wcfish::blocks
-
-# Lat/long key
-latlong_key <- data3 %>% 
-  select(haul_lat_dd, haul_long_dd, set_id) %>% 
-  na.omit() %>% 
-  sf::st_as_sf(coords=c("haul_long_dd", "haul_lat_dd"), crs=sf::st_crs(blocks))
-
-# Grab block
-block_index <- sf::st_intersects(x=latlong_key, y=blocks) %>% 
-  as.numeric()
-block_ids <- blocks$block_id[block_index]
-
-# Add to key
-latlong_key1 <- latlong_key %>% 
-  sf::st_drop_geometry() %>% 
-  mutate(block_id = block_ids)
-
-# Add to data
-data3_out <- data3 %>% 
-  # Add block id
-  left_join(latlong_key1 %>% select(set_id, block_id), by="set_id") %>% 
-  # Arrange
-  select(season:haul_long_dd, block_id, everything())
-
-
 # Export data
 ################################################################################
+
+# Slighlty simplify
+data3_out <- data3 %>% 
+  select(-c(year, date_haul2)) %>% 
+  rename(date_haul=date_haul1)
 
 # Export data
 saveRDS(data3_out, file=file.path(outdir, "SWFSC_1990_2017_set_net_observer_trips.Rds"))
 
 
 
+
+
+# Add block id (removed to be added in later steps)
+################################################################################
+
+# # Blocks
+# blocks <- wcfish::blocks
+# 
+# # Lat/long key
+# latlong_key <- data3 %>% 
+#   select(haul_lat_dd, haul_long_dd, set_id) %>% 
+#   na.omit() %>% 
+#   sf::st_as_sf(coords=c("haul_long_dd", "haul_lat_dd"), crs=sf::st_crs(blocks))
+# 
+# # Grab block
+# block_index <- sf::st_intersects(x=latlong_key, y=blocks) %>% 
+#   as.numeric()
+# block_ids <- blocks$block_id[block_index]
+# 
+# # Add to key
+# latlong_key1 <- latlong_key %>% 
+#   sf::st_drop_geometry() %>% 
+#   mutate(block_id = block_ids)
+# 
+# # Add to data
+# data3_out <- data3 %>% 
+#   # Add block id
+#   left_join(latlong_key1 %>% select(set_id, block_id), by="set_id") %>% 
+#   # Arrange
+#   select(season:haul_long_dd, block_id, everything())

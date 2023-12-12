@@ -40,20 +40,20 @@ hseal <- hseal_orig %>%
   rename(n_mid=n_animals) %>% 
   mutate(species="Harbor seal",
          stock="California",
-         units="Number of animals",
+         units="Number of seals",
          type="Observed")
 slion <- slion_orig %>% 
   mutate(species="California sea lion",
          stock="US West Coast",
          region="US West Coast",
-         units="Number of animals",
+         units="Number of sea lions",
          type="Observed") 
 
 # Format porpoise data
 porp <- porp_orig %>% 
   mutate(stock=region) %>% 
   mutate(species="Harbor porpoise",
-         units="Number of animals",
+         units="Number of porpoises",
          type="Observed") 
 
 # Format Brandt data
@@ -76,7 +76,7 @@ murre <- murre_orig %>%
   # Add
   mutate(stock="Central California") %>% 
   mutate(species="Common murre",
-         units="Number of animals")
+         units="Number of breeding birds")
 
 
 
