@@ -97,7 +97,7 @@ g1 <- ggplot(data1, aes(x=year, y=n_mid)) +
   geom_text(data=pbr1, mapping=aes(x=x, y=y, label=pbr_label), 
             hjust=0, size=2.0, color="black") +
   # Labels
-  labs(x="Year", y="Number of animals") +
+  labs(x="Year", y="Number of sea lions") +
   scale_x_continuous(breaks=seq(1950,2020,10), lim=c(NA, 2020)) +
   # Theme
   theme_bw() + my_theme
@@ -145,7 +145,7 @@ g3 <- ggplot(data3, aes(x=year, y=n_mid, fill=region, alpha=type)) +
   geom_text(data=pbr3, mapping=aes(x=x, y=y, label=pbr_label), 
             hjust=0, size=2.0, color="black", inherit.aes = F) +
   # Labels
-  labs(x="Year", y="Number of animals") +
+  labs(x="Year", y="Number of seals") +
   scale_x_continuous(breaks=seq(1950,2020,10), lim=c(NA, 2020)) +
   # Legend
   scale_fill_ordinal(name="") +
@@ -168,7 +168,7 @@ g4 <- ggplot(data4, aes(x=year, y=n_mid)) +
   geom_text(data=pbr4, mapping=aes(x=x, y=y, label=pbr_label), 
             hjust=0, size=2.0, color="black") +
   # Labels
-  labs(x="Year", y="Number of animals") +
+  labs(x="Year", y="Number of porpoises") +
   scale_x_continuous(breaks=seq(1950,2020,10), lim=c(NA, 2020)) +
   # Theme
   theme_bw() + my_theme
@@ -188,7 +188,7 @@ g5 <- ggplot(data5, aes(x=year, y=n_mid)) +
   geom_text(data=pbr5, mapping=aes(x=x, y=y, label=pbr_label), 
             hjust=0, size=2.0, color="black") +
   # Labels
-  labs(x="Year", y="Number of animals") +
+  labs(x="Year", y="Number of porpoises") +
   scale_x_continuous(breaks=seq(1950,2020,10), lim=c(NA, 2020)) +
   # Theme
   theme_bw() + my_theme
@@ -208,7 +208,7 @@ g6 <- ggplot(data6, aes(x=year, y=n_mid)) +
   geom_text(data=pbr6, mapping=aes(x=x, y=y, label=pbr_label), 
             hjust=0, size=2.0, color="black") +
   # Labels
-  labs(x="Year", y="Number of animals") +
+  labs(x="Year", y="Number of porpoises") +
   scale_x_continuous(breaks=seq(1950,2020,10), lim=c(NA, 2020)) +
   # Theme
   theme_bw() + my_theme
@@ -248,7 +248,7 @@ g8 <- ggplot(data8, aes(x=year, y=n_mid, alpha=type)) +
   # Ref line
   geom_vline(xintercept=reg_years-0.5, color="grey75", linetype="dotted", linewidth=0.2) +
   # Labels
-  labs(x="Year", y="Number of nests") +
+  labs(x="Year", y="Number of breeding birds") +
   scale_x_continuous(breaks=seq(1950,2020,10), lim=c(NA, 2020)) +
   # Legend
   scale_alpha_manual(name="", values=c(1,0.6), guide="none") +
