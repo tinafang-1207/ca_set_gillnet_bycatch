@@ -90,8 +90,14 @@ data1 <- data_orig1 %>%
          n_returned_dead=ifelse(!is.na(condition) & condition=="Dead" & is.na(n_returned_dead), 1, n_returned_dead),
          n_returned_alive=ifelse(!is.na(condition) & condition=="Alive" & is.na(n_returned_alive), 1, n_returned_alive)) %>% 
   # Check totals
+  # Total = Kept + returned alive + returned dead + returned unknown (damaged is redundant)
   mutate(n_caught_calc=n_kept+n_returned_alive+n_returned_dead+n_returned_unknown,
          n_caught_diff=n_caught-n_caught_calc) %>%
+  # Fill in missing values given that they passed
+  mutate(n_kept=ifelse(!is.na(n_caught) & is.na(n_kept), 0, n_kept),
+         n_returned_alive=ifelse(!is.na(n_caught) & is.na(n_returned_alive), 0, n_returned_alive),
+         n_returned_dead=ifelse(!is.na(n_caught) & is.na(n_returned_dead), 0, n_returned_dead),
+         n_returned_unknown=ifelse(!is.na(n_caught) & is.na(n_returned_unknown), 0, n_returned_unknown)) %>% 
   # Remove b/c pass check
   # select(-c(n_caught_calc, n_caught_diff)) %>%
   # Build set id
@@ -123,6 +129,29 @@ freeR::which_duplicated(spp_key$comm_name)
 
 # Export data
 saveRDS(data1, file=file.path(outdir, "SWFSC_set_net_observer_data.Rds"))
+
+
+# Summarize totals by set and spcies
+################################################################################
+
+# Build data
+data1_sum <- data1 %>% 
+  # Simplify
+  select(trip_id:spp_code, comm_name, sci_name, n_caught:n_returned_unknown) %>% 
+  # Summarize results across set and species
+  group_by(trip_id, set_num, set_id, category, spp_code, comm_name, sci_name) %>%
+  summarize(across(where(is.numeric), sum), .groups = 'drop')
+
+# Inspect
+freeR::complete(data1_sum)
+
+# Confirm no duplicates
+check2 <- data1_sum %>% 
+  count(set_id, comm_name)
+sum(check2$n>1)
+
+# Export
+saveRDS(data1_sum, file=file.path(outdir, "SWFSC_set_net_observer_data_summed.Rds"))
 
 
 # Format length compositions (data 2)
@@ -180,7 +209,7 @@ saveRDS(data2, file=file.path(outdir, "SWFSC_set_net_observer_length_comps.Rds")
 # We assume that sets without a set type (no net metadata) that target known set gillnet species primarily or secondarily are set nets
 
 # Known set net target species
-set_target_spp <- c("California halibut", "White seabass", "Pacific angel shark")
+set_target_spp <- c("California halibut", "White seabass", "Pacific angel shark", "Spider crab", "White croaker", "Soupfin shark")
 
 # Format data 3
 data3 <- data_orig3 %>%
@@ -272,6 +301,8 @@ data3 <- data_orig3 %>%
          net_material_strength_code=ifelse(net_type=="set", set_net_net_mat_strength_unit_code, float_net_net_mat_strength_unit_code)) %>%
   # Remove useless net columns
   select(-c(set_net_percent_described:float_net_net_mat_strength_unit_code)) %>%
+  # Replace 0 values with NAs
+  mutate(net_mesh_size_in=ifelse(net_mesh_size_in==0, NA, net_mesh_size_in)) %>% 
   # Add set id
   mutate(set_id=paste(trip_id, set_num, sep="-")) %>%
   # Add year
@@ -315,6 +346,7 @@ table(data3$target2_spp)
 
 # Net type
 table(data3$net_type)
+range(data3$net_mesh_size_in, na.rm=T)
 
 # Coordinates
 range(data3$lat_dd_haul, na.rm=T)
@@ -335,6 +367,10 @@ table(data3$net_color_code) # always empty
 table(data3$net_material_code) # don't know what these codes mean
 table(data3$net_hang_line_material_code)  # natural / synthetic???
 table(data3$net_material_strength_code) # pounds / size??
+
+# Net / target species key
+net_targ_key <- data3 %>% 
+  count(target1_spp, net_type)
 
 # Vessel key
 vessel_key <- data3 %>% 
@@ -357,34 +393,3 @@ data3_out <- data3 %>%
 saveRDS(data3_out, file=file.path(outdir, "SWFSC_1990_2017_set_net_observer_trips.Rds"))
 
 
-
-
-
-# Add block id (removed to be added in later steps)
-################################################################################
-
-# # Blocks
-# blocks <- wcfish::blocks
-# 
-# # Lat/long key
-# latlong_key <- data3 %>% 
-#   select(haul_lat_dd, haul_long_dd, set_id) %>% 
-#   na.omit() %>% 
-#   sf::st_as_sf(coords=c("haul_long_dd", "haul_lat_dd"), crs=sf::st_crs(blocks))
-# 
-# # Grab block
-# block_index <- sf::st_intersects(x=latlong_key, y=blocks) %>% 
-#   as.numeric()
-# block_ids <- blocks$block_id[block_index]
-# 
-# # Add to key
-# latlong_key1 <- latlong_key %>% 
-#   sf::st_drop_geometry() %>% 
-#   mutate(block_id = block_ids)
-# 
-# # Add to data
-# data3_out <- data3 %>% 
-#   # Add block id
-#   left_join(latlong_key1 %>% select(set_id, block_id), by="set_id") %>% 
-#   # Arrange
-#   select(season:haul_long_dd, block_id, everything())

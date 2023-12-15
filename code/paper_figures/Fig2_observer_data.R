@@ -15,7 +15,7 @@ datadir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_merge" 
 datadir2 <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/processed" # Chris
 
 # Read data
-data_orig <- readRDS(file=file.path(datadir, "1983_2017_gillnet_observer_data_3.5in_set_halibut.Rds"))
+data_orig <- readRDS(file=file.path(datadir, "1983_2017_gillnet_observer_data_with_sst_3.5in_set.Rds"))
 
 # Read species key
 spp_key <- read.csv("data/keys/species_key_final.csv", as.is=T)
@@ -56,6 +56,8 @@ data <- data_orig %>%
                               "Channel Islands"="Channel\nIslands",     
                               "Southern California"="Southern\nCalifornia",
                               "Unassigned"="Unassigned\n(no GPS coords)"))
+
+freeR::complete(data)
 
 # Totals
 stats_tots <- data %>%

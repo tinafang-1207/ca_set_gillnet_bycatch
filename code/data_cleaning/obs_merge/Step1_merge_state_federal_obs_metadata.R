@@ -89,8 +89,13 @@ swfsc_key <- swfsc_key_orig %>%
 
 # Merge keys
 set_key_orig <- bind_rows(cdfw_key, swfsc_key) %>% 
+  # Add date things
+  mutate(year=lubridate::year(date),
+         month=lubridate::month(date),
+         yday=lubridate::yday(date)) %>% 
   # Arrange
-  select(dataset, vessel_id, date, trip_id, set_num, set_id, everything())
+  select(dataset, year, month, yday, date, 
+         vessel_id, trip_id, set_num, set_id, everything())
 
 # Inspect
 freeR::complete(set_key_orig)
@@ -100,15 +105,435 @@ g <- ggplot(set_key_orig, aes(x=long_dd, y=lat_dd, color=net_type)) +
   geom_point()
 g
 
+# Export key
+saveRDS(set_key_orig, file.path(outdir, "1983_2017_gillnet_observer_metadata_unimputed.Rds"))
 
-# Impute data
+
+# Impute missing values
 ################################################################################
 
+# 1. Fill missing coordinates and  identify closest block
+# 3. Extract depth
+# 4. Assign block depth to missing depths
+# 5. Impute soak hours
+# 6. Add mesh sizes
+
+
+# 1a. Divide key into stes with and without GPS coords
+################################################################################
+
+# Divide set key
+set_key_gps <- set_key_orig %>% 
+  filter(!is.na(lat_dd) & !is.na(long_dd)) %>% 
+  mutate(gps_type="Reported")
+set_key_no_gps <- set_key_orig %>% 
+  filter(!(!is.na(lat_dd) & !is.na(long_dd))) %>% 
+  mutate(gps_type="Imputed")
+
+
+# 1b. Find block for sets without coords and give block coords
+################################################################################
+
+# Blocks
+blocks <- wcfish::blocks
+blocks_df <- blocks %>% 
+  sf::st_drop_geometry() %>% 
+  select(block_id, block_lat_dd, block_long_dd) %>% 
+  rename(lat_dd=block_lat_dd, long_dd=block_long_dd)
+
+# Format logs
+logs_use <- logs %>% 
+  filter(block_id %in% blocks$block_id) %>% 
+  mutate(year=lubridate::year(date),
+         month=lubridate::month(date))
+
+# Most commonly visited block in month
+block_key0 <- logs_use %>%
+  # Summarize
+  group_by(vessel_id, date, block_id) %>% 
+  summarize(ntrips=n_distinct(trip_id)) %>% 
+  ungroup() %>% 
+  # Most common block
+  arrange(vessel_id, date, desc(ntrips)) %>% 
+  group_by(vessel_id, date) %>% 
+  slice(1) %>% 
+  ungroup()
+
+# Most commonly visited block in month
+block_key1 <- logs_use %>%
+  # Summarize
+  group_by(vessel_id, year, month, block_id) %>% 
+  summarize(ntrips=n_distinct(trip_id)) %>% 
+  ungroup() %>% 
+  # Most common block
+  arrange(vessel_id, year, month, desc(ntrips)) %>% 
+  group_by(vessel_id, year, month) %>% 
+  slice(1) %>% 
+  ungroup()
+
+# Most commonly visited block in year
+block_key2 <- logs_use %>%
+  # Summarize
+  group_by(vessel_id, year, block_id) %>% 
+  summarize(ntrips=n_distinct(trip_id)) %>% 
+  ungroup() %>% 
+  # Most common block
+  arrange(vessel_id, year, desc(ntrips)) %>% 
+  group_by(vessel_id, year) %>% 
+  slice(1) %>% 
+  ungroup()
+
+# Most commonly visited block by vessel
+block_key3 <- logs_use %>%
+  # Summarize
+  group_by(vessel_id, block_id) %>% 
+  summarize(ntrips=n_distinct(trip_id)) %>% 
+  ungroup() %>% 
+  # Most common block
+  arrange(vessel_id, desc(ntrips)) %>% 
+  group_by(vessel_id) %>% 
+  slice(1) %>% 
+  ungroup()
+
+# Most commonly visited block by vessel
+block_key4 <- logs_use %>%
+  # Summarize
+  group_by(year, month, block_id) %>% 
+  summarize(ntrips=n_distinct(trip_id)) %>% 
+  ungroup() %>% 
+  # Most common block
+  arrange(year, month, desc(ntrips)) %>% 
+  group_by(year, month) %>% 
+  slice(1) %>% 
+  ungroup()
+
+# Add block id to 
+set_key_no_gps1 <- set_key_no_gps %>%
+  # Convert vessel id
+  mutate(vessel_id=as.character(vessel_id)) %>% 
+  # Add block candidates
+  left_join(block_key0 %>% select(-ntrips), by=c("vessel_id", "date")) %>% 
+  rename(block_id1=block_id) %>% 
+  left_join(block_key1 %>% select(-ntrips), by=c("vessel_id", "year", "month")) %>% 
+  rename(block_id2=block_id) %>% 
+  left_join(block_key2 %>% select(-ntrips), by=c("vessel_id", "year")) %>% 
+  rename(block_id3=block_id) %>% 
+  left_join(block_key3 %>% select(-ntrips), by=c("vessel_id")) %>% 
+  rename(block_id4=block_id) %>% 
+  left_join(block_key4 %>% select(-ntrips), by=c("year", "month")) %>% 
+  rename(block_id5=block_id) %>% 
+  # Final block id
+  mutate(block_id=ifelse(!is.na(block_id1), block_id1,
+                         ifelse(!is.na(block_id2), block_id2,
+                                ifelse(!is.na(block_id3), block_id3,
+                                              ifelse(!is.na(block_id4), block_id4, block_id5))))) %>% 
+  mutate(gps_type=ifelse(!is.na(block_id1), "Imputed-vessel day",
+                         ifelse(!is.na(block_id2), "Imputed-vessel month",
+                                ifelse(!is.na(block_id3), "Imputed-vessel year",
+                                       ifelse(!is.na(block_id4), "Imputed-vessel alltime", "Imputed-year/month"))))) %>% 
+  # Remove
+  select(-c(block_id1:block_id5)) %>% 
+  # Add coordinates
+  select(-c(long_dd, lat_dd)) %>% 
+  left_join(blocks_df) %>% 
+  # Convert vessel id
+  mutate(vessel_id=as.numeric(vessel_id))
+  
+
+# 1c. Find block for sets with coords
+################################################################################
+
+# Blocks
+blocks <- wcfish::blocks
+
+# Lat/long key
+latlong_key <- set_key_gps %>% 
+  select(long_dd, lat_dd) %>% 
+  unique()
+
+# Convert the GPS data to an sf object
+latlong_key_sf <- sf::st_as_sf(latlong_key, coords = c("long_dd", "lat_dd"), crs = sf::st_crs(blocks))
+
+# Use st_nearest_feature to find the nearest block for each GPS coordinate
+nearest_block <- sf::st_nearest_feature(latlong_key_sf, blocks)
+
+# Extract the block_id from the nearest block
+nearest_block_id <- blocks$block_id[nearest_block]
+
+# Add the block_id to the original GPS dataframe
+latlong_key$block_id <- nearest_block_id
+
 # Fill lat/long
-set_key1 <- set_key_orig %>% 
-  group_by(vessel_id, port_depart, net_type) 
+set_key_gps1 <- set_key_gps %>% 
+  # Add block id
+  left_join(latlong_key, by=c("long_dd", "lat_dd")) %>% 
+  # Move
+  relocate(block_id, .after=long_dd)
+
+
+# 1d. Find block for sets with coords
+################################################################################
+
+# Merge
+set_key2 <- bind_rows(set_key_gps1, set_key_no_gps1) %>% 
+  # Sort
+  arrange(year, month, date, vessel_id) %>% 
+  # Arrange
+  select(dataset:target_spp, gps_type, everything())
 
 # Inspect
-freeR::complete(set_key1)
+freeR::complete(set_key2)
 
+
+# 2. Impute soak hour
+################################################################################
+
+# Soak hour key
+soak_key <- set_key2 %>% 
+  group_by(vessel_id, net_type, target_spp, soak_hr) %>% 
+  summarize(nsets=n()) %>% 
+  ungroup() %>% 
+  arrange(vessel_id, net_type, target_spp, desc(nsets)) %>% 
+  group_by(vessel_id, net_type, target_spp) %>% 
+  slice(1) %>% 
+  ungroup() %>% 
+  rename(soak_hr_mode=soak_hr)
+
+# Impute soak time
+set_key3 <- set_key2 %>% 
+  # Add soak time
+  left_join(soak_key %>% select(-nsets), by=c("vessel_id", "net_type", "target_spp")) %>% 
+  # Impute
+  mutate(soak_hr_type=ifelse(!is.na(soak_hr), "Reported", "Imputed"),
+         soak_hr=ifelse(!is.na(soak_hr), soak_hr, soak_hr_mode))
+
+# Plot
+plot(soak_hr~soak_hr_mode, set_key3)
+
+# Inspect
+freeR::complete(set_key3)
+
+
+# 3. Impute mesh size
+################################################################################
+
+# Mesh key - vessel, net type, target
+mesh_key1 <- set_key2 %>% 
+  filter(!is.na(mesh_size_in)) %>% 
+  group_by(vessel_id, net_type, target_spp, mesh_size_in) %>% 
+  summarize(nsets=n()) %>% 
+  ungroup() %>% 
+  arrange(vessel_id, net_type, target_spp, desc(nsets)) %>% 
+  group_by(vessel_id, net_type, target_spp) %>% 
+  slice(1) %>% 
+  ungroup() %>% 
+  rename(mesh_size_in_mode1=mesh_size_in)
+
+# Mesh key 2 - net type, target
+mesh_key2 <- set_key2 %>% 
+  filter(!is.na(mesh_size_in)) %>% 
+  group_by(net_type, target_spp, mesh_size_in) %>% 
+  summarize(nsets=n()) %>% 
+  ungroup() %>% 
+  arrange(net_type, target_spp, desc(nsets)) %>% 
+  group_by(net_type, target_spp) %>% 
+  slice(1) %>% 
+  ungroup() %>% 
+  rename(mesh_size_in_mode2=mesh_size_in)
+
+# Mesh key 3 -net type
+mesh_key3 <- set_key3 %>% 
+  filter(!is.na(mesh_size_in)) %>% 
+  group_by(net_type, mesh_size_in) %>% 
+  summarize(nsets=n()) %>% 
+  ungroup() %>% 
+  arrange(net_type, desc(nsets)) %>% 
+  group_by(net_type) %>% 
+  slice(1) %>% 
+  ungroup() %>% 
+  rename(mesh_size_in_mode3=mesh_size_in)
+
+# Build
+set_key4 <- set_key3 %>% 
+  # Simplify
+  select(-soak_hr_mode) %>% 
+  # Add mesh size
+  left_join(mesh_key1 %>% select(-nsets), by=c("vessel_id", "net_type", "target_spp")) %>% 
+  left_join(mesh_key2 %>% select(-nsets), by=c("net_type", "target_spp")) %>% 
+  left_join(mesh_key3 %>% select(-nsets), by=c("net_type")) %>% 
+  # Select mesh size
+  mutate(mesh_size_in_type=ifelse(!is.na(mesh_size_in), "Reported",
+                                  ifelse(!is.na(mesh_size_in_mode1), "Imputed-1",
+                                         ifelse(!is.na(mesh_size_in_mode2), "Imputed-2", "Imputed-3")))) %>% 
+  mutate(mesh_size_in=ifelse(!is.na(mesh_size_in), mesh_size_in,
+                             ifelse(!is.na(mesh_size_in_mode1), mesh_size_in_mode1,
+                                    ifelse(!is.na(mesh_size_in_mode2), mesh_size_in_mode2, mesh_size_in_mode3))))
+
+# Inspect
+freeR::complete(set_key4)
+
+# Plot
+plot(mesh_size_in~mesh_size_in_mode1, set_key4)
+plot(mesh_size_in~mesh_size_in_mode2, set_key4)
+plot(mesh_size_in~mesh_size_in_mode3, set_key4)
+
+# Format
+set_key5 <- set_key4 %>% 
+  # Simplify
+  select(-c(mesh_size_in_mode1, mesh_size_in_mode2, mesh_size_in_mode3)) %>% 
+  relocate(mesh_size_in_type, .before=mesh_size_in)
+
+# Inspect
+freeR::complete(set_key5)
+
+
+# 4. Compute distance from shore
+################################################################################
+
+# Projections
+wgs84 <- "+proj=longlat +datum=WGS84"
+utm11 <- "+proj=utm +zone=11 +datum=NAD83"
+
+# Land
+usa <- rnaturalearth::ne_countries(country = "United States of America", returnclass = "sf", scale="large") 
+usa_sp <- usa %>% 
+  sf::st_transform(utm11) %>% 
+  sf::as_Spatial()
+
+# Lat/long key
+latlong_key <- set_key5 %>% 
+  select(lat_dd, long_dd) %>% 
+  unique()
+
+# Convert to sp
+latlong_key_sp <- latlong_key %>% 
+  sf::st_as_sf(coords=c("long_dd", "lat_dd"), crs=wgs84) %>% 
+  sf::st_transform(utm11) %>% 
+  sf::as_Spatial()
+
+# Calculate distance to shore
+dist_mat <- rgeos::gDistance(latlong_key_sp, usa_sp, byid = T)
+
+# Format distance matrix
+dist_df <- dist_mat %>%
+  # Convert to data frame
+  as.data.frame() %>%
+  # Add land polygon id
+  mutate(land_id=1:nrow(.)) %>% 
+  select(land_id, everything()) %>% 
+  # Gather
+  gather(key="latlong_id", value="dist_m", 2:ncol(.)) %>% 
+  mutate(latlong_id=as.numeric(latlong_id)) %>% 
+  # Find minimum distance
+  arrange(latlong_id, dist_m) %>% 
+  group_by(latlong_id) %>% 
+  slice(1) %>% 
+  ungroup() %>% 
+  # Remove land id
+  select(-land_id)
+
+# Add distance to latlong key
+latlong_key1 <- latlong_key %>% 
+  mutate(shore_km=dist_df$dist_m/1000)
+
+# Plot check
+ggplot(latlong_key1, aes(x=long_dd, y=lat_dd, color=pmin(shore_km,10))) +
+  geom_point() +
+  scale_color_gradientn(colors=RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
+  theme_bw()
+
+# Add shore distance
+set_key6 <- set_key5 %>% 
+  # Add shore distance
+  left_join(latlong_key1, by=c("long_dd", "lat_dd"))
+
+# Inspect
+freeR::complete(set_key6)
+
+
+# 6. Compute depth
+################################################################################
+
+# Read block depth values
+block_depth_key <- readRDS("data/bathymetry/processed/CA_block_depths.Rds") %>% 
+  select(block_id, depth_m_med) %>% 
+  as.matrix() %>% 
+  as.data.frame()
+
+# Read bathymetry
+bathy <- raster::raster("/Users/cfree/Library/CloudStorage/GoogleDrive-cfree@ucsb.edu/.shortcut-targets-by-id/1kCsF8rkm1yhpjh2_VMzf8ukSPf9d4tqO/MPA Network Assessment: Working Group Shared Folder/data/sync-data/bathymetry/processed/ca_bathymetry_200m_epsg3309.tif")
+
+# Plot bathy
+raster::plot(bathy)
+
+# Create SP latlong key
+latlong_key <- set_key6 %>% 
+  select(block_id, long_dd, lat_dd) %>% 
+  unique()
+latlong_key_sp <- latlong_key %>% 
+  sf::st_as_sf(coords=c("long_dd", "lat_dd"), crs="+proj=longlat +datum=WGS84") %>% 
+  sf::st_transform(crs=sf::st_crs(bathy)) %>% 
+  sf::as_Spatial()
+  
+# Extract depth values
+depth_values <- raster::extract(bathy, latlong_key_sp)
+
+# Add to key
+latlong_key_df <- latlong_key %>% 
+  # Absolute value
+  mutate(depth_m=depth_values*-1) %>% 
+  # 0s are on land and therefore NA
+  mutate(depth_m=ifelse(depth_m==0, NA, depth_m)) %>% 
+  # Mark which are extracted vs imputed
+  mutate(depth_m_type=ifelse(!is.na(depth_m), "Extracted", "Block median")) %>% 
+  # Add and use imputed values
+  left_join(block_depth_key) %>% 
+  mutate(depth_m=ifelse(depth_m_type=="Block median", depth_m_med, depth_m)) %>% 
+  select(-depth_m_med)
+
+# Add to set
+set_key7 <- set_key6 %>% 
+  # Rename original depth
+  rename(depth_fa_orig=depth_fa) %>% 
+  # Add extracted/computed depths
+  left_join(latlong_key_df) %>% 
+  mutate(depth_fa=measurements::conv_unit(depth_m, "m", "fathom")) %>% 
+  # Arrange
+  select(dataset:block_id, depth_m_type, depth_m, depth_fa, everything())
+
+# Inspect
+freeR::complete(set_key7)
+
+# Inspect
+plot(depth_fa_orig ~ depth_fa, set_key7, xlim=c(0,200), ylim=c(0,200))
+
+
+# Final inspection
+################################################################################
+
+# Inspect
+freeR::complete(set_key7)
+
+# Net type
+table(set_key7$net_type)
+
+# Net type
+table(set_key7$target_spp)
+
+# Ports
+table(set_key7$port_depart)
+table(set_key7$port_return)
+
+# Impute type
+table(set_key7$gps_type)
+table(set_key7$mesh_size_in_type)
+table(set_key7$soak_hr_type)
+table(set_key7$depth_m_type)
+
+
+# Export
+################################################################################
+
+# Export
+saveRDS(set_key7, file.path(outdir, "1983_2017_gillnet_observer_metadata_all.Rds"))
 

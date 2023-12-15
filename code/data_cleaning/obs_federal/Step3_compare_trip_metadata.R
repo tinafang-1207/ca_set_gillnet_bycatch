@@ -151,10 +151,18 @@ data <- data_orig1 %>%
          sst_f_haul=ifelse(!is.na(sst_f_haul), sst_f_haul, sst_f_haul_jim),
          lat_dd_haul=ifelse(!is.na(lat_dd_haul), lat_dd_haul, lat_dd_haul_jim),
          long_dd_haul=ifelse(!is.na(long_dd_haul), long_dd_haul, long_dd_haul_jim),
-         beaufort_haul=ifelse(!is.na(beaufort_haul), beaufort_haul, beaufort_haul_jim))
+         beaufort_haul=ifelse(!is.na(beaufort_haul), beaufort_haul, beaufort_haul_jim)) %>% 
+  # Correct the one unknown gear type which we now know to be "set" b/c California halibut is the taregt spp
+  mutate(net_type=ifelse(trip_id=="SN-VN-0553" & set_num==1, "set", net_type)) %>% 
+  # Format target species
+  mutate(target1_spp=gsub("Unidentified", "Unspecified", target1_spp),
+         target2_spp=gsub("Unidentified", "Unspecified", target2_spp))
         
 # Inspect
 freeR::complete(data)
+table(data$net_type)
+table(data$target1_spp)
+table(data$target2_spp)
 
 # Remove duplicate columns
 data_out <- data %>% 

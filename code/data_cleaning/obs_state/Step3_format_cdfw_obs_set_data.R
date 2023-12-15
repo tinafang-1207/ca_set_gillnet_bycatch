@@ -15,13 +15,22 @@ outdir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_state/pr
 plotdir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_state/figures"
 keydir <- "data/keys"
 
+# Read count data
+counts <- readRDS(file=file.path(outdir, "CDFW_1983_1989_gillnet_observer_data.Rds"))
+
 # Read data
 list.files(indir)
 data_orig <- read.csv(file.path(indir, "GNS8389.csv"), as.is=T, na.strings="")
 
 # Read species key
-port_key <- readRDS(file.path(keydir, "CDFW_port_key.Rds"))
-spp_key <- readRDS(file.path(keydir, "CDFW_species_key.Rds"))
+spp_key <- readRDS(file.path(keydir, "CDFW_species_key.Rds")) %>% 
+  mutate(comm_name=recode(comm_name,
+                          "White sea bass"="White seabass"))
+
+# Read port key 
+port_key <- readRDS(file.path(keydir, "CDFW_port_key.Rds")) %>% 
+  mutate(port=recode(port,
+                     "Santa Barbara Harbor"="Santa Barbara"))
 
 # Get blocks blocks
 blocks <- wcfish::blocks
@@ -145,17 +154,22 @@ data <- data_orig %>%
   # Add species name
   left_join(spp_key %>% select(spp_code_chr, comm_name), by=c("target_spp_code"="spp_code_chr")) %>%
   rename(target_spp=comm_name) %>%
-  # Add port names
+  # Add return port name
   left_join(port_key %>% select(port_code, port), by=c("port_depart_code"="port_code")) %>%
   rename(port_depart=port) %>%
+  # Add landing port name (plus fix some incorrect codes)
+  mutate(port_landing_code=case_when(port_landing_code==676 ~ 767, 
+                                     port_landing_code==740 ~ 748,
+                                     T ~ port_landing_code)) %>% 
   left_join(port_key %>% select(port_code, port), by=c("port_landing_code"="port_code")) %>%
   rename(port_landing=port) %>%
   # Format sampler
   mutate(sampler=toupper(sampler) %>% gsub(" ", "", .) %>% gsub("\\.", "", .)) %>%
-  # Add set id
-  mutate(set_id=paste(date, vessel_id, set_num, sep="-")) %>%
+  # Add trip id and set id
+  mutate(trip_id=paste(date, vessel_id, sep="-"),
+         set_id=paste(date, vessel_id, set_num, sep="-")) %>%
   # Arrange
-  select(date, vessel_id, set_num, set_id, complete_yn, obs_type,
+  select(date, vessel_id, set_num, trip_id, set_id, complete_yn, obs_type,
          port_depart_code, port_depart,
          port_landing_code, port_landing,
          target_spp_code, target_spp, lat_dd, long_dd,
@@ -181,7 +195,7 @@ range(data$date)
 table(data$complete_yn)
 table(data$obs_type)
 table(data$port_depart)
-table(data$port_landing) # 676, 740 not matched, probably typos
+table(data$port_landing)
 table(data$target_spp)
 table(data$net_orientation)
 table(data$net_type)
@@ -200,6 +214,33 @@ g <- ggplot(data, aes(x=long_dd, y=lat_dd, color=port_depart)) +
   # Theme
   theme_bw()
 g
+
+# Build meta-data for set ids in count data but not meta data
+################################################################################
+
+# Sets
+sets_not_in_metadata <- counts %>% 
+  # Reduce to sets without meta-data
+  filter(!set_id %in% data$set_id) %>%
+  # Unique properties
+  select(date:set_id) %>% 
+  unique() %>% 
+  # Add stuff
+  mutate(trip_id=paste(date, vessel_id, sep="-")) %>% 
+  separate(set_id, into=c("year", "month", "day", "vessel_id", "set_num"), sep="-") %>% 
+  mutate_at(vars(year:set_num), as.numeric) %>% 
+  select(-day) %>% 
+  # Trip id in meta data?
+  mutate(meta_yn=trip_id %in% data$trip_id)
+  
+
+str(sets_not_in_data)
+
+sets_not_in_data <- data %>% 
+  # Reduce to sets without meta-data
+  filter(!set_id %in% counts$set_id)
+
+
 
 
 # Add block id
@@ -230,6 +271,10 @@ data1 <- data %>%
          port_depart_code, port_depart,
          port_landing_code, port_landing,
          target_spp_code, target_spp, block_id, lat_dd, long_dd, everything())
+
+
+# Inspect
+freeR:: complete(data1)
 
 
 # Export data

@@ -43,14 +43,18 @@ data <- data_orig %>%
   # Format date
   mutate(date=lubridate::ymd(date)) %>%
   # Format number discarded alive
-  mutate(n_discarded_alive=ifelse(n_discarded_alive %in% c("m", "M"), NA, n_discarded_alive),
+  mutate(n_discarded_alive=ifelse(n_discarded_alive %in% c("m", "M"), 0, n_discarded_alive),
          n_discarded_alive=as.numeric(n_discarded_alive)) %>%
   # Format number damaged
-  mutate(n_damaged=ifelse(n_damaged %in% c("S", "M"), NA, n_damaged),
+  mutate(n_damaged=ifelse(n_damaged %in% c("S", "M"), 0, n_damaged),
          n_damaged=as.numeric(n_damaged)) %>%
   # Format number kept
-  mutate(n_kept=ifelse(n_kept %in% c("S"), NA, n_kept),
+  mutate(n_kept=ifelse(n_kept %in% c("S") | is.na(n_kept), 0, n_kept),
          n_kept=as.numeric(n_kept)) %>%
+  # Format number kept sublegal
+  mutate(n_kept_sublegal=ifelse(is.na(n_kept_sublegal), 0, n_kept_sublegal)) %>%
+  # Format number sold
+  mutate(n_sold=ifelse(is.na(n_sold), 0, n_sold)) %>%
   # Add species name (fix a few codes first)
   mutate(spp_code_chr=recode(spp_code_chr,
                              "PPn"="pPN",
@@ -64,12 +68,13 @@ data <- data_orig %>%
   # Check data
   mutate(n_caught_calc=n_discarded_dead+n_discarded_alive+n_kept+n_kept_sublegal+n_sold, # n_damaged is redundant
          n_check=n_caught-n_caught_calc) %>%
-  select(-c(n_caught_calc, n_check)) %>%
+  # select(-c(n_caught_calc, n_check)) %>%
   # Arrange
   select(date, vessel_id, set_num, set_id, spp_code_chr, comm_name, everything()) %>%
   arrange(date, vessel_id, set_num, set_id, comm_name)
 
 
+# Inspect data
 ################################################################################
 
 # Inspect
@@ -83,21 +88,38 @@ range(data$date)
 sort(unique(data$m_file_link))
 sort(unique(data$s_file_link))
 
-# Inspect species species
+# Inspect species 
 data_spp <- data %>%
   # Unique species
   select(spp_code_chr, comm_name) %>%
   unique() %>%
-  # Reduce to unmatched species
-  filter(is.na(comm_name)) %>%
   # Arrange
   arrange(spp_code_chr)
 data_spp$spp_code_chr
 
+# See if any species are duplicated within a set
+check1 <- data %>% 
+  count(set_id, comm_name) %>% 
+  filter(n>1)
+
+
+# Finalize data
+################################################################################
+
+# Finalize
+data_out <- data %>% 
+  # Simplify
+  select(-c(m_file_link, s_file_link, n_caught_calc, n_check)) %>% 
+  # Summarize results across set and species
+  group_by(date, vessel_id, set_num, set_id, spp_code_chr, comm_name) %>% 
+  summarize(across(where(is.numeric), sum), .groups = 'drop')
+
+# Inspect
+freeR::complete(data_out)
 
 # Export data
 ################################################################################
 
 # Export
-saveRDS(data, file=file.path(outdir, "CDFW_1983_1989_gillnet_observer_data.Rds"))
+saveRDS(data_out, file=file.path(outdir, "CDFW_1983_1989_gillnet_observer_data.Rds"))
 
