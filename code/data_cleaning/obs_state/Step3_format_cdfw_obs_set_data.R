@@ -168,6 +168,11 @@ data <- data_orig %>%
   # Add trip id and set id
   mutate(trip_id=paste(date, vessel_id, sep="-"),
          set_id=paste(date, vessel_id, set_num, sep="-")) %>%
+  # Convert 0s to NAs
+  mutate(mesh_size2_in=ifelse(mesh_size2_in==0, NA, mesh_size2_in),
+         hanging_length_in=ifelse(hanging_length_in==0, NA, hanging_length_in),
+         suspender_length_ft=ifelse(suspender_length_ft==0, NA, suspender_length_ft),
+         extender_length_ft=ifelse(extender_length_ft==0, NA, extender_length_ft)) %>% 
   # Arrange
   select(date, vessel_id, set_num, trip_id, set_id, complete_yn, obs_type,
          port_depart_code, port_depart,
@@ -234,13 +239,13 @@ sets_not_in_metadata <- counts %>%
   mutate(meta_yn=trip_id %in% data$trip_id)
   
 
-str(sets_not_in_data)
+
 
 sets_not_in_data <- data %>% 
   # Reduce to sets without meta-data
   filter(!set_id %in% counts$set_id)
 
-
+str(sets_not_in_data)
 
 
 # Add block id

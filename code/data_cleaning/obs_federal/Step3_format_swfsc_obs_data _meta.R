@@ -16,190 +16,10 @@ plotdir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_federal
 
 # Read data
 list.files(indir)
-data_orig1 <- read.csv(file.path(indir, "obs_setnet_catch.csv"), as.is=T, na.strings="")
-data_orig2 <- read.csv(file.path(indir, "obs_setnet_measurement.csv"), as.is=T, na.strings="")
 data_orig3 <- read.csv(file.path(indir, "SN_trip_SET_1990_2017.csv"), as.is=T, na.strings="")
 
 # Read species key
 spp_key <- readRDS(file.path(outdir, "SWFSC_observer_program_spp_key.Rds"))
-
-
-# Format counts (data 1)
-################################################################################
-
-# Categories recorded differently (protect spp)
-protected_catg <- c("Marine mammals", "Sea turtles", "Seabirds")
-
-# Format data 1
-data1 <- data_orig1 %>%
-  # Rename
-  janitor::clean_names() %>%
-  rename(trip_id=observer_trip_number,
-         set_num=set_number,
-         spp_code=catch_species_code,
-         comm_name_orig=species_common_name,
-         n_caught=total_catch_count,
-         n_kept=total_kept_count,
-         n_returned_alive=returned_alive_count,
-         n_returned_dead=returned_dead_count,
-         n_returned_unknown=returned_unknown_count,
-         n_damaged_mammals=damage_by_marine_mammals_count,
-         n_damaged=damage_total_count,
-         tag_yn=was_tag_present,
-         mammal_damage_yn=was_damaged_by_marine_mammals,
-         condition=condition_description) %>%
-  # Format species
-  mutate(spp_code=ifelse(is.na(spp_code), "0", spp_code),
-         spp_code=recode(spp_code,
-                         "000"="0",
-                         "001"="1",
-                         "003"="3",
-                         "019"="19",
-                         "040"="40",
-                         "050"="50",
-                         "051"="51",
-                         "055"="55",
-                         "079"="79",
-                         "080"="80",
-                         "096"="96")) %>%
-  # Add species info
-  left_join(spp_key %>% select(spp_code, comm_name, sci_name, category), by="spp_code") %>%
-  # Fill in missing species
-  mutate(comm_name_orig=ifelse(spp_code=="152", "Shark, Spiny Dogfish", comm_name_orig),
-         comm_name=ifelse(spp_code=="152", "Spiny dogfish shark", comm_name),
-         sci_name=ifelse(spp_code=="152", "Squalus suckleyi", sci_name),
-         category=ifelse(spp_code=="152", "Fish", category)) %>%
-  # Format sex
-  mutate(sex=ifelse(sex=="", "Unknown", sex),
-         sex=recode(sex,
-                    "U"="Unknown",
-                    "M"="Male",
-                    "F"="Female")) %>%
-  # Format condition
-  mutate(condition=ifelse(category %in% protected_catg & (condition=="" | is.na(condition)), "Unknown", condition)) %>%
-  # Format tag
-  mutate(tag_yn=recode(tag_yn,
-                       "Y"="yes",
-                       "N"="no")) %>%
-  # Format marine mammal damage?
-  mutate(mammal_damage_yn=recode(mammal_damage_yn,
-                       "Y"="yes",
-                       "N"="no")) %>%
-  # Record marine mammals in n caught column
-  mutate(n_caught=ifelse(category %in% protected_catg & is.na(n_caught), 1, n_caught),
-         n_returned_dead=ifelse(!is.na(condition) & condition=="Dead" & is.na(n_returned_dead), 1, n_returned_dead),
-         n_returned_alive=ifelse(!is.na(condition) & condition=="Alive" & is.na(n_returned_alive), 1, n_returned_alive)) %>% 
-  # Check totals
-  # Total = Kept + returned alive + returned dead + returned unknown (damaged is redundant)
-  mutate(n_caught_calc=n_kept+n_returned_alive+n_returned_dead+n_returned_unknown,
-         n_caught_diff=n_caught-n_caught_calc) %>%
-  # Fill in missing values given that they passed
-  mutate(n_kept=ifelse(!is.na(n_caught) & is.na(n_kept), 0, n_kept),
-         n_returned_alive=ifelse(!is.na(n_caught) & is.na(n_returned_alive), 0, n_returned_alive),
-         n_returned_dead=ifelse(!is.na(n_caught) & is.na(n_returned_dead), 0, n_returned_dead),
-         n_returned_unknown=ifelse(!is.na(n_caught) & is.na(n_returned_unknown), 0, n_returned_unknown)) %>% 
-  # Remove b/c pass check
-  # select(-c(n_caught_calc, n_caught_diff)) %>%
-  # Build set id
-  mutate(set_id=paste(trip_id, set_num, sep="-")) %>%
-  # Arrange
-  select(trip_id, set_num, set_id,
-         category, spp_code, comm_name_orig, comm_name, sci_name,
-         everything()) %>%
-  arrange(trip_id, set_num, set_id, spp_code) 
-
-# Inspect
-str(data1)
-freeR::complete(data1)
-
-# Inspect
-sort(unique(data1$tag_yn))
-sort(unique(data1$mammal_damage_yn))
-sort(unique(data1$condition_code))
-sort(unique(data1$condition))
-sort(unique(data1$sex))
-
-# Species key
-spp_key_check <- data1 %>%
-  select(spp_code, comm_name) %>%
-  unique() %>%
-  arrange(spp_code)
-freeR::which_duplicated(spp_key$spp_code)
-freeR::which_duplicated(spp_key$comm_name)
-
-# Export data
-saveRDS(data1, file=file.path(outdir, "SWFSC_set_net_observer_data.Rds"))
-
-
-# Summarize totals by set and spcies
-################################################################################
-
-# Build data
-data1_sum <- data1 %>% 
-  # Simplify
-  select(trip_id:spp_code, comm_name, sci_name, n_caught:n_returned_unknown) %>% 
-  # Summarize results across set and species
-  group_by(trip_id, set_num, set_id, category, spp_code, comm_name, sci_name) %>%
-  summarize(across(where(is.numeric), sum), .groups = 'drop')
-
-# Inspect
-freeR::complete(data1_sum)
-
-# Confirm no duplicates
-check2 <- data1_sum %>% 
-  count(set_id, comm_name)
-sum(check2$n>1)
-
-# Export
-saveRDS(data1_sum, file=file.path(outdir, "SWFSC_set_net_observer_data_summed.Rds"))
-
-
-# Format length compositions (data 2)
-################################################################################
-
-# Format data 2
-data2 <- data_orig2 %>%
-  # Rename
-  janitor::clean_names() %>%
-  rename(trip_id=observer_trip_number,
-         set_num=set_number,
-         spp_code=catch_species_code,
-         comm_name=species_common_name,
-         length_cm=measurement) %>%
-  # Add set id
-  mutate(set_id=paste(trip_id, set_num, sep="-")) %>%
-  # Remove useless columns
-  select(-c(measurement_units, condition)) %>%
-  # Arrange
-  select(trip_id, set_num, set_id, spp_code, everything()) %>%
-  arrange(trip_id, set_num, set_id, spp_code)
-
-# Inspect
-str(data2)
-freeR::complete(data2)
-
-# Inspect columns
-# sort(unique(data2$condition)) ## ALWAYS EMPTY
-# sort(unique(data2$measurement_units)) ## EMPTY on "cm"
-sort(unique(data2$disposition))
-
-# Inspect species key
-spp_key_check2 <- data2 %>%
-  select(spp_code, comm_name) %>%
-  unique()
-
-# Plot lengths
-# g <- ggplot(data2, aes(x=length_cm)) +
-#   facet_wrap(~comm_name, ncol=8, scales = "free") +
-#   geom_density() +
-#   # Labels
-#   labs(x="Length (cm)", y="Density") +
-#   # Theme
-#   theme_bw()
-# g
-
-# Export data
-saveRDS(data2, file=file.path(outdir, "SWFSC_set_net_observer_length_comps.Rds"))
 
 
 # Format set metadata (data 3)
@@ -247,6 +67,8 @@ data3 <- data_orig3 %>%
   # Format target species
   mutate(target1_spp=wcfish::reverse_names(target1_spp),
          target2_spp=wcfish::reverse_names(target2_spp)) %>% 
+  # Format temperature
+  
   # Label net type
   rowwise() %>%
   mutate(sn_vals_n=sum(!is.na(set_net_percent_described),
@@ -307,6 +129,16 @@ data3 <- data_orig3 %>%
   mutate(set_id=paste(trip_id, set_num, sep="-")) %>%
   # Add year
   mutate(year=lubridate::year(date_haul1)) %>% 
+  # Convert 0s to NAs
+  mutate(depth_fa_haul=ifelse(depth_fa_haul==0, NA, depth_fa_haul),
+         sst_f_haul=ifelse(sst_f_haul==0, NA, sst_f_haul),
+         net_hang_length_in=ifelse(net_hang_length_in==0, NA, net_hang_length_in),
+         net_extender_length_in=ifelse(net_extender_length_in==0, NA, net_extender_length_in),
+         net_suspender_length_in=ifelse(net_suspender_length_in==0, NA, net_suspender_length_in),
+         net_n_meshes_hang=ifelse(net_n_meshes_hang==0, NA, net_n_meshes_hang),
+         net_material_strength_lbs=ifelse(net_material_strength_lbs==0, NA, net_material_strength_lbs),
+         net_mesh_panel_length_fathoms=ifelse(net_mesh_panel_length_fathoms==0, NA, net_mesh_panel_length_fathoms),
+         net_depth_in_mesh_n=ifelse(net_depth_in_mesh_n==0, NA, net_depth_in_mesh_n)) %>% 
   # Arrange
   select(year, season, trip_id, set_num, set_id, 
          vessel, vessel_plate, vessel_permit,
@@ -337,8 +169,8 @@ table(data3$port_depart)
 table(data3$port_return)
 
 # SST/GPS devices
-table(data3$temp_device_haul) # don't know what these codes mean
-table(data3$pos_code_haul) # don't know what these codes mean
+table(data3$temp_device_haul) # OTR-Other, SPL-spirit?, VSL-Vessel temperature gauge
+table(data3$pos_code_haul) # 1-LOR = Loran, 2-DED = Dead reckoning, 3-SAT = GPS, 4-VER = Verbal
 
 # Target species
 table(data3$target1_spp)
@@ -363,10 +195,10 @@ g
 
 # Net characteristics
 table(data3$net_type)
-table(data3$net_color_code) # always empty
-table(data3$net_material_code) # don't know what these codes mean
-table(data3$net_hang_line_material_code)  # natural / synthetic???
-table(data3$net_material_strength_code) # pounds / size??
+table(data3$net_color_code) # green (1), red (2), blue (3), brown (4), other (5)
+table(data3$net_material_code) # monofilament (1) / multifilament (2) / combination (3) / twisted monofilament (4)
+table(data3$net_hang_line_material_code)  # synthetic (1) / natural (2)
+table(data3$net_material_strength_code) # pounds test (1) / twine size (2)
 
 # Net / target species key
 net_targ_key <- data3 %>% 
