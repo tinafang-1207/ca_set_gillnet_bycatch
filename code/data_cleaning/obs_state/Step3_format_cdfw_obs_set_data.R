@@ -89,7 +89,7 @@ data <- data_orig %>%
          net_type=ntype,
          net_material=nmat,
          net_length_fa=nlen,
-         net_depth=ndepth,
+         net_depth_nmeshes=ndepth,
          mesh_size1_in=msize1,
          mesh_size2_in=msize2,
          hanging_length_in=hlength,
@@ -179,7 +179,7 @@ data <- data_orig %>%
          port_landing_code, port_landing,
          target_spp_code, target_spp, lat_dd, long_dd,
          dfs, area, environment, bottom_depth_fa, time_pull, duration, soak_hr,
-         net_orientation, net_type, net_material, net_length_fa, net_depth,
+         net_orientation, net_type, net_material, net_length_fa, net_depth_nmeshes,
          mesh_size1_in, mesh_size2_in, hanging_length_in, hratio, suspender_length_ft, extender_length_ft, sampler,
          everything()) %>%
   select(-c(long_dd_orig, lat_dd_orig))
@@ -206,6 +206,9 @@ table(data$net_orientation)
 table(data$net_type)
 table(data$net_material)
 table(data$sampler)
+
+# Inspect quantitate
+boxplot(data$suspender_length_ft) #5-25 
 
 # Check lat/long
 usa <- rnaturalearth::ne_states(country="United States of America", returnclass = "sf")

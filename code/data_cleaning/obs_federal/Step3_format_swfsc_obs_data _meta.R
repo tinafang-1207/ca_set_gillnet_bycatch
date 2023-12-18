@@ -111,7 +111,7 @@ data3 <- data_orig3 %>%
          net_hang_length_in=ifelse(net_type=="set", set_net_hanging_length_inches, float_net_hanging_length_inches),
          net_mesh_size_in=ifelse(net_type=="set", set_net_mesh_size_inches, float_net_mesh_size_inches),
          net_suspender_length_in=ifelse(net_type=="set", set_net_suspender_length_inches, float_net_suspender_length_inches),
-         net_extender_length_in=ifelse(net_type=="set", set_net_extender_length_feet, float_net_extender_length_feet),
+         net_extender_length_ft=ifelse(net_type=="set", set_net_extender_length_feet, float_net_extender_length_feet),
          net_perc_slack=ifelse(net_type=="set", set_net_percent_slack, float_net_percent_slack),
          net_n_meshes_hang=ifelse(net_type=="set", set_net_number_of_meshes_hanging, float_net_number_of_meshes_hanging),
          net_material_strength_lbs=ifelse(net_type=="set", set_net_material_strength_lbs, float_net_material_strength_lbs),
@@ -133,12 +133,20 @@ data3 <- data_orig3 %>%
   mutate(depth_fa_haul=ifelse(depth_fa_haul==0, NA, depth_fa_haul),
          sst_f_haul=ifelse(sst_f_haul==0, NA, sst_f_haul),
          net_hang_length_in=ifelse(net_hang_length_in==0, NA, net_hang_length_in),
-         net_extender_length_in=ifelse(net_extender_length_in==0, NA, net_extender_length_in),
+         net_extender_length_ft=ifelse(net_extender_length_ft==0, NA, net_extender_length_ft),
          net_suspender_length_in=ifelse(net_suspender_length_in==0, NA, net_suspender_length_in),
          net_n_meshes_hang=ifelse(net_n_meshes_hang==0, NA, net_n_meshes_hang),
          net_material_strength_lbs=ifelse(net_material_strength_lbs==0, NA, net_material_strength_lbs),
          net_mesh_panel_length_fathoms=ifelse(net_mesh_panel_length_fathoms==0, NA, net_mesh_panel_length_fathoms),
          net_depth_in_mesh_n=ifelse(net_depth_in_mesh_n==0, NA, net_depth_in_mesh_n)) %>% 
+  # Recode codes
+  mutate(net_material=recode(net_material_code, 
+                             "MLT"="multifilament",
+                             "MON"="monofilament",
+                             "TWM"="twisted monofilament")) %>% 
+  mutate(net_hang_line_material_code=recode(net_hang_line_material_code, 
+                                           "NAT"="natural",
+                                           "SYN"="synthetic")) %>% 
   # Arrange
   select(year, season, trip_id, set_num, set_id, 
          vessel, vessel_plate, vessel_permit,
@@ -199,6 +207,10 @@ table(data3$net_color_code) # green (1), red (2), blue (3), brown (4), other (5)
 table(data3$net_material_code) # monofilament (1) / multifilament (2) / combination (3) / twisted monofilament (4)
 table(data3$net_hang_line_material_code)  # synthetic (1) / natural (2)
 table(data3$net_material_strength_code) # pounds test (1) / twine size (2)
+
+# Quantitative net characteristics
+boxplot(data3$net_suspender_length_in)
+
 
 # Net / target species key
 net_targ_key <- data3 %>% 

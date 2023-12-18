@@ -133,7 +133,7 @@ data <- data_orig1 %>%
          temp_device_haul, sst_f_set_jim, sst_f_haul, sst_f_haul_jim, 
          beaufort_set_jim, beaufort_haul, beaufort_haul_jim,
          sn_vals_n, fn_vals_n, net_type, perc_obs,
-         net_hang_length_in, net_mesh_size_in, net_suspender_length_in, net_extender_length_in, net_perc_slack,
+         net_hang_length_in, net_mesh_size_in, net_suspender_length_in, net_extender_length_ft, net_perc_slack,
          net_n_meshes_hang, net_material_strength_lbs, net_mesh_panel_length_fathoms, net_depth_in_mesh_n, net_color_code,
          net_hang_line_material_code, net_material_code, net_material_strength_code, 
          everything()) %>% 
