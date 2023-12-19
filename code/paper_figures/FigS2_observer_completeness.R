@@ -13,14 +13,15 @@ library(tidyverse)
 plotdir <- "figures"
 datadir1 <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_federal/processed"
 datadir2 <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_state/processed"
+datadir3 <-  "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_merge"
+
+
+# Completeness
+################################################################################
 
 # Read data
 data_orig1 <- readRDS(file.path(datadir2, "CDFW_1983_1989_gillnet_observer_set_info.Rds"))
 data_orig2 <- readRDS(file.path(datadir1, "SWFSC_1990_2017_set_net_observer_trips_merged.Rds"))
-
-
-# Format and merge data
-################################################################################
 
 # Format state
 colnames(data_orig1)
@@ -75,10 +76,6 @@ data2 <- data_orig2 %>%
 data <- bind_rows(data1, data2)
 colnames(data)
 
-
-# Plot data
-################################################################################
-
 # Build data
 completeness <- freeR::complete(data) / nrow(data)
 stats <- tibble(variable=names(completeness),
@@ -114,16 +111,139 @@ stats <- tibble(variable=names(completeness),
   mutate(variable=factor(variable, levels=variable))
 
 
+
+
+# Imputation methods
+################################################################################
+
+# Read data
+data_raw_orig <- readRDS(file.path(datadir3, "1983_2017_gillnet_observer_metadata_unimputed.Rds"))
+data_imputed_orig <- readRDS(file.path(datadir3, "1983_2017_gillnet_observer_metadata_all.Rds"))
+
+
+# Format imputed data
+table(data_imputed_orig$net_type)
+data_imputed <- data_imputed_orig %>% 
+  # Set nets
+  filter(!net_type %in% c("drift", "float")) 
+
+# Format raw data
+table(data$net_type)
+data_raw <- data_raw_orig %>% 
+  # Set nets
+  filter(!net_type %in% c("drift", "float")) %>% 
+  mutate(soak_day=soak_hr/24)
+
+# Mesh size by target stats
+mesh_stats <- data_raw %>% 
+  group_by(target_spp) %>% 
+  summarise(mesh_in=median(mesh_size_in, na.rm=T)) %>% 
+  ungroup() %>% 
+  arrange(desc(mesh_in))
+
+# Order data by mesh size
+data_raw1 <- data_raw %>% 
+  mutate(target_spp=factor(target_spp, levels=mesh_stats$target_spp))
+
 # Plot data
 ################################################################################
 
-# Plot data
-g <- ggplot(stats, aes(y=variable, x=perc)) +
+# Base theme
+base_theme <- theme(axis.text=element_text(size=6),
+                    axis.text.y = element_text(angle = 90, hjust = 0.5),
+                    axis.title=element_text(size=7),
+                    legend.text=element_text(size=5),
+                    legend.title=element_text(size=6),
+                    plot.tag=element_text(size=7),
+                    plot.title=element_blank(),
+                    # Gridlines
+                    panel.grid.major = element_blank(), 
+                    panel.grid.minor = element_blank(),
+                    panel.background = element_blank(), 
+                    axis.line = element_line(colour = "black"),
+                    # Legend
+                    legend.background = element_rect(fill=alpha('blue', 0)))
+
+
+# Completeness
+g1 <- ggplot(stats, aes(y=variable, x=perc)) +
   geom_point() +
   # Labels
-  labs(x="Percent incomplete", y="") +
-  scale_x_continuous(labels = scales::percent, trans="log10", lim=c(0.001, 1)) +
+  labs(x="Percent incomplete", y="Data attribue", tag="A") +
+  scale_x_continuous(trans="log10", 
+                     lim=c(0.001, 1), 
+                     breaks=c(0.001, 0.01, 0.1, 1),
+                     labels=c("0.1%", "1%", "10%", "100%")) +
   # Theme
-  theme_bw()
+  theme_bw() +
+  theme(axis.text=element_text(size=6),
+        axis.title=element_text(size=7),
+        legend.text=element_text(size=5),
+        legend.title=element_text(size=6),
+        plot.tag=element_text(size=7),
+        plot.title = element_blank())
+g1
+
+# Depths
+g2 <- ggplot(data_imputed, aes(x=depth_fa_orig, y=depth_fa)) +
+  geom_point(shape=1, alpha=0.5, color="grey50") + 
+  # Reference lines
+  geom_abline(slope=c(1)) +
+  # Labels
+  labs(x="Reported depth (fa)", y="Extracted depth (fa)", tag="B") +
+  # Theme
+  theme_bw() + base_theme 
+g2
+
+# Soak time
+max_hrs <- data_raw$soak_hr %>% max(., na.rm=T)
+g3 <- ggplot(data_raw, aes(x=soak_day)) +
+  geom_histogram(breaks=seq(0, 10, 0.25)) +
+  # Labels
+  labs(x="Soak time (days)", y="Number of observed sets", tag="C") +
+  scale_x_continuous(breaks=seq(0, 10, 1), lim=c(0,10.2)) +
+  # Max
+  annotate(geom="text", x=max_hrs/24, y=0, label=paste0(max_hrs, " hr\nmax"), vjust=-0.1, size=1.8) +
+  # Theme
+  theme_bw() + base_theme 
+g3
+
+#  Mesh sizes
+max_in <- data_raw$mesh_size_in %>% max(., na.rm=T)
+g4 <- ggplot(data_raw, aes(x=mesh_size_in)) +
+  geom_histogram(breaks=seq(0, 30, 0.5)) +
+  # Labels
+  labs(x="Mesh size (in)", y="Number of observed sets", tag="D") +
+  scale_x_continuous(breaks=c(0, 3.5, 8.5, 15, 20, 25, 30), lim=c(0,26)) + 
+  # Max
+  annotate(geom="text", x=max_in, y=0, label=paste0(max_in, '"\nmax'), vjust=-0.1, size=1.8) +
+  # Theme
+  theme_bw() + base_theme 
+g4
+
+# Mesh size by species
+g5 <- ggplot(data_raw1, aes(y=target_spp, x=mesh_size_in)) +
+  geom_boxplot(outlier.shape=21, linewidth=0.2, outlier.size = 0.3) +
+  # Labels
+  labs(x="Mesh size (in)", y="Target species", tag="E") +
+  scale_x_continuous(breaks=c(0, 3.5, 6.5, 8.5, seq(10,30, 5)), lim=c(0, NA)) +
+  # Theme
+  theme_bw() + base_theme +
+  theme(axis.text.y = element_text(angle = 0, hjust = 1))
+g5
+
+# Merge
+layout_matrix <- matrix(data=c(1,2,3,
+                               4,5,5), ncol=3, byrow=T)
+g <- gridExtra::grid.arrange(g1, g2, g3, g4, g5, 
+                             layout_matrix=layout_matrix)
 g
+
+# Export
+ggsave(g, filename=file.path(plotdir, "FigS2_observer_data_imputation.png"), 
+       width=6.5, height=4.5, units="in", dpi=600)
+
+
+
+
 
