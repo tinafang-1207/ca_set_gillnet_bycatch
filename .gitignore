@@ -6,6 +6,4 @@
 .DS_Store
 
 #confidential
-figures
 data/confidential
-model_result
