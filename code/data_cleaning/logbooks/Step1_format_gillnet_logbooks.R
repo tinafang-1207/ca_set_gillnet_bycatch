@@ -191,6 +191,11 @@ data1 <- data_orig %>%
                             "W, X"="White Seabass, Soupfin Shark")) %>% 
   # Finalize target species
   mutate(target_spp=ifelse(!is.na(target_spp1), target_spp1, target_spp2)) %>% 
+  # Extract primary target specie
+  mutate(target_spp_first=sapply(strsplit(target_spp, ","), function(x) x[1])) %>% 
+  # Format net type
+  # If targeting "Swordfish/Shark" or if buoy line depth is reported, assume drift gillnet
+  mutate(net_type_final=ifelse(target_spp_first %in% c("Swordfish/Shark", "Shark/Swordfish") | !is.na(buoy_line_depth_ft_num), "Drift", net_type_final)) %>% 
   # Format predator
   # Rules: maintain order, maybe/question mark = unknown
   mutate(predator=predator %>% stringr::str_squish(.) %>% stringr::str_to_sentence(.),
@@ -304,7 +309,7 @@ data1 <- data_orig %>%
          mesh_size_in, mesh_size_in_num,
          buoy_line_depth_ft, buoy_line_depth_ft_num, 
          soak_hr, soak_hr_num,
-         target_spp1, target_spp2, target_spp, 
+         target_spp1, target_spp2, target_spp, target_spp_first, 
          spp_code, comm_name1, comm_name2, comm_name,
          status, catch_n, catch_lb, predator,
          everything()) %>% 
@@ -392,7 +397,7 @@ table(data1$predator)
 sort(unique(data1$target_spp1))
 sort(unique(data1$target_spp2))
 target_spp_key <- data1 %>% 
-  count(target_spp, target_spp1, target_spp2)
+  count(target_spp_first, target_spp, target_spp1, target_spp2)
 
 # Caught species
 spp_key_orig <- data1 %>% 
