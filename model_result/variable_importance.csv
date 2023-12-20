@@ -1,0 +1,25 @@
+"","species","variable","importance"
+"1","California sea lion","haul_long_dd",238.955811451077
+"2","California sea lion","julian_day",233.184057213728
+"3","California sea lion","sst",225.108744372317
+"4","California sea lion","haul_lat_dd",221.634483865087
+"5","California sea lion","net_mesh_size_in",193.779874119468
+"6","California sea lion","dist_km",177.040036086731
+"7","California sea lion","haul_depth_fa",154.071963833452
+"8","California sea lion","soak_hr",135.645776778152
+"9","Harbor seal","julian_day",103.859074392723
+"10","Harbor seal","soak_hr",86.2711488962244
+"11","Harbor seal","haul_depth_fa",80.2883320722236
+"12","Harbor seal","net_mesh_size_in",79.7586446249911
+"13","Harbor seal","haul_lat_dd",76.8171471435311
+"14","Harbor seal","sst",73.9485707527008
+"15","Harbor seal","dist_km",58.0894741695859
+"16","Harbor seal","haul_long_dd",53.9744149075734
+"17","Soupfin shark","julian_day",73.3214583227511
+"18","Soupfin shark","haul_depth_fa",68.8803682874549
+"19","Soupfin shark","haul_long_dd",65.966775944187
+"20","Soupfin shark","soak_hr",64.8332620256899
+"21","Soupfin shark","dist_km",63.4971412805428
+"22","Soupfin shark","sst",62.7176795280503
+"23","Soupfin shark","haul_lat_dd",58.99894003101
+"24","Soupfin shark","net_mesh_size_in",57.4175306121339
