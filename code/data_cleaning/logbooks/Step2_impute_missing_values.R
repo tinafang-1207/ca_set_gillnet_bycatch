@@ -12,7 +12,7 @@ library(tidyverse)
 # Directories
 indir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/raw"
 outdir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/processed"
-plotdir <- "figures"
+plotdir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/figures"
 
 # Read data
 data_orig <- readRDS(file=file.path(outdir, "CDFW_1981_2020_gillnet_logbook_data.Rds"))
@@ -34,7 +34,7 @@ data <- data_orig %>%
          vessel_id_use_type, vessel_id_use, 
          block_id_num, block_type, block_lat_dd, block_long_dd, 
          net_type, depth_fa_num, net_length_fa_num, mesh_size_in_num, buoy_line_depth_ft_num, soak_hr_num, 
-         target_spp, spp_code, comm_name, status, catch_n, catch_lb, predator) %>% 
+         target_spp, target_spp_first, spp_code, comm_name, status, catch_n, catch_lb, predator) %>% 
   # Rename
   rename(vessel_id=vessel_id_use,
          vessel_id_type=vessel_id_use_type,
@@ -168,7 +168,7 @@ g
 ################################################################################
 
 # Maxes
-soak_cap <- 96
+soak_cap <- 10*24
 length_cap <- 2000
 
 # Build set key
@@ -290,7 +290,7 @@ data3 <- data2 %>%
          buoy_line_depth_ft, 
          soak_hr_imp, 
          soak_hr_imp_source,
-         target_spp, spp_code, comm_name, status, catch_n, catch_lb, predator) %>% 
+         target_spp, target_spp_first, spp_code, comm_name, status, catch_n, catch_lb, predator) %>% 
   # Rename
   rename(depth_fa=depth_fa_imp, 
          depth_source=depth_fa_imp_source, 

@@ -26,28 +26,27 @@ sets <- data_orig %>%
   # Flter
   filter(net_type=="Set") %>% 
   # Set meta-data
-  select(logbook_id:target_spp) %>% 
+  select(logbook_id:target_spp_first) %>% 
   unique() %>% 
   # Meta-data of interest
   select(date, block_id, depth_fa_num, 
          net_length_fa_num, mesh_size_in_num,
-         soak_hr_num, target_spp)
+         soak_hr_num, target_spp, target_spp_first)
 
 # Add 1st target
 sets1 <- sets %>% 
-  # Extract primary target
-  mutate(target_spp1=sapply(strsplit(target_spp, ","), function(x) x[1])) %>% 
   # Reduce to species longer than two character
-  filter(nchar(target_spp1)>=3) %>% 
+  filter(nchar(target_spp_first)>=3) %>% 
   # Calculate median
-  group_by(target_spp1) %>% 
-  mutate(mesh_med=median(mesh_size_in_num, na.rm=T)) %>% ungroup()
+  group_by(target_spp_first) %>% 
+  mutate(mesh_med=median(mesh_size_in_num, na.rm=T)) %>% ungroup() %>% 
+  mutate(target_spp_first=stringr::str_to_sentence(target_spp_first))
 
 # Completeness stats
 comp_percs <- freeR::complete(sets) / nrow(sets)
 comp_df <- tibble(variable=names(comp_percs),
                   perc=comp_percs %>% as.numeric()) %>% 
-  filter(perc!=0 & variable!="date") %>% 
+  filter(perc!=0 & !variable%in%c("date", "target_spp_first")) %>% 
   # Format
   mutate(variable=recode(variable,
                          "block_id"=" Block id",              
@@ -114,15 +113,18 @@ g2
 
 # Plot 
 g3 <- ggplot(sets, aes(x=depth_fa_num, y=after_stat(count)/1000)) +
-  geom_histogram(breaks=seq(0,2000,20)) +
+  geom_histogram(breaks=seq(0,2000,10)) +
   # Labels
   labs(x="Depth (fathoms)", y="Thousands of pseudo-sets", tag="C") +
+  scale_x_continuous(lim=c(0,300),
+                     breaks=seq(0,300,100),
+                     labels=c(seq(0,200, 100), "≥300")) +
   # Theme
   theme_bw() + hist_theme
 g3
 
 # Plot 
-g4 <- ggplot(sets1, aes(x=mesh_size_in_num, y=reorder(target_spp1, desc(mesh_med)))) +
+g4 <- ggplot(sets1, aes(x=mesh_size_in_num, y=reorder(target_spp_first, desc(mesh_med)))) +
   geom_boxplot(outlier.shape=21, linewidth=0.2, outlier.size = 0.3) +
   # Labels
   labs(x="Mesh size (in)", y="Target species", tag="D") +

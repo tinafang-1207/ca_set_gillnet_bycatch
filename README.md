@@ -14,14 +14,15 @@ The repository is structured as follows:
   - **data_cleaning:** code to clean confidential data
   - **paper_figures:** code to make figures included in paper
   - **modelling:** code to run the modeling analysis
-  - **function:** functions to support the modelling analyes (move to modelling)
+      - **ratio_estimation:** code to run the ratio estimation analysis
+      - **random_forests:** code to run the random forest analysis
   - **exploration_figure:** code for exploratory analyses
-  - **TO BE DELETED:** process_CDFW_logbook, process_observer_data
 * **data:** non-confidential data used in the analysis
-* **literature_analysis:** relevant references (rename as "reference" and hide)
-* **model_result:** output from the modeling analysis (rename as "output")
+* **figures:** figures included in the paper
+* **model_output**: non-confidential model output (e.g., variable importance, marginal effect, spatial/temporal predictions)
+* **references:** relevant references
 
-No confidential data are included in this repository.
+No confidential data are included in this repository. Model output with confidential data (e.g., training or test data) are also excluded from the repository.
 
 # Acknowledgements
 
