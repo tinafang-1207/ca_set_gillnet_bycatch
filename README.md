@@ -17,8 +17,9 @@ The repository is structured as follows:
       - **ratio_estimation:** code to run the ratio estimation analysis
       - **random_forests:** code to run the random forest analysis
   - **exploration_figure:** code for exploratory analyses
-* **model_output**: non-confidential model output (e.g., variable importance, marginal effect, spatial/temporal predictions)
 * **data:** non-confidential data used in the analysis
+* **figures:** figures included in the paper
+* **model_output**: non-confidential model output (e.g., variable importance, marginal effect, spatial/temporal predictions)
 * **references:** relevant references
 
 No confidential data are included in this repository. Model output with confidential data (e.g., training or test data) are also excluded from the repository.
