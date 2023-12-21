@@ -42,10 +42,8 @@ data_set_lg <- data_set %>%
 # Inspect
 table(data_set_lg$target_spp)
 
-# Target species: California halibut, White seabass, Pacific angel shark
-data_set_lg_targ <- data_set %>% 
-  # Filter to target species
-  filter(target_spp %in% c("California halibut", "White seabass", "Pacific angel shark"))
+# Completeness
+freeR::complete(data_set_lg)
 
 
 # Export
