@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <idinfo>
+    <citation>
+      <citeinfo>
+        <origin/>
+        <origin/>
+        <pubdate>20040322</pubdate>
+        <title>Offshore Islands of California, 2004</title>
+        <geoform>vector digital data</geoform>
+        <pubinfo>
+          <pubplace/>
+          <publish>California. Department of Fish and Game. Marine Resources Region</publish>
+        </pubinfo>
+        <pubinfo>
+          <pubplace/>
+          <publish>California. Department of Fish and Game. Marine Resources Region</publish>
+        </pubinfo>
+        <onlink>http://purl.stanford.edu/nd958xt7750</onlink>
+        <lworkcit>
+          <citeinfo>
+            <pubdate>20000101</pubdate>
+            <title>California Department of Fish and Wildlife GIS Maps and Data</title>
+          </citeinfo>
+        </lworkcit>
+      </citeinfo>
+    </citation>
+    <descript>
+      <abstract>This line shapefile represents California's offshore islands. This layer is part of a collection of data created by the California Department of Fish &amp;amp; Wildlife.</abstract>
+      <purpose>These data are intended for researchers, students, policy makers, and the general public for reference and mapping purposes, and may be used for basic applications such as viewing, querying, and map output production.</purpose>
+      <supplinf>Accuracy appears good by informal look at the vector over 1999 NOAA charts, however it has not been quantified.</supplinf>
+    </descript>
+    <spdom>
+      <bounding>
+        <westbc>-123.013836</westbc>
+        <eastbc>-118.203628</eastbc>
+        <northbc>37.741583</northbc>
+        <southbc>32.776085</southbc>
+      </bounding>
+    </spdom>
+    <keywords>
+      <theme>
+        <themekt>lcsh</themekt>
+        <themekey>Islands</themekey>
+      </theme>
+      <theme>
+        <themekt>ISO 19115 Topic Categories</themekt>
+        <themekey>oceans</themekey>
+        <themekey>boundaries</themekey>
+      </theme>
+      <place>
+        <placekt>geonames</placekt>
+        <placekey>Farallon Islands</placekey>
+        <placekey>California</placekey>
+        <placekey>Channel Islands</placekey>
+      </place>
+    </keywords>
+    <accconst>This item is in the public domain. There are no restrictions on access or use.</accconst>
+    <useconst>None</useconst>
+    <ptcontac>
+      <cntinfo>
+        <cntorgp>
+          <cntorg>California Department of Fish &amp; Game</cntorg>
+          <cntper>Marine Region GIS</cntper>
+        </cntorgp>
+        <cntaddr>
+          <addrtype>mailing and physical</addrtype>
+          <address>20 Lower Ragsdale Dr. Suite 100</address>
+          <city>Monterey</city>
+          <state>CA</state>
+          <postal>93940</postal>
+          <country>US</country>
+        </cntaddr>
+        <cntvoice>831.649.7143</cntvoice>
+        <cntemail>mr_gis@dfg.ca.gov</cntemail>
+      </cntinfo>
+    </ptcontac>
+    <datacred>California Department of Fish and Game. Marine Resources Region. (2004). Offshore Islands of California, 2004. California Department of Fish and Game. Available at: http://purl.stanford.edu/nd958xt7750.</datacred>
+    <native>Microsoft Windows 7 Version 6.1 (Build 7601) Service Pack 1; Esri ArcGIS 10.3.1.4959</native>
+  </idinfo>
+  <spdoinfo>
+    <direct>Vector</direct>
+    <ptvctinf>
+      <sdtsterm>
+        <sdtstype>String</sdtstype>
+        <ptvctcnt>31</ptvctcnt>
+      </sdtsterm>
+    </ptvctinf>
+  </spdoinfo>
+  <eainfo>
+    <detailed>
+      <enttyp>
+        <enttypl>california_islands</enttypl>
+      </enttyp>
+      <attr>
+        <attrlabl>FID</attrlabl>
+        <attrdef>Internal feature number.</attrdef>
+        <attrdefs>ESRI</attrdefs>
+        <attrdomv>
+          <udom>Sequential unique whole numbers that are automatically generated.</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>Shape</attrlabl>
+        <attrdef>Feature geometry.</attrdef>
+        <attrdefs>ESRI</attrdefs>
+        <attrdomv>
+          <udom>Coordinates defining the features.</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>FNODE_</attrlabl>
+      </attr>
+      <attr>
+        <attrlabl>TNODE_</attrlabl>
+      </attr>
+      <attr>
+        <attrlabl>LPOLY_</attrlabl>
+      </attr>
+      <attr>
+        <attrlabl>RPOLY_</attrlabl>
+      </attr>
+      <attr>
+        <attrlabl>LENGTH</attrlabl>
+      </attr>
+      <attr>
+        <attrlabl>COUNTY_</attrlabl>
+      </attr>
+      <attr>
+        <attrlabl>COUNTY_ID</attrlabl>
+      </attr>
+      <attr>
+        <attrlabl>LUCODE</attrlabl>
+      </attr>
+      <attr>
+        <attrlabl>STATE</attrlabl>
+      </attr>
+    </detailed>
+  </eainfo>
+  <distinfo>
+    <distrib>
+      <cntinfo>
+        <cntorgp>
+          <cntorg>Stanford Geospatial Center</cntorg>
+        </cntorgp>
+        <cntaddr>
+          <addrtype>physical</addrtype>
+          <address>Branner Earth Sciences Library</address>
+          <address>Mitchell Building, 2nd Floor</address>
+          <address>397 Panama Mall</address>
+          <city>Stanford</city>
+          <state>California</state>
+          <postal>94305</postal>
+        </cntaddr>
+        <cntvoice>650-723-2746</cntvoice>
+        <cntemail>brannerlibrary@stanford.edu</cntemail>
+      </cntinfo>
+    </distrib>
+    <distliab>See access and use constraints information.</distliab>
+  </distinfo>
+  <metainfo>
+    <metd>20160129</metd>
+    <metc>
+      <cntinfo>
+        <cntorgp>
+          <cntorg>California Department of Fish &amp; Game</cntorg>
+          <cntper>Marine Region GIS</cntper>
+        </cntorgp>
+        <cntaddr>
+          <addrtype>mailing and physical</addrtype>
+          <address>20 Lower Ragsdale Dr. Suite 100</address>
+          <city>Monterey</city>
+          <state>CA</state>
+          <postal>93940</postal>
+          <country>US</country>
+        </cntaddr>
+        <cntvoice>831.649.7143</cntvoice>
+        <cntemail>mr_gis@dfg.ca.gov</cntemail>
+      </cntinfo>
+    </metc>
+    <metstdn>FGDC Content Standard for Digital Geospatial Metadata</metstdn>
+    <metstdv>FGDC-STD-001-1998</metstdv>
+    <mettc>local time</mettc>
+  </metainfo>
+</metadata>

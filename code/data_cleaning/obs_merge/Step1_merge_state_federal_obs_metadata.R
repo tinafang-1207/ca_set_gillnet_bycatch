@@ -478,6 +478,14 @@ latlong_key_sp <- latlong_key %>%
 # Extract depth values
 depth_values <- raster::extract(bathy, latlong_key_sp)
 
+# MARMAP version
+bathy_marmap <- marmap::getNOAA.bathy(lon1 = -116, lon2 = -125,
+                                      lat1 = 32, lat2 = 42, resolution = 4)
+plot(bathy_marmap)
+depth_values_marmap <- marmap::get.depth(bathy_marmap, x=latlong_key %>% select(long_dd, lat_dd), locator=F)
+plot(depth_values ~ depth_values_marmap$depth)
+hist(measurements::conv_unit(set_key6$depth_fa, "fathom", "m"), breaks=seq(0,1000,10), xlim=c(0,200))
+
 # Add to key
 latlong_key_df <- latlong_key %>% 
   # Absolute value
@@ -493,47 +501,84 @@ latlong_key_df <- latlong_key %>%
 
 # Add to set
 set_key7 <- set_key6 %>% 
-  # Rename original depth
-  rename(depth_fa_orig=depth_fa) %>% 
   # Add extracted/computed depths
   left_join(latlong_key_df) %>% 
-  mutate(depth_fa=measurements::conv_unit(depth_m, "m", "fathom")) %>% 
+  mutate(depth_fa_imputed=measurements::conv_unit(depth_m, "m", "fathom")) %>% 
+  # Impute depths
+  mutate(depth_type=ifelse(!is.na(depth_fa), "Reported", depth_m_type),
+         depth_fa=ifelse(!is.na(depth_fa), depth_fa, depth_fa_imputed)) %>% 
+  select(-c(depth_m, depth_m_type)) %>% 
   # Arrange
-  select(dataset:block_id, depth_m_type, depth_m, depth_fa, everything())
+  select(dataset:block_id, depth_type, depth_fa, depth_fa_imputed, everything())
 
 # Inspect
 freeR::complete(set_key7)
+table(set_key7$depth_type)
 
 # Inspect
-plot(depth_fa_orig ~ depth_fa, set_key7, xlim=c(0,200), ylim=c(0,200))
+plot(depth_fa_imputed ~ depth_fa, set_key7, xlim=c(0,200), ylim=c(0,200))
+
+
+# 7. Mark islands
+################################################################################
+
+# Island buffer
+buffer <- readRDS("data/gis_data/island_buffer_10km.Rds")
+
+# Create an 'sf' object for the GPS coordinates
+latlong_key <- set_key7 %>% 
+  select(block_id, long_dd, lat_dd) %>% 
+  unique()
+latlong_key_sf <- latlong_key %>% 
+  sf::st_as_sf(coords=c("long_dd", "lat_dd"), crs="+proj=longlat +datum=WGS84")
+
+# Check if each point falls within the buffer polygon
+out <- sf::st_within(latlong_key_sf, buffer) %>% as.numeric() 
+out_yn <- ifelse(is.na(out), 0, 1)
+table(out_yn)
+
+#
+latlong_key$island_yn <- out_yn
+
+# Plot check
+g <- ggplot(latlong_key, aes(x=long_dd, y=lat_dd, color=island_yn)) +
+  geom_sf(data=buffer, fill=NA, inherit.aes = F) +
+  geom_point() +
+  coord_sf(xlim=c(-121, -116), ylim=c(32, 35)) +
+  theme_bw()
+g
+
+# Add island yes/no
+set_key8 <- set_key7 %>% 
+  left_join(latlong_key)
 
 
 # Final inspection
 ################################################################################
 
 # Inspect
-freeR::complete(set_key7)
+freeR::complete(set_key8)
 
 # Net type
-table(set_key7$net_type)
+table(set_key8$net_type)
 
 # Net type
-table(set_key7$target_spp)
+table(set_key8$target_spp)
 
 # Ports
-table(set_key7$port_depart)
-table(set_key7$port_return)
+table(set_key8$port_depart)
+table(set_key8$port_return)
 
 # Impute type
-table(set_key7$gps_type)
-table(set_key7$mesh_size_in_type)
-table(set_key7$soak_hr_type)
-table(set_key7$depth_m_type)
+table(set_key8$gps_type)
+table(set_key8$mesh_size_in_type)
+table(set_key8$soak_hr_type)
+table(set_key8$depth_type)
 
 
 # Export
 ################################################################################
 
 # Export
-saveRDS(set_key7, file.path(outdir, "1983_2017_gillnet_observer_metadata_all.Rds"))
+saveRDS(set_key8, file.path(outdir, "1983_2017_gillnet_observer_metadata_all.Rds"))
 
