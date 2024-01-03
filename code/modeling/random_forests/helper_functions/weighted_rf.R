@@ -36,7 +36,7 @@ fit_weighted_rf_model <- function(spp, model_orig) {
   
   #Join model data
   
-  # Balanced rf
+  # Weighted rf
   model_data_weighted <- left_join(response_pre_join, predictor_pre_join, by = "set_id") %>%
     mutate(response = as.factor(response))
   
