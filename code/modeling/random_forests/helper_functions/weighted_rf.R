@@ -11,26 +11,33 @@
 fit_weighted_rf_model <- function(spp, model_orig) {
   
   
-  # Format model data
+  # Format data (predictor and response)
   
   response_pre_join <- model_orig %>%
-    # don't want data from 1990 - 1994
-    filter(data_source != "SWFSC(1990-1994)") %>%
     mutate(response = ifelse(comm_name == spp, 1, 0)) %>%
     group_by(set_id) %>%
     summarize(response = sum(response)) %>%
     mutate(response = ifelse(response >= 1, 1, response))
   
+  # predictors
+  # lat_dd = latitude
+  # depth_fa = haul depth (ignore depth_fa_imputed)
+  # soak_hr = soak hours
+  # mesh_size_in = mesh size
+  # shore_km = distance to shore (in km)
+  # yday = julian day
+  # sst_c = sea surface temperature
+  # island_yn = island dummy
+  
+  
   predictor_pre_join <- model_orig %>%
-    filter(data_source != "SWFSC(1990-1994)") %>%
-    separate("date", c("year", "month", "day"), sep = "-") %>%
-    select(set_id, haul_long_dd, haul_lat_dd, haul_depth_fa, soak_hr, net_mesh_size_in, dist_km, julian_day, sst) %>%
+    select(set_id, lat_dd, depth_fa, soak_hr, mesh_size_in, shore_km, yday, sst_c, island_yn) %>%
     filter(!duplicated(set_id))
   
-  # Join model data
+  #Join model data
   
+  # Balanced rf
   model_data_weighted <- left_join(response_pre_join, predictor_pre_join, by = "set_id") %>%
-    filter(!duplicated(set_id)) %>%
     mutate(response = as.factor(response))
   
   # For loop to find the best weight
