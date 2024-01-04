@@ -12,19 +12,28 @@ plotdir <- "figures"
 #### read in model result ####
 
 # sealion
-output_sl_balanced <- readRDS("model_result/balanced_rf/california_sea_lion_model_balanced_rf.Rds")
-output_sl_weighted <- readRDS("model_result/weighted_rf/california_sea_lion_model_weighted_rf.Rds")
+output_sl_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/california_sea_lion_model_balanced_rf.Rds")
+output_sl_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/california_sea_lion_model_weighted_rf.Rds")
 
 # harbor seal
-output_hs_balanced <- readRDS("model_result/balanced_rf/harbor_seal_model_balanced_rf.Rds")
-output_hs_weighted <- readRDS("model_result/weighted_rf/harbor_seal_model_weighted_rf.Rds")
+output_hs_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/harbor_seal_model_balanced_rf.Rds")
+output_hs_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/harbor_seal_model_weighted_rf.Rds")
 
 # soupfin shark
-output_ss_balanced <- readRDS("model_result/balanced_rf/soupfin_shark_model_balanced_rf.Rds")
-output_ss_weighted <- readRDS("model_result/weighted_rf/soupfin_shark_model_weighted_rf.Rds")
+output_ss_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/soupfin_shark_model_balanced_rf.Rds")
+output_ss_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/soupfin_shark_model_weighted_rf.Rds")
 
 # giant seabass
-# output_gs_balanced <- readRDS("model_result/balanced_rf/giant_sea_bass_model_balanced_rf.Rds")
+output_gs_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/giant_sea_bass_model_balanced_rf.Rds")
+output_gs_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/giant_sea_bass_model_weighted_rf.Rds")
+
+# common murre
+output_cm_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/common_murre_model_balanced_rf.Rds")
+output_cm_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/common_murre_model_weighted_rf.Rds")
+
+# brandt's cormorant 
+output_bc_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/brandt's_cormorant_model_balanced_rf.Rds")
+output_bc_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/brandt's_cormorant_model_weighted_rf.Rds")
 
 #### Extract output from model result ####
 
@@ -50,14 +59,43 @@ ss_weighted_df <- output_ss_weighted[["rf_weighted_final"]] %>%
   mutate(species = "Soupfin shark")
 
 #giant seabass
-#gs_balanced_df <- output_gs_balanced[["rf_all_df"]] %>%
-  #mutate(species = "Giant seabass", weight = NA)
+gs_balanced_df <- output_gs_balanced[["rf_all_df"]] %>%
+  mutate(species = "Giant sea bass", weight = NA)
+
+gs_weighted_df <- output_gs_weighted[["rf_weighted_final"]] %>%
+  mutate(species = "Giant sea bass")
+
+#common murre
+cm_balanced_df <- output_cm_balanced[["rf_all_df"]] %>%
+  mutate(species = "Common murre", weight = NA)
+
+cm_weighted_df <- output_cm_weighted[["rf_weighted_final"]] %>%
+  mutate(species = "Common murre")
+
+# Brandt's cormorant
+bc_balanced_df <-  output_bc_balanced[["rf_all_df"]] %>%
+  mutate(species = "Brandt's cormorant", weight = NA)
+
+bc_weighted_df <- output_bc_weighted[["rf_weighted_final"]] %>%
+  mutate(species = "Brandt's cormorant")
+
   
 #### Make plots to show the result ####
 
 # make the final table
 
-model_df_final <- rbind(sl_balanced_df, sl_weighted_df, hs_balanced_df, hs_weighted_df, ss_balanced_df, ss_weighted_df) %>%
+model_df_final <- rbind(sl_balanced_df, 
+                        sl_weighted_df, 
+                        hs_balanced_df, 
+                        hs_weighted_df, 
+                        ss_balanced_df, 
+                        ss_weighted_df,
+                        gs_balanced_df,
+                        gs_weighted_df,
+                        cm_balanced_df,
+                        cm_weighted_df,
+                        bc_balanced_df,
+                        bc_weighted_df) %>%
   rename(metric = .metric) %>%
   mutate(metric = recode_factor(metric, 
                                 "kap" = "Cohen's kappa", 

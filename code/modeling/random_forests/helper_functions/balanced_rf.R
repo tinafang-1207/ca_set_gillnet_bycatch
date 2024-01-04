@@ -27,10 +27,11 @@ fit_balanced_rf_model <- function(spp, model_orig) {
   # yday = julian day
   # sst_c = sea surface temperature
   # island_yn = island dummy
+  # long_dd = longitude
   
   
   predictor_pre_join <- model_orig %>%
-    select(set_id, lat_dd, depth_fa, soak_hr, mesh_size_in, shore_km, yday, sst_c, island_yn) %>%
+    select(set_id, lat_dd, long_dd, depth_fa, soak_hr, mesh_size_in, shore_km, yday, sst_c, island_yn) %>%
     filter(!duplicated(set_id))
   
   #Join model data
@@ -80,9 +81,9 @@ fit_balanced_rf_model <- function(spp, model_orig) {
   # Set up grid search
   set.seed(1207)
   
-  model_fold <- vfold_cv(model_train_balance)
+  model_fold <- vfold_cv(model_train_balance, strata = response)
   
-  param_grid <- grid_regular(mtry(range = c(1, 8)), levels = 8) 
+  param_grid <- grid_regular(mtry(range = c(1, 9)), levels = 9) 
   
   
   # Set up workflow
