@@ -149,6 +149,7 @@ g_balanced
 
 g_weighted <- ggplot(data = model_df_final %>% filter(balanced_type == "Weighted"), 
                      mapping = aes(x = mtry, y = mean, color = weight, group = weight)) +
+  geom_hline(data = ref_df, mapping = aes(yintercept = value), color = "grey70",linetype = "dashed") +
   geom_line() +
   labs(x = "Number of variables (mtry)", y = "Value" ) +
   facet_grid(metric~species, scales = "free_y") +
@@ -182,7 +183,7 @@ select_model_kappa <- best_model_kappa %>%
 
 select_model_roc <- model_df_final %>%
   filter(metric == "Area under the ROC curve") %>%
-  filter(model_id == "Area under the ROC curve-Preprocessor1_Model3-SMOTE-Harbor seal-3-NA"|model_id == "Area under the ROC curve-Preprocessor1_Model1-SMOTE-Soupfin shark-1-NA"|model_id == "Area under the ROC curve-Preprocessor1_Model1-Weighted-California sea lion-1-75")
+  filter(model_id == "Area under the ROC curve-Preprocessor1_Model2-SMOTE-California sea lion-2-NA"|model_id == "Area under the ROC curve-Preprocessor1_Model1-SMOTE-Giant sea bass-1-NA"|model_id == "Area under the ROC curve-Preprocessor1_Model1-SMOTE-Soupfin shark-1-NA"|model_id == "Area under the ROC curve-Preprocessor1_Model4-Weighted-Brandt's cormorant-4-50"|model_id == "Area under the ROC curve-Preprocessor1_Model8-Weighted-Common murre-8-25"|model_id == "Area under the ROC curve-Preprocessor1_Model4-Weighted-Harbor seal-4-75")
 
 select_model_final <- rbind(select_model_kappa, select_model_roc) %>%
   mutate(metric = factor(metric, levels = c("Cohen's kappa", "Area under the ROC curve")))
@@ -191,7 +192,7 @@ select_model_final <- rbind(select_model_kappa, select_model_roc) %>%
 
 # All best models
 model_best_all <- model_df_final %>%
-  filter(balanced_type%in%c("Upsample", "Downsample", "SMOTE")|(species == "California sea lion" & weight == "75")|(species == "Harbor seal" & weight == "150")|(species == "Soupfin shark"& weight == "25")) %>%
+  filter(balanced_type%in%c("Upsample", "Downsample", "SMOTE")|(species == "California sea lion" & weight == "50")|(species == "Harbor seal" & weight == "75")|(species == "Soupfin shark"& weight == "25")|(species == "Common murre"& weight == "25")|(species == "Brandt's cormorant"& weight == "50")|(species == "Giant sea bass"& weight == "75")) %>%
   mutate(metric = factor(metric, levels = c("Cohen's kappa", "Area under the ROC curve"))) %>%
   select(-weight)
 
@@ -219,7 +220,7 @@ model_best_weight_kappa <- model_df_final %>%
 model_best_weight_roc <- model_df_final %>%
   filter(balanced_type == "Weighted") %>%
   filter(metric == "Area under the ROC curve") %>%
-  filter(model_id == "Area under the ROC curve-Preprocessor1_Model1-Weighted-California sea lion-1-75"|model_id == "Area under the ROC curve-Preprocessor1_Model7-Weighted-Harbor seal-7-150"|model_id == "Area under the ROC curve-Preprocessor1_Model2-Weighted-Soupfin shark-2-25")
+  filter(model_id == "Area under the ROC curve-Preprocessor1_Model5-Weighted-California sea lion-5-50"|model_id == "Area under the ROC curve-Preprocessor1_Model4-Weighted-Harbor seal-4-75"|model_id == "Area under the ROC curve-Preprocessor1_Model2-Weighted-Soupfin shark-2-25"|model_id == "Area under the ROC curve-Preprocessor1_Model4-Weighted-Brandt's cormorant-4-50"|model_id == "Area under the ROC curve-Preprocessor1_Model8-Weighted-Common murre-8-25"|model_id == "Area under the ROC curve-Preprocessor1_Model1-Weighted-Giant sea bass-1-75")
 
 model_best_weight_final<-rbind(model_best_weight_kappa, model_best_weight_roc)
 
@@ -243,7 +244,7 @@ g <- gridExtra::grid.arrange(g_best, g_best_weight, ncol = 1)
 
 
 ggsave(g, filename=file.path(plotdir, "FigSX_rf_model_selection.png"),
-       width=5.5, height=6.5, units="in", dpi=600)
+       width=7.5, height=7, units="in", dpi=600)
 
   
   
