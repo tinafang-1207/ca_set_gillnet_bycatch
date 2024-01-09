@@ -62,7 +62,7 @@ for (i in 1:length(spp_do)) {
 ############## Fit weighted rf below ###############
 
 #set up output dir for weighted rf
-outputdir_weighted_rf <- "/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_long/"
+outputdir_weighted_rf <- "/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/"
 
 i <- 1
 

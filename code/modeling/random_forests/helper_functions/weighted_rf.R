@@ -31,7 +31,7 @@ fit_weighted_rf_model <- function(spp, model_orig) {
   
   
   predictor_pre_join <- model_orig %>%
-    select(set_id, lat_dd, long_dd, depth_fa, soak_hr, mesh_size_in, shore_km, yday, sst_c, island_yn) %>%
+    select(set_id, lat_dd, depth_fa, soak_hr, mesh_size_in, shore_km, yday, sst_c, island_yn) %>%
     filter(!duplicated(set_id))
   
   #Join model data
@@ -89,7 +89,7 @@ fit_weighted_rf_model <- function(spp, model_orig) {
     
     model_fold <- vfold_cv(model_train_weighted)
     
-    param_grid <- grid_regular(mtry(range = c(1, 9)), levels = 9) 
+    param_grid <- grid_regular(mtry(range = c(1, 8)), levels = 8) 
     
     # set up model workflow
     set.seed(1207)
