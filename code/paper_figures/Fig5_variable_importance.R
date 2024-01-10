@@ -53,7 +53,7 @@ base_theme <-  theme(axis.text=element_text(size=7),
 g <- ggplot(data, aes(x=importance, 
                       y=tidytext::reorder_within(variable, importance, species),
                       fill = category)) +
-  facet_wrap(~species, ncol=4, scales="free") +
+  facet_wrap(~species, ncol=2, scales="free") +
   geom_bar(stat="identity") +
   scale_fill_discrete(name = "Category") +
   # Labels
@@ -66,6 +66,6 @@ g
 
 # Export
 ggsave(g, filename=file.path(plotdir, "Fig5_variable_importance.png"), 
-       width=12, height=3, units="in", dpi=600)
+       width=6.5, height=4, units="in", dpi=600)
 
 

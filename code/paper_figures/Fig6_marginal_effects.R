@@ -17,7 +17,6 @@ plotdir <- "figures"
 
 data <- read.csv("model_result/marginal_effects.csv")
 
-
 # Plot data
 ################################################################################
 
@@ -51,6 +50,6 @@ g
 
 # Export
 ggsave(g, filename=file.path(plotdir, "Fig6_marginal_effects.png"), 
-       width=6.5, height=3.75, units="in", dpi=600)
+       width=7, height=3.75, units="in", dpi=600)
 
 
