@@ -105,7 +105,11 @@ model_df_final <- rbind(sl_balanced_df,
                                 "upsample" = "Upsample",
                                 "smote" = "SMOTE",
                                 "weighted" = "Weighted")) %>%
-  mutate(model_id = paste(metric, .config, balanced_type, species, mtry, weight, sep = "-"))
+  mutate(model_id = paste(metric, .config, balanced_type, species, mtry, weight, sep = "-")) %>%
+  mutate(species = species %>% fct_reorder(mean))
+
+
+
 
 
 # make the plot
@@ -136,6 +140,8 @@ auc_df <- tibble(metric = "Area under the ROC curve",
 ref_df <- rbind(kappa_df, auc_df) %>%
   mutate(metric = factor(metric, levels = c("Cohen's kappa", "Area under the ROC curve")))
 
+# create best model result from balanced rf
+
 g_balanced <-ggplot(data = model_df_final %>% filter(balanced_type != "Weighted"), 
                     mapping = aes(x = mtry, y = mean)) +
   geom_hline(data = ref_df, mapping = aes(yintercept = value), color = "grey70",linetype = "dashed") +
@@ -146,6 +152,8 @@ g_balanced <-ggplot(data = model_df_final %>% filter(balanced_type != "Weighted"
   theme_bw()+base_theme
 
 g_balanced
+
+# create best model result from weighted rf
 
 g_weighted <- ggplot(data = model_df_final %>% filter(balanced_type == "Weighted"), 
                      mapping = aes(x = mtry, y = mean, color = weight, group = weight)) +
