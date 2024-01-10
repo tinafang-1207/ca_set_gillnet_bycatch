@@ -32,6 +32,7 @@ fit_balanced_rf_model <- function(spp, model_orig) {
   
   predictor_pre_join <- model_orig %>%
     select(set_id, lat_dd, depth_fa, soak_hr, mesh_size_in, shore_km, yday, sst_c, island_yn) %>%
+    mutate(island_yn = as.factor(island_yn)) %>%
     filter(!duplicated(set_id))
   
   #Join model data
@@ -59,14 +60,20 @@ fit_balanced_rf_model <- function(spp, model_orig) {
   
   # Balanced rf - downsampling
   model_rec_down <- recipe(response~., data = model_train_balance) %>%
+    step_dummy(island_yn) %>%
+    step_normalize(all_predictors()) %>%
     step_downsample(response)
   
   # Balanced rf- upsampling
   model_rec_up <- recipe(response~., data = model_train_balance) %>%
+    step_dummy(island_yn) %>%
+    step_normalize(all_predictors()) %>%
     step_upsample(response)
   
   # Balanced rf-smote
   model_rec_smote <- recipe(response~., data = model_train_balance) %>%
+    step_dummy(island_yn) %>%
+    step_normalize(all_predictors()) %>%
     step_smote(response)
   
   
