@@ -123,6 +123,8 @@ explainer_rf_sl <- explain_tidymodels(
   verbose = FALSE
 )
 
+# for continuous variables
+
 pdp_rf_sl <- model_profile(explainer_rf_sl, 
                         N = NULL, 
                         variables = c("mesh_size_in",
@@ -134,7 +136,6 @@ pdp_rf_sl <- model_profile(explainer_rf_sl,
                                       "depth_fa",
                                       "island_yn"), 
                         groups = NULL)
-
 
 pdp_rf_df_sl <- as.data.frame(pdp_rf_sl$agr_profiles) %>%
   select(-"_label_",-"_ids_") %>%
@@ -155,6 +156,16 @@ pdp_rf_df_sl <- as.data.frame(pdp_rf_sl$agr_profiles) %>%
   filter(!(variable=="Soak time (hr)" & value>96)) %>%
   # add species column
   mutate(species = "California sea lion")
+
+# for categorical variable - island_yn 
+
+pdp_rf_sl_cat <- model_profile(explainer_rf_sl, N = NULL, variables = "island_yn", variable_type = "categorical", groups = NULL, type = "partial")
+
+pdp_rf_sl_cat_df <- as.data.frame(pdp_rf_sl_cat$agr_profiles) %>%
+  select(-"_label_",-"_ids_") %>%
+  rename(variable = "_vname_", value = "_x_", prob = "_yhat_")
+
+
 
 
 
