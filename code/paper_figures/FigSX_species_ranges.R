@@ -17,11 +17,45 @@ haulouts <- readRDS(file.path(datadir, "2001_2003_harbor_seal_haulouts.Rds"))
 colonies <- readRDS(file.path(datadir,  "2010_seabird_colony_database.Rds" ))
 ranges <- readRDS(file.path(datadir, "cwhr_ranges_simplified.Rds"))
 hporp_ras <- raster::raster(file.path(datadir, "harbor_porpoise_range.tiff"))
+eseal_ts <- readxl::read_excel("data/species_distributions/raw/elephant_seal/Lowry_2014_Table2.xlsx", sheet=1)
+eseal_xy <- readxl::read_excel("data/species_distributions/raw/elephant_seal/Lowry_2014_Table2.xlsx", sheet=2)
+slion_ts <- readxl::read_excel("data/species_distributions/raw/california_sea_lion/Lowry_etal_2021_Table4.xlsx", sheet=1)
+slion_xy <- readxl::read_excel("data/species_distributions/raw/california_sea_lion/Lowry_etal_2021_Table4.xlsx", sheet=2)
 
-# Convert raster
+
+# Format data
+################################################################################
+
+# Convert harbor porpoise raster
 hporp_ras_df <- hporp_ras %>% 
   raster::as.data.frame(xy=T) %>% 
   filter(layer==1)
+
+# Build elephant seal data
+eseal <- eseal_ts %>% 
+  # Reduce to most recent year
+  filter(Year==2010) %>% 
+  # Gather
+  gather(key="rookery", value="nbirths", 2:ncol(.)) %>% 
+  select(-Year) %>% 
+  # Eliminate totals
+  filter(!grepl("total", tolower(rookery))) %>% 
+  # Add metadata
+  full_join(eseal_xy) %>% 
+  # Arrange
+  select(region, rookery, long_dd, lat_dd, nbirths)
+
+# Build sea lion data
+slion <- slion_ts %>% 
+  # Mean
+  group_by(species, haulout, area) %>% 
+  summarise(nlive=mean(live_total)) %>% 
+  ungroup() %>% 
+  # Reduce 
+  filter(species=="California sea lion") %>% 
+  # Add xy
+  left_join(slion_xy)
+
 
 # Plot data
 ################################################################################
@@ -58,15 +92,21 @@ g1 <- ggplot(ranges %>% filter(comm_name=="California sea lion")) +
   # Plot reference lines
   # geom_hline(yintercept=lats,
   #            linetype="dotted", linewidth=0.3, color="grey50") +
+  # Rookeries
+  geom_point(data=slion, mapping=aes(x=long_dd, y=lat_dd, size=nlive)) +
   # Land
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data=mexico, fill="grey85", col="white", linewidth=0.2, inherit.aes = F) +
   # Axes
   scale_x_continuous(breaks=seq(-124, -116, 2)) +
   scale_y_continuous(breaks=seq(32, 42, 2)) +
+  # Legend
+  scale_size_continuous(name="Haulout size\n(# of sea lions)", range=c(0.2, 3)) +
   # Crop
   coord_sf(xlim = c(-124, -117), ylim = c(32.3, 38.5)) +
-  theme_bw() + base_theme
+  theme_bw() + base_theme +
+  theme(legend.key.size=unit(0.2, "cm"),
+        legend.position = c(0.2, 0.2))
 g1
 
 # Elephant seal
@@ -79,12 +119,19 @@ g2 <- ggplot(ranges %>% filter(comm_name=="Northern elephant seal")) +
   # Land
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data=mexico, fill="grey85", col="white", linewidth=0.2, inherit.aes = F) +
+  # Rookeries
+  geom_point(data=eseal, mapping=aes(x=long_dd, y=lat_dd, size=nbirths)) +
+  geom_point(data=eseal %>% filter(is.na(nbirths)), mapping=aes(x=long_dd, y=lat_dd), shape="x", size=2.5) +
   # Axes
   scale_x_continuous(breaks=seq(-124, -116, 2)) +
   scale_y_continuous(breaks=seq(32, 42, 2)) +
+  # Legend
+  scale_size_continuous(name="Rookery size\n(# of births)", range=c(0.2, 3)) +
   # Crop
   coord_sf(xlim = c(-124, -117), ylim = c(32.3, 38.5)) +
-  theme_bw() + base_theme
+  theme_bw() + base_theme +
+  theme(legend.key.size=unit(0.2, "cm"),
+        legend.position = c(0.2, 0.2))
 g2
 
 # Harbor seal
