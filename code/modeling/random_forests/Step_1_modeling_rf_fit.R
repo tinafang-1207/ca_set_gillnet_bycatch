@@ -18,28 +18,32 @@ library(workflows)
 
 ### read in data ###
 
-model_orig <- read.csv("data/confidential/processed/fig2_total_merge_final.csv") # yutian
+# Yutian
+model_orig <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/obs_merge/1983_2017_gillnet_observer_data_with_sst_3.5in_set.Rds") 
 
-model_orig <- read.csv("/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/processed/fig2_total_merge_final.csv") # chris
+# Chris
+model_orig <- readRDS("/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_merge/1983_2017_gillnet_observer_data_with_sst_3.5in_set.Rds") 
 
 
 ### Source the function
 
 # balanced rf
-source("code/function/balanced_rf.R")
+source("code/modeling/random_forests/helper_functions/balanced_rf.R")
 
 #weighted rf
-source("code/function/weighted_rf.R")
+source("code/modeling/random_forests/helper_functions/weighted_rf.R")
 
 ### set up the species list ###
 
-spp_do <- c("California sea lion", "Harbor seal", "Soupfin shark")
+spp_do <- c("California sea lion")
+
+spp_do <- c("California sea lion", "Harbor seal", "Soupfin shark", "Common murre", "Giant sea bass", "Brandt's cormorant")
 
 
 ########### Fit balanced rf below ###############
 
 # set up output dir for balance rf
-outputdir_balanced_rf <- "model_result/balanced_rf"
+outputdir_balanced_rf <- "/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf"
 
 i <- 1
 
@@ -58,7 +62,7 @@ for (i in 1:length(spp_do)) {
 ############## Fit weighted rf below ###############
 
 #set up output dir for weighted rf
-outputdir_weighted_rf <- "model_result/weighted_rf"
+outputdir_weighted_rf <- "/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/"
 
 i <- 1
 

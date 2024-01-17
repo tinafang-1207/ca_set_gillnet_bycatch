@@ -5,6 +5,7 @@
 ######################### Balanced random forest ############################
 #############################################################################
 
+
 # Notice: This takes about 20 minutes to run for 1 species
 
 fit_balanced_rf_model <- function(spp, model_orig) {
@@ -12,24 +13,32 @@ fit_balanced_rf_model <- function(spp, model_orig) {
   # Format data (predictor and response)
   
   response_pre_join <- model_orig %>%
-    # don't want data from 1990 - 1994
-    filter(data_source != "SWFSC(1990-1994)") %>%
     mutate(response = ifelse(comm_name == spp, 1, 0)) %>%
     group_by(set_id) %>%
     summarize(response = sum(response)) %>%
     mutate(response = ifelse(response >= 1, 1, response))
   
+ # predictors
+  # lat_dd = latitude
+  # depth_fa = haul depth (ignore depth_fa_imputed)
+  # soak_hr = soak hours
+  # mesh_size_in = mesh size
+  # shore_km = distance to shore (in km)
+  # yday = julian day
+  # sst_c = sea surface temperature
+  # island_yn = island dummy
+  # long_dd = longitude
+  
+  
   predictor_pre_join <- model_orig %>%
-    filter(data_source != "SWFSC(1990-1994)") %>%
-    separate("date", c("year", "month", "day"), sep = "-") %>%
-    select(set_id, haul_long_dd, haul_lat_dd, haul_depth_fa, soak_hr, net_mesh_size_in, dist_km, julian_day, sst) %>%
+    select(set_id, lat_dd, depth_fa, soak_hr, mesh_size_in, shore_km, yday, sst_c, island_yn) %>%
+    mutate(island_yn = as.factor(island_yn)) %>%
     filter(!duplicated(set_id))
   
   #Join model data
   
   # Balanced rf
   model_data_balance <- left_join(response_pre_join, predictor_pre_join, by = "set_id") %>%
-    filter(!duplicated(set_id)) %>%
     mutate(response = as.factor(response))
   
   # Split model data
@@ -51,14 +60,20 @@ fit_balanced_rf_model <- function(spp, model_orig) {
   
   # Balanced rf - downsampling
   model_rec_down <- recipe(response~., data = model_train_balance) %>%
+    step_dummy(island_yn) %>%
+    step_normalize(all_predictors()) %>%
     step_downsample(response)
   
   # Balanced rf- upsampling
   model_rec_up <- recipe(response~., data = model_train_balance) %>%
+    step_dummy(island_yn) %>%
+    step_normalize(all_predictors()) %>%
     step_upsample(response)
   
   # Balanced rf-smote
   model_rec_smote <- recipe(response~., data = model_train_balance) %>%
+    step_dummy(island_yn) %>%
+    step_normalize(all_predictors()) %>%
     step_smote(response)
   
   
@@ -73,7 +88,7 @@ fit_balanced_rf_model <- function(spp, model_orig) {
   # Set up grid search
   set.seed(1207)
   
-  model_fold <- vfold_cv(model_train_balance)
+  model_fold <- vfold_cv(model_train_balance, strata = response)
   
   param_grid <- grid_regular(mtry(range = c(1, 8)), levels = 8) 
   
