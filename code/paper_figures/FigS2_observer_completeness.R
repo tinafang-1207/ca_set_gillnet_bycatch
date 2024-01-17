@@ -185,12 +185,11 @@ g1 <- ggplot(stats, aes(y=variable, x=perc)) +
 g1
 
 # Depths
-g2 <- ggplot(data_imputed, aes(x=depth_fa_orig, y=depth_fa)) +
-  geom_point(shape=1, alpha=0.5, color="grey50") + 
-  # Reference lines
-  geom_abline(slope=c(1)) +
+g2 <- ggplot(data_raw, aes(x=depth_fa)) +
+  geom_histogram(breaks=seq(0,200,5)) +
   # Labels
-  labs(x="Reported depth (fa)", y="Extracted depth (fa)", tag="B") +
+  labs(x="Depth (fathoms)", y="Number of observed sets", tag="B") +
+  # scale_x_continuous(breaks=seq(0, 10, 1), lim=c(0,10.2)) +
   # Theme
   theme_bw() + base_theme 
 g2
