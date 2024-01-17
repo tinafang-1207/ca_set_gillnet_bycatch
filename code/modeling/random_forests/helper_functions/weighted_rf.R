@@ -32,6 +32,7 @@ fit_weighted_rf_model <- function(spp, model_orig) {
   
   predictor_pre_join <- model_orig %>%
     select(set_id, lat_dd, depth_fa, soak_hr, mesh_size_in, shore_km, yday, sst_c, island_yn) %>%
+    mutate(island_yn = as.factor(island_yn)) %>%
     filter(!duplicated(set_id))
   
   #Join model data
@@ -77,7 +78,9 @@ fit_weighted_rf_model <- function(spp, model_orig) {
       drop_na()
     
     # set up model recipe
-    model_rec_weighted <- recipe(response~., data = model_train_weighted)
+    model_rec_weighted <- recipe(response~., data = model_train_weighted) %>%
+      step_dummy(island_yn) %>%
+      step_normalize(all_predictors())
     
     # set up model engine
     rf_spec_weighted <- rand_forest(mtry = tune()) %>%

@@ -168,7 +168,8 @@ g_weighted <- ggplot(data = model_df_final %>% filter(balanced_type == "Weighted
 
 g_weighted
 
-RColorBrewer::display.brewer.all(9)
+# color palette 
+# RColorBrewer::display.brewer.all(9)
 
 
 #### select the best model ####
@@ -191,7 +192,7 @@ select_model_kappa <- best_model_kappa %>%
 
 select_model_roc <- model_df_final %>%
   filter(metric == "Area under the ROC curve") %>%
-  filter(model_id == "Area under the ROC curve-Preprocessor1_Model2-SMOTE-California sea lion-2-NA"|model_id == "Area under the ROC curve-Preprocessor1_Model1-SMOTE-Giant sea bass-1-NA"|model_id == "Area under the ROC curve-Preprocessor1_Model1-SMOTE-Soupfin shark-1-NA"|model_id == "Area under the ROC curve-Preprocessor1_Model4-Weighted-Brandt's cormorant-4-50"|model_id == "Area under the ROC curve-Preprocessor1_Model8-Weighted-Common murre-8-25"|model_id == "Area under the ROC curve-Preprocessor1_Model4-Weighted-Harbor seal-4-75")
+  filter(model_id == "Area under the ROC curve-Preprocessor1_Model2-SMOTE-California sea lion-2-NA"|model_id == "Area under the ROC curve-Preprocessor1_Model1-SMOTE-Giant sea bass-1-NA"|model_id == "Area under the ROC curve-Preprocessor1_Model2-Upsample-Soupfin shark-2-NA"|model_id == "Area under the ROC curve-Preprocessor1_Model4-Weighted-Brandt's cormorant-4-50"|model_id == "Area under the ROC curve-Preprocessor1_Model8-Weighted-Common murre-8-25"|model_id == "Area under the ROC curve-Preprocessor1_Model4-Weighted-Harbor seal-4-75")
 
 select_model_final <- rbind(select_model_kappa, select_model_roc) %>%
   mutate(metric = factor(metric, levels = c("Cohen's kappa", "Area under the ROC curve")))
