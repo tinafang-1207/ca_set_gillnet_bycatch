@@ -41,8 +41,8 @@ sl_best_model <- output_sl_balanced[["best_models"]][["model_smote_best"]]
 # harbor seal - weighted - 75
 hs_best_model <- output_hs_weighted[["best_models"]][[3]]
 
-# soupfin shark - SMOTE
-ss_best_model <- output_ss_balanced[["best_models"]][["model_smote_best"]]
+# soupfin shark - Upsample
+ss_best_model <- output_ss_balanced[["best_models"]][["model_upsample_best"]]
 
 # common murre - weighted-25
 cm_best_model <- output_cm_weighted[["best_models"]][[1]]
@@ -55,8 +55,8 @@ sl_best_fit <-  output_sl_balanced[["final_fit"]][["model_smote_final_fit"]]
 # harbor seal - weighted - 75
 hs_best_fit <- output_hs_weighted[["final_fit"]][[3]]
 
-# soupfin shark - SMOTE
-ss_best_fit <- output_ss_balanced[["final_fit"]][["model_smote_final_fit"]]
+# soupfin shark - Upsample
+ss_best_fit <- output_ss_balanced[["final_fit"]][["model_up_final_fit"]]
 
 # common murre - weighted -25
 cm_best_fit <- output_cm_weighted[["final_fit"]][[1]]
@@ -133,8 +133,7 @@ pdp_rf_sl <- model_profile(explainer_rf_sl,
                                       "lat_dd",
                                       "soak_hr",
                                       "shore_km",
-                                      "depth_fa",
-                                      "island_yn"), 
+                                      "depth_fa"), 
                         groups = NULL)
 
 pdp_rf_df_sl <- as.data.frame(pdp_rf_sl$agr_profiles) %>%
@@ -148,8 +147,7 @@ pdp_rf_df_sl <- as.data.frame(pdp_rf_sl$agr_profiles) %>%
                                 "mesh_size_in"="Mesh size (cm)",
                                 "shore_km"="Shore distance (km)",
                                 "depth_fa"="Depth (fathoms)",    
-                                "soak_hr"="Soak time (hr)",
-                                "island_yn" = "Island location (yes or no)")) %>% 
+                                "soak_hr"="Soak time (hr)")) %>% 
   # Remove outlier values (BUT WE SHOULD DO THIS RIGHT SOMEWHERE)
   filter(!(variable=="Depth (fathoms)" & value>100)) %>% 
   filter(!(variable=="Shore distance (km)" & value>20)) %>% 
@@ -163,7 +161,10 @@ pdp_rf_sl_cat <- model_profile(explainer_rf_sl, N = NULL, variables = "island_yn
 
 pdp_rf_sl_cat_df <- as.data.frame(pdp_rf_sl_cat$agr_profiles) %>%
   select(-"_label_",-"_ids_") %>%
-  rename(variable = "_vname_", value = "_x_", prob = "_yhat_")
+  rename(variable = "_vname_", value = "_x_", prob = "_yhat_") %>%
+  mutate(variable = recode_factor(variable, "island_yn" = "Island area?")) %>%
+  # add species column
+  mutate(species = "California sea lion")
 
 
 
@@ -193,8 +194,7 @@ pdp_rf_hs <- model_profile(explainer_rf_hs,
                                          "lat_dd",
                                          "soak_hr",
                                          "shore_km",
-                                         "depth_fa",
-                                         "island_yn"), 
+                                         "depth_fa"), 
                            groups = NULL)
 
 
@@ -209,8 +209,7 @@ pdp_rf_df_hs <- as.data.frame(pdp_rf_hs$agr_profiles) %>%
                                 "mesh_size_in"="Mesh size (cm)",
                                 "shore_km"="Shore distance (km)",
                                 "depth_fa"="Depth (fathoms)",    
-                                "soak_hr"="Soak time (hr)",
-                                "island_yn" = "Island location (yes or no)")) %>% 
+                                "soak_hr"="Soak time (hr)")) %>% 
   # Remove outlier values (BUT WE SHOULD DO THIS RIGHT SOMEWHERE)
   filter(!(variable=="Depth (fathoms)" & value>100)) %>% 
   filter(!(variable=="Shore distance (km)" & value>20)) %>% 
@@ -218,6 +217,17 @@ pdp_rf_df_hs <- as.data.frame(pdp_rf_hs$agr_profiles) %>%
   # add species column
   mutate(species = "Harbor seal")
 
+
+# for categorical variable - island_yn 
+
+pdp_rf_hs_cat <- model_profile(explainer_rf_hs, N = NULL, variables = "island_yn", variable_type = "categorical", groups = NULL, type = "partial")
+
+pdp_rf_hs_cat_df <- as.data.frame(pdp_rf_hs_cat$agr_profiles) %>%
+  select(-"_label_",-"_ids_") %>%
+  rename(variable = "_vname_", value = "_x_", prob = "_yhat_") %>%
+  mutate(variable = recode_factor(variable, "island_yn" = "Island area?")) %>%
+  # add species
+  mutate(species = "Harbor seal")
 
 
 # soupfin shark
@@ -245,8 +255,7 @@ pdp_rf_ss <- model_profile(explainer_rf_ss,
                                          "lat_dd",
                                          "soak_hr",
                                          "shore_km",
-                                         "depth_fa",
-                                         "island_yn"), 
+                                         "depth_fa"), 
                            groups = NULL)
 
 
@@ -261,13 +270,23 @@ pdp_rf_df_ss <- as.data.frame(pdp_rf_ss$agr_profiles) %>%
                                 "mesh_size_in"="Mesh size (cm)",
                                 "shore_km"="Shore distance (km)",
                                 "depth_fa"="Depth (fathoms)",    
-                                "soak_hr"="Soak time (hr)",
-                                "island_yn" = "Island location (yes or no)")) %>% 
+                                "soak_hr"="Soak time (hr)")) %>% 
   # Remove outlier values (BUT WE SHOULD DO THIS RIGHT SOMEWHERE)
   filter(!(variable=="Depth (fathoms)" & value>100)) %>% 
   filter(!(variable=="Shore distance (km)" & value>20)) %>% 
   filter(!(variable=="Soak time (hr)" & value>96)) %>%
   # add species column
+  mutate(species = "Soupfin shark")
+
+# for categorical variable - island_yn
+
+pdp_rf_ss_cat <- model_profile(explainer_rf_ss, N = NULL, variables = "island_yn", variable_type = "categorical", groups = NULL, type = "partial")
+
+pdp_rf_ss_cat_df <- as.data.frame(pdp_rf_ss_cat$agr_profiles) %>%
+  select(-"_label_",-"_ids_") %>%
+  rename(variable = "_vname_", value = "_x_", prob = "_yhat_") %>%
+  mutate(variable = recode_factor(variable, "island_yn" = "Island area?")) %>%
+  # add species
   mutate(species = "Soupfin shark")
 
 
@@ -299,8 +318,7 @@ pdp_rf_cm <- model_profile(explainer_rf_cm,
                                          "lat_dd",
                                          "soak_hr",
                                          "shore_km",
-                                         "depth_fa",
-                                         "island_yn"), 
+                                         "depth_fa"), 
                            groups = NULL)
 
 
@@ -315,13 +333,23 @@ pdp_rf_df_cm <- as.data.frame(pdp_rf_cm$agr_profiles) %>%
                                 "mesh_size_in"="Mesh size (cm)",
                                 "shore_km"="Shore distance (km)",
                                 "depth_fa"="Depth (fathoms)",    
-                                "soak_hr"="Soak time (hr)",
-                                "island_yn" = "Island location (yes or no)")) %>% 
+                                "soak_hr"="Soak time (hr)")) %>% 
   # Remove outlier values (BUT WE SHOULD DO THIS RIGHT SOMEWHERE)
   filter(!(variable=="Depth (fathoms)" & value>100)) %>% 
   filter(!(variable=="Shore distance (km)" & value>20)) %>% 
   filter(!(variable=="Soak time (hr)" & value>96)) %>%
   # add species column
+  mutate(species = "Common murre")
+
+# for categorical variable - island_yn
+
+pdp_rf_cm_cat <- model_profile(explainer_rf_cm, N = NULL, variables = "island_yn", variable_type = "categorical", groups = NULL, type = "partial")
+
+pdp_rf_cm_cat_df <- as.data.frame(pdp_rf_cm_cat$agr_profiles) %>%
+  select(-"_label_",-"_ids_") %>%
+  rename(variable = "_vname_", value = "_x_", prob = "_yhat_") %>%
+  mutate(variable = recode_factor(variable, "island_yn" = "Island area?")) %>%
+  # add species
   mutate(species = "Common murre")
 
 
@@ -338,11 +366,17 @@ vi_df_final <- rbind(sl_vi_df, hs_vi_df, ss_vi_df, cm_vi_df)
 
 me_df_final <- rbind(pdp_rf_df_sl, pdp_rf_df_hs, pdp_rf_df_ss, pdp_rf_df_cm)
 
+me_df_cat_final <- rbind(pdp_rf_sl_cat_df, pdp_rf_hs_cat_df, pdp_rf_ss_cat_df, pdp_rf_cm_cat_df) %>%
+  mutate(value = case_when(value == "0"~"No",
+                           value == "1"~"Yes"))
+
 # save tables
 
-write.csv(vi_df_final, file = "model_result/variable_importance.csv")
+write.csv(vi_df_final, file = "model_result/variable_importance.csv", row.names = FALSE)
 
-write.csv(me_df_final, file = "model_result/marginal_effects.csv")
+write.csv(me_df_final, file = "model_result/marginal_effects.csv", row.names = FALSE)
+
+write.csv(me_df_cat_final, file = "model_result/categorical_marginal_effects.csv", row.names = FALSE)
 
 
 

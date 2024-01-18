@@ -26,9 +26,9 @@ data <- data %>%
                                   "shore_km"="Shore distance",
                                   "depth_fa"="Depth",    
                                   "soak_hr"="Soak hour",
-                                  "island_yn" = "Island location (yes or no)")) %>%
+                                  "island_yn_X1" = "Island area?")) %>%
   mutate(category = case_when(variable %in% c("Mesh size", "Soak hour")~"Fishing",
-                              variable %in% c("Latitude", "Depth", "Shore distance", "Island location (yes or no)")~"Space",
+                              variable %in% c("Latitude", "Depth", "Shore distance", "Island area?")~"Space",
                               variable %in% c("Julian day")~"Time",
                               variable%in% c("Temperature")~"Environment"))
 
@@ -66,6 +66,6 @@ g
 
 # Export
 ggsave(g, filename=file.path(plotdir, "Fig5_variable_importance.png"), 
-       width=6.5, height=4, units="in", dpi=600)
+       width=5.5, height=4, units="in", dpi=600)
 
 

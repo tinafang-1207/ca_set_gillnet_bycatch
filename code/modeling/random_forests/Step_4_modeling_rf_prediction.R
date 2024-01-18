@@ -15,40 +15,43 @@ library(randomForest)
 
 # notice: this is the fake data to show the spatial pattern
 
-# The SST needs to fix in the future (we want to have average SST from 2010 rather than 2000)
-data_predict <- readRDS("data/confidential/processed/pre_model/sealion/fake_spatial_pre_model.Rds")
+data_predict <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/create_spatial_risk_unpredict.Rds")
 
 # read in the logbook data
 logbook <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/processed/CDFW_1981_2020_gillnet_logbook_data_use.Rds") 
 
 
-# read in model results
+# read in best model results
 
-# sealion
-output_sl_balanced <- readRDS("model_result/balanced_rf/california_sea_lion_model_balanced_rf.Rds")
-output_sl_weighted <- readRDS("model_result/weighted_rf/california_sea_lion_model_weighted_rf.Rds")
+# sealion - SMOTE
+output_sl_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/california_sea_lion_model_balanced_rf.Rds")
 
-# harbor seal
-output_hs_balanced <- readRDS("model_result/balanced_rf/harbor_seal_model_balanced_rf.Rds")
-output_hs_weighted <- readRDS("model_result/weighted_rf/harbor_seal_model_weighted_rf.Rds")
+# harbor seal-weight 75
+output_hs_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/harbor_seal_model_weighted_rf.Rds")
 
-# soupfin shark
-output_ss_balanced <- readRDS("model_result/balanced_rf/soupfin_shark_model_balanced_rf.Rds")
-output_ss_weighted <- readRDS("model_result/weighted_rf/soupfin_shark_model_weighted_rf.Rds")
+# soupfin shark - Upsample
+output_ss_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/soupfin_shark_model_balanced_rf.Rds")
+
+# common murre - weight 25
+output_cm_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/common_murre_model_weighted_rf.Rds")
+
 
 ### Extract the model best fit (to training data)
 
-# sealion - weight - 75
-sl_best_fit <- output_sl_weighted[["final_fit"]][[3]]
+# sealion - SMOTE
+sl_best_fit <- output_sl_balanced[["final_fit"]][["model_smote_final_fit"]]
 
-# harbor seal - SMOTE
-hs_best_fit <- output_hs_balanced[["final_fit"]][["model_smote_final_fit"]]
+# harbor seal - weight - 75
+hs_best_fit <- output_hs_weighted[["final_fit"]][[3]]
 
-# soupfin shark - SMOTE
-ss_best_fit <- output_ss_balanced[["final_fit"]][["model_smote_final_fit"]]
+# soupfin shark - Upsample
+ss_best_fit <- output_ss_balanced[["final_fit"]][["model_up_final_fit"]]
+
+# common murre - weight - 25
+cm_best_fit <- output_cm_weighted[["final_fit"]][[1]]
 
 # source the spatial risk predict function
-source("code/function/predict_rf.R")
+source("code/modeling/random_forests/helper_functions/predict_rf.R")
 
 ###########################################################
 ################### model prediction ######################
@@ -57,15 +60,19 @@ source("code/function/predict_rf.R")
 
 # Format the predict data
 predict_data_format <- data_predict %>%
-  rename(haul_lat_dd = lats,
-         haul_long_dd = longs,
-         julian_day = jdays,
-         haul_depth_fa = bathy_fa, 
-         net_mesh_size_in = mesh_size,
-         sst = mean_sst) %>%
-  mutate(haul_depth_fa = as.integer(haul_depth_fa), 
+  rename(lat_dd = lats,
+         long_dd = longs,
+         yday = jdays,
+         depth_fa = bathy_fa, 
+         mesh_size_in = mesh_size,
+         sst_c = mean_sst,
+         shore_km = dist_km) %>%
+  mutate(depth_fa = as.integer(depth_fa), 
          soak_hr = as.double(soak_hr),
-         net_mesh_size_in = as.double(net_mesh_size_in)) %>%
+         mesh_size_in = as.double(mesh_size_in),
+         island_yn = as.factor(island_yn)) %>%
+  # filter only to the fishing region
+  filter(shore_km <= 10) %>%
   drop_na()
 
 
@@ -74,15 +81,18 @@ predict_data_format <- data_predict %>%
 sealion_spatial_risk <- predict_spatial_risk(best_model_fit = sl_best_fit, predict_data = predict_data_format, spp = "California sea lion")
 seal_spatial_risk <- predict_spatial_risk(best_model_fit = hs_best_fit, predict_data = predict_data_format, spp = "Harbor seal")
 soupfin_spatial_risk <- predict_spatial_risk(best_model_fit = ss_best_fit, predict_data = predict_data_format, spp = "Soupfin shark")
+murre_spatial_risk <- predict_spatial_risk(best_model_fit = cm_best_fit, predict_data = predict_data_format, spp = "Common murre")
+
 
 # combine the dataframe
 spatial_risk_final <- rbind(sealion_spatial_risk,
                             seal_spatial_risk,
-                            soupfin_spatial_risk) %>%
-  rename(Latitude = haul_lat_dd, Longitude = haul_long_dd)
+                            soupfin_spatial_risk,
+                            murre_spatial_risk) %>%
+  rename(Latitude = lat_dd, Longitude = long_dd)
 
 # save the combined dataframe
-saveRDS(spatial_risk_final, file.path("model_result/rf_prediction/spatial_risk_final.Rds"))
+saveRDS(spatial_risk_final, file.path("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/spatial_risk_predict_final.Rds"))
 
 
 ###########################################################
@@ -163,7 +173,21 @@ g3 <- ggplot() +
 
 g3
 
-g <- gridExtra::grid.arrange(g1, g2, g3, ncol = 3)
+g4 <- ggplot() +
+  geom_tile(data = spatial_risk_final %>% filter(species == "Common murre"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
+  geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
+  coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
+  scale_x_continuous(breaks=seq(-122, -118, 1)) +
+  scale_y_continuous(breaks=seq(32, 35, 1)) +
+  facet_wrap(.~species) +
+  theme_bw() + base_theme
+
+g4
+
+
+g <- gridExtra::grid.arrange(g1, g2, g3, g4, nrow = 2, ncol = 2)
 
 g
 

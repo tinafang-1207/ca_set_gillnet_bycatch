@@ -1,33 +1,33 @@
-"","species","variable","importance"
-"1","California sea lion","shore_km",141.135525788783
-"2","California sea lion","sst_c",137.48215352183
-"3","California sea lion","mesh_size_in",133.698303068171
-"4","California sea lion","lat_dd",125.396656030372
-"5","California sea lion","depth_fa",112.145161386725
-"6","California sea lion","yday",102.535780772167
-"7","California sea lion","soak_hr",84.4143109040083
-"8","California sea lion","island_yn",73.795029122682
-"9","Harbor seal","lat_dd",1206.10663422146
-"10","Harbor seal","yday",1199.17249054617
-"11","Harbor seal","sst_c",745.501159341656
-"12","Harbor seal","shore_km",584.864218408136
-"13","Harbor seal","depth_fa",414.135928703338
-"14","Harbor seal","soak_hr",314.66592659706
-"15","Harbor seal","mesh_size_in",306.563408859247
-"16","Harbor seal","island_yn",20.0607695953155
-"17","Soupfin shark","island_yn",64.4796480739922
-"18","Soupfin shark","depth_fa",62.4551499838828
-"19","Soupfin shark","yday",58.9634400982665
-"20","Soupfin shark","sst_c",55.8912386988455
-"21","Soupfin shark","mesh_size_in",54.3035183892067
-"22","Soupfin shark","shore_km",53.1929491254879
-"23","Soupfin shark","lat_dd",50.981661365347
-"24","Soupfin shark","soak_hr",50.227436804245
-"25","Common murre","lat_dd",4802.52246161236
-"26","Common murre","sst_c",111.532798101492
-"27","Common murre","shore_km",88.6542490770685
-"28","Common murre","yday",86.4159056751934
-"29","Common murre","depth_fa",43.5806019521665
-"30","Common murre","soak_hr",32.4647792576298
-"31","Common murre","mesh_size_in",9.61448708690446
-"32","Common murre","island_yn",0
+"species","variable","importance"
+"California sea lion","mesh_size_in",219.965998476183
+"California sea lion","lat_dd",205.075669207841
+"California sea lion","sst_c",188.532134457052
+"California sea lion","shore_km",184.347525991327
+"California sea lion","depth_fa",170.558006656679
+"California sea lion","yday",153.612746433724
+"California sea lion","soak_hr",117.620501574843
+"California sea lion","island_yn_X1",29.716303013778
+"Harbor seal","lat_dd",1206.10663422146
+"Harbor seal","yday",1199.17249054617
+"Harbor seal","sst_c",745.501159341656
+"Harbor seal","shore_km",584.864218408136
+"Harbor seal","depth_fa",414.135928703338
+"Harbor seal","soak_hr",314.66592659706
+"Harbor seal","mesh_size_in",306.563408859247
+"Harbor seal","island_yn_X1",20.0607695953155
+"Soupfin shark","depth_fa",167.404088468778
+"Soupfin shark","yday",150.784282850408
+"Soupfin shark","sst_c",150.364786964947
+"Soupfin shark","shore_km",133.338135905161
+"Soupfin shark","soak_hr",129.190447414103
+"Soupfin shark","lat_dd",128.303651857175
+"Soupfin shark","mesh_size_in",77.9063220529881
+"Soupfin shark","island_yn_X1",44.0048739483438
+"Common murre","lat_dd",4802.52246161236
+"Common murre","sst_c",111.532798101492
+"Common murre","shore_km",88.6542490770685
+"Common murre","yday",86.4159056751934
+"Common murre","depth_fa",43.5806019521665
+"Common murre","soak_hr",32.4647792576298
+"Common murre","mesh_size_in",9.61448708690446
+"Common murre","island_yn_X1",0
