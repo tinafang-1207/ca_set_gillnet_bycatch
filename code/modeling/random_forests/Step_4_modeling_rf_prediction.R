@@ -18,7 +18,7 @@ library(randomForest)
 data_predict <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/create_spatial_risk_unpredict.Rds")
 
 # read in the logbook data
-#logbook <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/processed/CDFW_1981_2020_gillnet_logbook_data_use.Rds") 
+logbook <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/processed/CDFW_1981_2020_gillnet_logbook_data_use.Rds") 
 
 
 # read in best model results
@@ -67,9 +67,12 @@ predict_data_format <- data_predict %>%
          mesh_size_in = mesh_size,
          sst_c = mean_sst,
          shore_km = dist_km) %>%
-  mutate(haul_depth_fa = as.integer(haul_depth_fa), 
+  mutate(depth_fa = as.integer(depth_fa), 
          soak_hr = as.double(soak_hr),
-         net_mesh_size_in = as.double(net_mesh_size_in)) %>%
+         mesh_size_in = as.double(mesh_size_in),
+         island_yn = as.factor(island_yn)) %>%
+  # filter only to the fishing region
+  filter(shore_km <= 10) %>%
   drop_na()
 
 
@@ -78,15 +81,18 @@ predict_data_format <- data_predict %>%
 sealion_spatial_risk <- predict_spatial_risk(best_model_fit = sl_best_fit, predict_data = predict_data_format, spp = "California sea lion")
 seal_spatial_risk <- predict_spatial_risk(best_model_fit = hs_best_fit, predict_data = predict_data_format, spp = "Harbor seal")
 soupfin_spatial_risk <- predict_spatial_risk(best_model_fit = ss_best_fit, predict_data = predict_data_format, spp = "Soupfin shark")
+murre_spatial_risk <- predict_spatial_risk(best_model_fit = cm_best_fit, predict_data = predict_data_format, spp = "Common murre")
+
 
 # combine the dataframe
 spatial_risk_final <- rbind(sealion_spatial_risk,
                             seal_spatial_risk,
-                            soupfin_spatial_risk) %>%
-  rename(Latitude = haul_lat_dd, Longitude = haul_long_dd)
+                            soupfin_spatial_risk,
+                            murre_spatial_risk) %>%
+  rename(Latitude = lat_dd, Longitude = long_dd)
 
 # save the combined dataframe
-saveRDS(spatial_risk_final, file.path("model_result/rf_prediction/spatial_risk_final.Rds"))
+saveRDS(spatial_risk_final, file.path("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/spatial_risk_predict_final.Rds"))
 
 
 ###########################################################
@@ -167,7 +173,21 @@ g3 <- ggplot() +
 
 g3
 
-g <- gridExtra::grid.arrange(g1, g2, g3, ncol = 3)
+g4 <- ggplot() +
+  geom_tile(data = spatial_risk_final %>% filter(species == "Common murre"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
+  geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
+  coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
+  scale_x_continuous(breaks=seq(-122, -118, 1)) +
+  scale_y_continuous(breaks=seq(32, 35, 1)) +
+  facet_wrap(.~species) +
+  theme_bw() + base_theme
+
+g4
+
+
+g <- gridExtra::grid.arrange(g1, g2, g3, g4, nrow = 2, ncol = 2)
 
 g
 

@@ -136,13 +136,30 @@ saveRDS(data_final, file = "/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/con
 
 ############ add island dummy below #################
 
+# read in data
 
+data_orig <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/create_spatial_risk_unpredict.Rds")
 
+# island buffer
+buffer <- readRDS("data/gis_data/island_buffer_10km.Rds")
 
+# select geographic coordinates
+spatial_xy_df <- data_orig %>%
+  select(lats, longs)
 
+# turn it into a sf object
+spatial_xy_sf <- spatial_xy_df %>%
+  sf::st_as_sf(coords = c("longs", "lats"), crs="+proj=longlat +datum=WGS84")
 
+out <- sf::st_within(spatial_xy_sf, buffer) %>% as.numeric() 
+out_yn <- ifelse(is.na(out), 0, 1)
 
+# join back
+data_orig$island_yn <- out_yn
 
+# save the dataframe
+
+saveRDS(data_orig, file = "/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/create_spatial_risk_unpredict.Rds")
 
 
 
