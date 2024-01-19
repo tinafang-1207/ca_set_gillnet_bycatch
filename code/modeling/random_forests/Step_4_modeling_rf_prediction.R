@@ -71,8 +71,8 @@ predict_data_format <- data_predict %>%
          soak_hr = as.double(soak_hr),
          mesh_size_in = as.double(mesh_size_in),
          island_yn = as.factor(island_yn)) %>%
-  # filter only to the fishing region
-  filter(shore_km <= 10) %>%
+  # filter only to the fishing region (Chris said to 20km)
+  filter(shore_km <= 20) %>%
   drop_na()
 
 
@@ -123,77 +123,86 @@ base_theme <- theme(axis.text=element_text(size=7),
                     legend.key = element_rect(fill = NA),
                     legend.background = element_rect(fill=alpha('blue', 0)))
 
-ggplot() +
+g <- ggplot() +
   geom_tile(data = spatial_risk_final, aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
-  scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "RdYlGn") %>% rev()) +
+  scale_fill_gradientn(name = "Spatial bycatch risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
   coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
   scale_x_continuous(breaks=seq(-122, -118, 1)) +
   scale_y_continuous(breaks=seq(32, 35, 1)) +
   facet_wrap(.~species) +
   theme_bw() + base_theme
-
-g1 <- ggplot() +
-  geom_tile(data = spatial_risk_final %>% filter(species == "California sea lion"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
-  geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
-  geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
-  scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
-  coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
-  scale_x_continuous(breaks=seq(-122, -118, 1)) +
-  scale_y_continuous(breaks=seq(32, 35, 1)) +
-  facet_wrap(.~species) +
-  theme_bw() + base_theme
-
-g1
-
-g2 <- ggplot() +
-  geom_tile(data = spatial_risk_final %>% filter(species == "Harbor seal"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
-  geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
-  geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
-  scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
-  coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
-  scale_x_continuous(breaks=seq(-122, -118, 1)) +
-  scale_y_continuous(breaks=seq(32, 35, 1)) +
-  facet_wrap(.~species) +
-  theme_bw() + base_theme
-
-g2
-
-g3 <- ggplot() +
-  geom_tile(data = spatial_risk_final %>% filter(species == "Soupfin shark"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
-  geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
-  geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
-  scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
-  coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
-  scale_x_continuous(breaks=seq(-122, -118, 1)) +
-  scale_y_continuous(breaks=seq(32, 35, 1)) +
-  facet_wrap(.~species) +
-  theme_bw() + base_theme
-
-g3
-
-g4 <- ggplot() +
-  geom_tile(data = spatial_risk_final %>% filter(species == "Common murre"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
-  geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
-  geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
-  scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
-  coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
-  scale_x_continuous(breaks=seq(-122, -118, 1)) +
-  scale_y_continuous(breaks=seq(32, 35, 1)) +
-  facet_wrap(.~species) +
-  theme_bw() + base_theme
-
-g4
-
-
-g <- gridExtra::grid.arrange(g1, g2, g3, g4, nrow = 2, ncol = 2)
 
 g
+
+
+# Seperate legend below (for each species)
+#############################################################
+
+#g1 <- ggplot() +
+  #geom_tile(data = spatial_risk_final %>% filter(species == "California sea lion"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
+  #geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  #geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  #scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
+  #coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
+  #scale_x_continuous(breaks=seq(-122, -118, 1)) +
+  #scale_y_continuous(breaks=seq(32, 35, 1)) +
+  #facet_wrap(.~species) +
+  #theme_bw() + base_theme
+
+#g1
+
+#g2 <- ggplot() +
+  #geom_tile(data = spatial_risk_final %>% filter(species == "Harbor seal"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
+  #geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  #geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  #scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
+  #coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
+  #scale_x_continuous(breaks=seq(-122, -118, 1)) +
+  #scale_y_continuous(breaks=seq(32, 35, 1)) +
+  #facet_wrap(.~species) +
+  #theme_bw() + base_theme
+
+#g2
+
+#g3 <- ggplot() +
+  #geom_tile(data = spatial_risk_final %>% filter(species == "Soupfin shark"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
+  #geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  #geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  #scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
+  #coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
+  #scale_x_continuous(breaks=seq(-122, -118, 1)) +
+  #scale_y_continuous(breaks=seq(32, 35, 1)) +
+  #facet_wrap(.~species) +
+  #theme_bw() + base_theme
+
+#g3
+
+#g4 <- ggplot() +
+  #geom_tile(data = spatial_risk_final %>% filter(species == "Common murre"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
+  #geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  #geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  #scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
+  #coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
+  #scale_x_continuous(breaks=seq(-122, -118, 1)) +
+  #scale_y_continuous(breaks=seq(32, 35, 1)) +
+  #facet_wrap(.~species) +
+  #theme_bw() + base_theme
+
+#g4
+
+
+#g <- gridExtra::grid.arrange(g1, g2, g3, g4, nrow = 2, ncol = 2)
+
+#g
+
+# save figure
+################################################
 
 plotdir <- "figures"
 
 ggsave(g, filename=file.path(plotdir, "Fig7_spatial_prediction.png"), 
-       width=7, height=6.5, units="in", dpi=600)
+       width=5.5, height=4.5, units="in", dpi=600)
 
 
