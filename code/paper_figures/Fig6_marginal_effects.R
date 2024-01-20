@@ -75,7 +75,7 @@ insert_plot <- ggplot(data_cat, aes(x = value, y = prob, fill=species)) +
   
 insert_plot
 
-# use coplowt package, we can insert categorical plot inside
+# use cowplot package, we can insert categorical plot inside
 
 plot_with_insert <-
   ggdraw() +
@@ -86,6 +86,6 @@ plot_with_insert <-
   
 # Export
 ggsave(plot_with_insert, filename=file.path(plotdir, "Fig6_marginal_effects.png"), 
-       width=5.37, height=4.19, units="in", dpi=600)
+       width=5.6, height=4.19, units="in", dpi=600)
 
 
