@@ -149,7 +149,7 @@ ggsave(g, filename=file.path(plotdir, "Fig7_spatial_prediction_one_legend.png"),
 
 # multiple legend plot
 ggsave(g_total, filename=file.path(plotdir, "Fig7_spatial_prediction_multi_legend.png"), 
-       width=5.5, height=4.5, units="in", dpi=600)
+       width=4, height=4.5, units="in", dpi=600)
 
 
 
