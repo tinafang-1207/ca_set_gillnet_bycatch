@@ -65,7 +65,7 @@ g1 <- ggplot(data1, aes(x=msi,
   geom_bar(stat="identity") + 
   # Label
   tidytext::scale_y_reordered() +
-  labs(x="Number of mortality and\nserious injury incidents (2016-2020)", y="") +
+  labs(x="Number of observed mortality and\nserious injury incidents (2016-2020)", y="") +
   # Legend
   scale_fill_discrete(name="Source type") +
   # Theme
@@ -82,7 +82,7 @@ g2 <- ggplot(data2, aes(x=msi,
   geom_bar(stat="identity") + 
   # Label
   tidytext::scale_y_reordered() +
-  labs(x="Number of mortality and\nserious injury incidents (2016-2020)", y="") +
+  labs(x="Number of observed mortality and\nserious injury incidents (2016-2020)", y="") +
   # Legend
   scale_fill_discrete(name="Source type") +
   # Theme
