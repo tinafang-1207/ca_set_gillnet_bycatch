@@ -255,5 +255,140 @@ g <- gridExtra::grid.arrange(g_best, g_best_weight, ncol = 1)
 ggsave(g, filename=file.path(plotdir, "FigSX_rf_model_selection.png"),
        width=7.5, height=7, units="in", dpi=600)
 
-  
+######################################################################
+
+# CALCULATE ROC CURVE
+
+# THIS ONLY FOR CALIFORNIA SEA LION, HARBOR SEAL, SOUPFIN SHARK AND COMMON MURRE
+
+# READ IN PACKAGE
+library(tidymodels)
+library(ranger)
+library(workflows)
+library(randomForest)
+
+# Extract best model fit
+
+# sealion - SMOTE
+sl_best_fit <-  output_sl_balanced[["final_fit"]][["model_smote_final_fit"]]
+
+# harbor seal - weighted - 75
+hs_best_fit <- output_hs_weighted[["final_fit"]][[3]]
+
+# soupfin shark - Upsample
+ss_best_fit <- output_ss_balanced[["final_fit"]][["model_up_final_fit"]]
+
+# common murre - weighted -25
+cm_best_fit <- output_cm_weighted[["final_fit"]][[1]]
+
+# Extract test data
+
+# California sea lion
+model_test_balanced_sl <- output_sl_balanced[["data_test"]]
+
+# Harbor seal
+model_test_weighted_hs <- output_hs_weighted[["data_test"]]
+
+# Soupfin shark
+model_test_balanced_ss <- output_ss_balanced[["data_test"]]
+
+# Common murre
+model_test_weighted_cm <- output_cm_weighted[["data_test"]]
+
+# Create roc_curve
+
+# sl roc
+sl_roc <- predict(sl_best_fit, new_data = model_test_balanced_sl, type = "prob") %>%
+  bind_cols(model_test_balanced_sl) %>%
+  roc_curve(response, .pred_1, event_level = "second") %>%
+  mutate(species = "California sea lion")
+
+# sl autoplot
+autoplot(sl_roc)
+
+# hs roc
+hs_roc <- predict(hs_best_fit, new_data = model_test_weighted_hs, type = "prob") %>%
+  bind_cols(model_test_weighted_hs) %>%
+  roc_curve(response, .pred_1, event_level = "second") %>%
+  mutate(species = "Harbor seal")
+
+# hs autoplot
+autoplot(hs_roc)
+
+# ss roc
+ss_roc <- predict(ss_best_fit, new_data = model_test_balanced_ss, type = "prob") %>%
+  bind_cols(model_test_balanced_ss) %>%
+  roc_curve(response, .pred_1, event_level = "second") %>%
+  mutate(species = "Soupfin shark")
+
+# ss autoplot
+autoplot(ss_roc)
+
+# cm roc
+cm_roc <- predict(cm_best_fit, new_data = model_test_weighted_cm, type = "prob") %>%
+  bind_cols(model_test_weighted_cm) %>%
+  roc_curve(response, .pred_1, event_level = "second") %>%
+  mutate(species = "Common murre")
+
+# cm autoplot
+autoplot(cm_roc)
+
+# bind columns 
+
+roc_all <- bind_rows(sl_roc, hs_roc, ss_roc, cm_roc) %>%
+  mutate(false_positive = (1-specificity)) %>%
+  mutate(difference = sensitivity - false_positive)
+
+
+# Explort the table
+write.csv(roc_all, file = "model_result/roc_curve.csv", row.names = FALSE)
+
+
+#########################################################################
+
+# PLOT ROC CURVE
+
+# Find the optimum cut-off points
+
+roc_optimum_threshold <- roc_all %>%
+  group_by(species) %>%
+  filter(difference == max(difference))
+
+
+
+# Theme
+base_theme <-  theme(axis.text=element_text(size=7),
+                     axis.title=element_text(size=8),
+                     legend.text=element_text(size=7),
+                     legend.title=element_text(size=8),
+                     strip.text=element_text(size=8),
+                     # Gridlines
+                     panel.grid.major = element_blank(), 
+                     panel.grid.minor = element_blank(),
+                     panel.background = element_blank(), 
+                     axis.line = element_line(colour = "black"),
+                     # Legend
+                     legend.background = element_rect(fill=alpha('blue', 0)))
+
+g <- ggplot(data = roc_all, aes(x = 1-specificity, y = sensitivity))+
+  geom_path()+
+  geom_abline(lty = 3) +
+  geom_point(data = roc_optimum_threshold, aes(x = 1-specificity, y = sensitivity), shape = 19) +
+  labs(x = "False positive rate", y = "True positive rate") +
+  facet_wrap(.~species) +
+  theme_bw() + base_theme
+
+g
+
+ggsave(g, filename=file.path(plotdir, "FigSX_roc_curve_threshold.png"), 
+       width=3.5, height=4, units="in", dpi=600)
+
+
+
+
+
+
+
+
+
   
