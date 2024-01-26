@@ -295,6 +295,20 @@ model_test_balanced_ss <- output_ss_balanced[["data_test"]]
 # Common murre
 model_test_weighted_cm <- output_cm_weighted[["data_test"]]
 
+# Extract training data
+
+# California sea lion
+model_train_balanced_sl <- output_sl_balanced[["data_train"]]
+
+# Harbor seal
+model_train_weighted_hs <- output_hs_weighted[["data_train"]]
+
+# Soupfin shark
+model_train_balanced_ss <- output_ss_balanced[["data_train"]]
+
+# Common murre
+model_test_train_cm <- output_cm_weighted[["data_train"]]
+
 # Create roc_curve
 
 # sl roc
@@ -335,10 +349,7 @@ autoplot(cm_roc)
 
 # bind columns 
 
-roc_all <- bind_rows(sl_roc, hs_roc, ss_roc, cm_roc) %>%
-  mutate(false_positive = (1-specificity)) %>%
-  mutate(difference = sensitivity - false_positive)
-
+roc_all <- bind_rows(sl_roc, hs_roc, ss_roc, cm_roc)
 
 # Explort the table
 write.csv(roc_all, file = "model_result/roc_curve.csv", row.names = FALSE)
@@ -348,13 +359,16 @@ write.csv(roc_all, file = "model_result/roc_curve.csv", row.names = FALSE)
 
 # PLOT ROC CURVE
 
+# read in csv data
+
+roc_all <- read.csv("model_result/roc_curve.csv")
+
 # Find the optimum cut-off points
 
 roc_optimum_threshold <- roc_all %>%
+  mutate(difference = sensitivity - (1-specificity)) %>%
   group_by(species) %>%
   filter(difference == max(difference))
-
-
 
 # Theme
 base_theme <-  theme(axis.text=element_text(size=7),
@@ -373,15 +387,18 @@ base_theme <-  theme(axis.text=element_text(size=7),
 g <- ggplot(data = roc_all, aes(x = 1-specificity, y = sensitivity))+
   geom_path()+
   geom_abline(lty = 3) +
+  geom_point(aes(x = 1-specificity, y = sensitivity, color = .threshold)) +
   geom_point(data = roc_optimum_threshold, aes(x = 1-specificity, y = sensitivity), shape = 19) +
+  scale_color_gradientn(name = "Threshold level", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.1, 0.5, 0.9))+
   labs(x = "False positive rate", y = "True positive rate") +
   facet_wrap(.~species) +
+  guides(color = guide_colorbar(ticks.colour = "black", frame.colour = "black")) +
   theme_bw() + base_theme
 
 g
 
 ggsave(g, filename=file.path(plotdir, "FigSX_roc_curve_threshold.png"), 
-       width=3.5, height=4, units="in", dpi=600)
+       width=4.5, height=4, units="in", dpi=600)
 
 
 
