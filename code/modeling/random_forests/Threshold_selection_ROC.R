@@ -16,6 +16,104 @@ library(workflows)
 # read in data
 model_orig <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/obs_merge/1983_2017_gillnet_observer_data_with_sst_3.5in_set.Rds")
 
+
+# Calculate ROC for test data
+#####################################################################
+
+# Read in model result
+
+# sealion
+output_sl_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/california_sea_lion_model_balanced_rf.Rds")
+output_sl_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/california_sea_lion_model_weighted_rf.Rds")
+
+# harbor seal
+output_hs_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/harbor_seal_model_balanced_rf.Rds")
+output_hs_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/harbor_seal_model_weighted_rf.Rds")
+
+# soupfin shark
+output_ss_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/soupfin_shark_model_balanced_rf.Rds")
+output_ss_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/soupfin_shark_model_weighted_rf.Rds")
+
+# common murre
+output_cm_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/common_murre_model_balanced_rf.Rds")
+output_cm_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/common_murre_model_weighted_rf.Rds")
+
+# Extract best model fit
+
+# sealion - SMOTE
+sl_best_fit <-  output_sl_balanced[["final_fit"]][["model_smote_final_fit"]]
+
+# harbor seal - weighted - 75
+hs_best_fit <- output_hs_weighted[["final_fit"]][[3]]
+
+# soupfin shark - Upsample
+ss_best_fit <- output_ss_balanced[["final_fit"]][["model_up_final_fit"]]
+
+# common murre - weighted -25
+cm_best_fit <- output_cm_weighted[["final_fit"]][[1]]
+
+# Extract test data
+
+# California sea lion
+model_test_balanced_sl <- output_sl_balanced[["data_test"]]
+
+# Harbor seal
+model_test_weighted_hs <- output_hs_weighted[["data_test"]]
+
+# Soupfin shark
+model_test_balanced_ss <- output_ss_balanced[["data_test"]]
+
+# Common murre
+model_test_weighted_cm <- output_cm_weighted[["data_test"]]
+
+# Create roc_curve
+
+# sl roc
+sl_roc <- predict(sl_best_fit, new_data = model_test_balanced_sl, type = "prob") %>%
+  bind_cols(model_test_balanced_sl) %>%
+  roc_curve(response, .pred_1, event_level = "second") %>%
+  mutate(species = "California sea lion")
+
+# sl autoplot
+autoplot(sl_roc)
+
+# hs roc
+hs_roc <- predict(hs_best_fit, new_data = model_test_weighted_hs, type = "prob") %>%
+  bind_cols(model_test_weighted_hs) %>%
+  roc_curve(response, .pred_1, event_level = "second") %>%
+  mutate(species = "Harbor seal")
+
+# hs autoplot
+autoplot(hs_roc)
+
+# ss roc
+ss_roc <- predict(ss_best_fit, new_data = model_test_balanced_ss, type = "prob") %>%
+  bind_cols(model_test_balanced_ss) %>%
+  roc_curve(response, .pred_1, event_level = "second") %>%
+  mutate(species = "Soupfin shark")
+
+# ss autoplot
+autoplot(ss_roc)
+
+# cm roc
+cm_roc <- predict(cm_best_fit, new_data = model_test_weighted_cm, type = "prob") %>%
+  bind_cols(model_test_weighted_cm) %>%
+  roc_curve(response, .pred_1, event_level = "second") %>%
+  mutate(species = "Common murre")
+
+# cm autoplot
+autoplot(cm_roc)
+
+# bind columns 
+
+roc_all <- bind_rows(sl_roc, hs_roc, ss_roc, cm_roc)
+
+# Explort the table
+write.csv(roc_all, file = "model_result/roc_curve.csv", row.names = FALSE)
+
+
+
+# calculate ROC for training data
 ###########################################################################
 # California sea lion
 
