@@ -18,6 +18,8 @@ usa <- rnaturalearth::ne_states(country = "United States of America", returnclas
 mexico <- rnaturalearth::ne_countries(country="Mexico", returnclass = "sf")
 
 # Read observer data
+
+obs_orig <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/obs_merge/1983_2017_gillnet_observer_data_with_sst_3.5in_set.Rds")
 obs_orig <- readRDS("/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_merge/1983_2017_gillnet_observer_data_with_sst_3.5in_set.Rds") # Chris
 
 
