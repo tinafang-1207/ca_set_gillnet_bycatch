@@ -14,7 +14,7 @@ datadir1 <- "model_result"
 datadir2 <- "data/historical_estimates/processed"
 
 # Read data
-data_orig <- readRDS(file=file.path(datadir1, "1981_2022_bycatch_estimate_ratio_no_strata.Rds"))
+data_orig <- readRDS(file=file.path(datadir1, "1981_2021_bycatch_estimate_ratio_stratified.Rds"))
 
 # Read historical data
 data_hist_orig <- readRDS(file=file.path(datadir2, "ca_set_gillnet_bycatch_estimates_historical.Rds")) 
@@ -27,6 +27,30 @@ data_hist_orig <- readRDS(file=file.path(datadir2, "ca_set_gillnet_bycatch_estim
 spp_do <- c("Common murre", "California sea lion", "Harbor seal",
             "Brandt's cormorant", "Northern elephant seal", "Harbor porpoise")
 
+
+# Calculate recent averages
+stats <- data_orig %>%
+  # Calculate annual sum
+  group_by(comm_name, year) %>%
+  summarize(nbycatch=sum(nbycatch, na.rm=T)) %>% 
+  ungroup() %>% 
+  # Calculate recent average
+  group_by(comm_name) %>% 
+  summarize(ymax=max(nbycatch, na.rm=T),
+            nbycatch_avg=mean(nbycatch[year %in% 2012:2021], na.rm=T)) %>% 
+  ungroup() %>% 
+  # Add label
+  mutate(label=paste(round(nbycatch_avg, 0), "per yr")) %>% 
+  # Arrange
+  arrange(desc(nbycatch_avg)) %>% 
+  mutate(comm_name=factor(comm_name, levels=comm_name))
+
+# Order results
+data <- data_orig %>% 
+  mutate(comm_name=factor(comm_name, levels=levels(stats$comm_name))) %>% 
+  mutate(strata=factor(strata, levels=c("Southern California", "Channel Islands", 
+                                        "Ventura", "Morro Bay", "Monterey Bay")))
+
 # Format data
 data_hist <- data_hist_orig %>% 
   # Filter
@@ -38,7 +62,11 @@ data_hist <- data_hist_orig %>%
   # Expand
   full_join(data_orig %>% select(year, comm_name)) %>% 
   # Arrange
-  arrange(comm_name, year)
+  arrange(comm_name, year) %>% 
+  # Rename
+  rename(nbycatch=mort) %>% 
+  # Factor species
+  mutate(comm_name=factor(comm_name, levels=levels(stats$comm_name))) 
 
 
 # Plot data
@@ -60,17 +88,19 @@ base_theme <-  theme(axis.text=element_text(size=7),
                      legend.background = element_rect(fill=alpha('blue', 0)))
 
 # Plot
-g <- ggplot(data_orig, aes(x=year, y=mort)) +
+g <- ggplot(data, aes(x=year, y=nbycatch)) +
   # Facet
   lemon::facet_rep_wrap(~comm_name, scales="free_y", ncol=3, repeat.tick.labels = 'bottom') +
   # Our estimates
-  geom_bar(stat="identity", fill="grey70") +
+  geom_bar(stat="identity", mapping=aes(fill=strata), color="grey30", linewidth=0.1) +
   # geom_errorbar(mapping=aes(ymin=mort_lo, ymax=mort_hi), color="grey70", width=0) +
   # Historical estimates
   geom_point(data=data_hist, size=0.6) +
   geom_path(data=data_hist, linewidth=0.3) +
   # Labels
   labs(x="", y="Estimated bycatch") +
+  # Legend
+  scale_fill_discrete(name="") +
   # Theme
   theme_bw() + base_theme +
   theme(legend.position="top",

@@ -14,7 +14,7 @@ datadir1 <- "model_result"
 datadir2 <- "data/historical_estimates/processed"
 
 # Read data
-data_orig <- readRDS(file=file.path(datadir1, "1981_2022_bycatch_estimate_ratio_no_strata.Rds"))
+data_orig <- readRDS(file=file.path(datadir1, "1981_2021_bycatch_estimate_ratio_stratified.Rds"))
 
 
 # Build data
@@ -22,21 +22,26 @@ data_orig <- readRDS(file=file.path(datadir1, "1981_2022_bycatch_estimate_ratio_
 
 # Calculate recent averages
 stats <- data_orig %>%
-  # Calculate stats
-  group_by(comm_name) %>%
-  summarize(ymax=max(mort_hi),
-            yuse=ymax*0.15,
-            bycatch_avg=mean(mort[year%in%2013:2022])) %>% 
+  # Calculate annual sum
+  group_by(comm_name, year) %>%
+  summarize(nbycatch=sum(nbycatch, na.rm=T)) %>% 
+  ungroup() %>% 
+  # Calculate recent average
+  group_by(comm_name) %>% 
+  summarize(ymax=max(nbycatch, na.rm=T),
+            nbycatch_avg=mean(nbycatch[year %in% 2012:2021], na.rm=T)) %>% 
   ungroup() %>% 
   # Add label
-  mutate(label=paste(round(bycatch_avg, 1), "/ yr")) %>% 
+  mutate(label=paste(round(nbycatch_avg, 0), "per yr")) %>% 
   # Arrange
-  arrange(desc(bycatch_avg)) %>% 
+  arrange(desc(nbycatch_avg)) %>% 
   mutate(comm_name=factor(comm_name, levels=comm_name))
 
 # Order results
 data <- data_orig %>% 
-  mutate(comm_name=factor(comm_name, levels=stats$comm_name))
+  mutate(comm_name=factor(comm_name, levels=levels(stats$comm_name))) %>% 
+  mutate(strata=factor(strata, levels=c("Southern California", "Channel Islands", 
+                                        "Ventura", "Morro Bay", "Monterey Bay")))
 
 
 # Plot data
@@ -58,19 +63,19 @@ base_theme <-  theme(axis.text=element_text(size=7),
                      legend.background = element_rect(fill=alpha('blue', 0)))
 
 # Plot
-g <- ggplot(data, aes(x=year, y=mort)) +
+g <- ggplot(data, aes(x=year, y=nbycatch, fill=strata)) +
   # Facet
   lemon::facet_rep_wrap(~comm_name, scales="free_y", ncol=3, repeat.tick.labels = 'bottom') +
   # Our estimates
-  geom_bar(stat="identity", fill="grey70") +
-  geom_errorbar(mapping=aes(ymin=mort_lo, ymax=mort_hi), color="grey30", width=0, linewidth=0.3) +
+  geom_bar(stat="identity", color="grey30", linewidth=0.1) +
+  # Reference lines
+  geom_vline(xintercept=c(1987, 1994, 2002), linetype="dashed", color="grey80", linewidth=0.3) +
   # Plot label
-  geom_segment(data=stats, mapping=aes(yend=yuse), 
-               x=2013, xend=2013, y=0, color="grey30", linewidth=0.2, linetype="solid") +
-  geom_text(data=stats, mapping=aes(y=yuse, label=label),
-            x=2013.5, hjust=0, size=2, color="grey30") +
+  geom_text(data=stats, mapping=aes(y=ymax*0.97, label=label),
+            x=2021, hjust=1, size=2.2, color="grey30", inherit.aes = F) +
   # Labels
   labs(x="", y="Estimated bycatch") +
+  scale_fill_discrete(name="") +
   # Theme
   theme_bw() + base_theme +
   theme(legend.position="top",
