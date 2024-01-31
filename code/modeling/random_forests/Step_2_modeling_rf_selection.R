@@ -255,5 +255,3 @@ g <- gridExtra::grid.arrange(g_best, g_best_weight, ncol = 1)
 ggsave(g, filename=file.path(plotdir, "FigSX_rf_model_selection.png"),
        width=7.5, height=7, units="in", dpi=600)
 
-  
-  

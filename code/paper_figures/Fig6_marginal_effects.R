@@ -111,7 +111,7 @@ base_theme <-  theme(axis.text=element_text(size=7),
                      legend.background = element_rect(fill=alpha('blue', 0)))
 
 
-# California sea lion plot
+# California sea lion
 
 species_color <- c("California sea lion" = "#FF3300", "Common murre" = "#669900", "Harbor seal" = "#33CCCC", "Soupfin shark" = "#9966FF")
 
@@ -248,4 +248,57 @@ plot_with_insert
 # Export
 ggsave(plot_with_insert, filename=file.path(plotdir, "Fig6_marginal_effects_CM.png"), 
        width=5.6, height=4.19, units="in", dpi=600)
+
+########################################################################
+
+
+# Soupfin shark
+
+
+main_plot <- ggplot(data %>% filter(species == "Soupfin shark"), aes(x=value, y=prob, color=species)) +
+  facet_wrap(~variable, ncol=4, scales="free") +
+  geom_line() +
+  # Labels
+  labs(x="Variable value", y="Marginal effect") +
+  # Legend
+  scale_colour_manual(name="Species", values = species_color) +
+  # Theme
+  theme_bw() + base_theme +
+  theme(legend.key.size=unit(0.3, "cm"),
+        legend.position = "bottom")
+
+main_plot
+
+
+insert_plot <- ggplot(data_cat %>% filter(species == "Soupfin shark"), aes(x = value, y = prob, fill=species)) +
+  facet_wrap(~variable) +
+  geom_bar(stat = "identity", position = "dodge") +
+  # fill color
+  scale_fill_manual(values = species_color) +
+  # Theme
+  theme_bw() + base_theme +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank())
+
+insert_plot
+
+# use cowplot package, we can insert categorical plot inside
+
+plot_with_insert <-
+  ggdraw() +
+  draw_plot(main_plot) +
+  draw_plot(insert_plot, x = 0.755, y = 0.125, width = 0.25, height = 0.45)
+
+plot_with_insert
+
+# Export
+ggsave(plot_with_insert, filename=file.path(plotdir, "Fig6_marginal_effects_SS.png"), 
+       width=5.6, height=4.19, units="in", dpi=600)
+
+
+
+
+
+
 
