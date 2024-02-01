@@ -35,7 +35,7 @@ source("code/modeling/random_forests/helper_functions/weighted_rf.R")
 
 ### set up the species list ###
 
-spp_do <- ("California sea lion")
+spp_do <- c("Harbor seal", "Soupfin shark", "Common murre")
 
 spp_do <- c("California sea lion", "Harbor seal", "Soupfin shark", "Common murre", "Giant sea bass", "Brandt's cormorant")
 

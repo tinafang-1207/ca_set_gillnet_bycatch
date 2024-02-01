@@ -28,10 +28,10 @@ obs <- obs_orig %>%
   filter(comm_name %in% c("California sea lion", "Common murre", "Harbor seal", "Soupfin shark")) %>% 
   rename(species=comm_name)
 
-obs_sp <- obs %>% 
+obs_sp <- obs_orig %>% 
   dplyr::select(set_id, long_dd, lat_dd) %>%
   unique() %>% 
-  dplyr::select(-set_id) 
+  dplyr::select(-set_id)
 coordinates(obs_sp) <- c("long_dd", "lat_dd")
 
 # Create a raster template covering the extent of the points with cell size 0.1 degrees
@@ -39,7 +39,7 @@ raster_template <- raster(extent(obs_sp), res = 0.05)
 
 # Sea lion
 obs_slion <- obs %>% 
-  filter(species=="California sea lion") %>% 
+  filter(species=="California sea lion") %>%
   dplyr::select(set_id, long_dd, lat_dd) %>% 
   unique() %>% 
   dplyr::select(-set_id) 
@@ -60,6 +60,7 @@ obs_seal <- obs %>%
   dplyr::select(-set_id) 
 coordinates(obs_seal) <- c("long_dd", "lat_dd")
 
+count_tot <- rasterize(obs_sp, raster_template, fun = "count")
 count_seal <- rasterize(obs_seal, raster_template, fun = "count")
 seal_rate <- count_seal / count_tot
 seal_rate_df <- seal_rate %>% 
@@ -74,17 +75,15 @@ obs_ss <- obs %>%
   dplyr::select(-set_id) 
 coordinates(obs_ss) <- c("long_dd", "lat_dd")
 
+count_tot <- rasterize(obs_sp, raster_template, fun = "count")
 count_ss <- rasterize(obs_ss, raster_template, fun = "count")
 ss_rate <- count_ss / count_tot
 ss_rate_df <- ss_rate %>% 
   as.data.frame(xy=T) %>%
   mutate(species = "Soupfin shark")
 
-
-
-
-
-
+#############################################################
+# make plot below
 
 g_sealion <- ggplot() +
   geom_tile(data = slion_rate_df, aes(x = x, y = y, fill = layer)) +
