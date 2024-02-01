@@ -344,5 +344,12 @@ eva_all <- bind_rows(sl_kap, hs_kap, ss_kap)
 
 write.csv(eva_all, file = "model_result/threshold_eva_all_metrics.csv", row.names = FALSE)
 
+eva_all <- read.csv("model_result/threshold_eva_all_metrics.csv")
+
+ggplot(data = eva_all, aes(x = .threshold, y = .estimate, color = species)) +
+  geom_line() +
+  facet_wrap(.~.metric) +
+  theme_bw()
+
 
 

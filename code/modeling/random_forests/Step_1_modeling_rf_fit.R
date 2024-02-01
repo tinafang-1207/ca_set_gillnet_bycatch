@@ -35,13 +35,15 @@ source("code/modeling/random_forests/helper_functions/weighted_rf.R")
 
 ### set up the species list ###
 
+spp_do <- c("Harbor seal", "Soupfin shark", "Common murre")
+
 spp_do <- c("California sea lion", "Harbor seal", "Soupfin shark", "Common murre", "Giant sea bass", "Brandt's cormorant")
 
 
 ########### Fit balanced rf below ###############
 
 # set up output dir for balance rf
-outputdir_balanced_rf <- "/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf"
+outputdir_balanced_rf <- "/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf_with_long/"
 
 i <- 1
 
@@ -60,7 +62,7 @@ for (i in 1:length(spp_do)) {
 ############## Fit weighted rf below ###############
 
 #set up output dir for weighted rf
-outputdir_weighted_rf <- "/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/"
+outputdir_weighted_rf <- "/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/"
 
 i <- 1
 

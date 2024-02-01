@@ -255,3 +255,48 @@ g <- gridExtra::grid.arrange(g_best, g_best_weight, ncol = 1)
 ggsave(g, filename=file.path(plotdir, "FigSX_rf_model_selection.png"),
        width=7.5, height=7, units="in", dpi=600)
 
+
+
+
+##########################################################################
+# Experiment with long below
+
+output_sl_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf_with_long/california_sea_lion_model_balanced_rf.Rds")
+output_sl_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/california_sea_lion_model_weighted_rf.Rds")
+
+sl_balanced_df <- output_sl_balanced[["rf_all_df"]] %>%
+  mutate(species = "California sea lion", weight = NA)
+
+sl_weighted_df <- output_sl_weighted[["rf_weighted_final"]] %>%
+  mutate(species = "California sea lion")
+
+
+
+model_df_final <- rbind(sl_balanced_df, 
+                        sl_weighted_df) %>%
+  rename(metric = .metric) %>%
+  mutate(metric = recode_factor(metric, 
+                                "kap" = "Cohen's kappa", 
+                                "roc_auc" = "Area under the ROC curve"),
+         balanced_type = recode_factor(balanced_type, 
+                                       "downsample" = "Downsample", 
+                                       "upsample" = "Upsample",
+                                       "smote" = "SMOTE",
+                                       "weighted" = "Weighted")) %>%
+  mutate(model_id = paste(metric, .config, balanced_type, species, mtry, weight, sep = "-")) %>%
+  mutate(species = species %>% fct_reorder(mean))
+
+model_df_final_kappa <- model_df_final %>%
+  filter(metric == "Cohen's kappa") %>%
+  group_by(balanced_type) %>%
+  filter(mean == max(mean))
+
+
+
+
+
+
+
+
+
+

@@ -29,11 +29,14 @@ fit_weighted_rf_model <- function(spp, model_orig) {
   # sst_c = sea surface temperature
   # island_yn = island dummy
   
-  
   predictor_pre_join <- model_orig %>%
-    select(set_id, lat_dd, depth_fa, soak_hr, mesh_size_in, shore_km, yday, sst_c, island_yn) %>%
+    select(set_id, lat_dd, long_dd, depth_fa, soak_hr, mesh_size_in, shore_km, yday, sst_c, island_yn) %>%
     mutate(island_yn = as.factor(island_yn)) %>%
+    filter(shore_km<=20) %>%
+    filter(soak_hr<=96) %>%
+    filter(depth_fa <=100) %>%
     filter(!duplicated(set_id))
+  
   
   #Join model data
   
@@ -92,7 +95,7 @@ fit_weighted_rf_model <- function(spp, model_orig) {
     
     model_fold <- vfold_cv(model_train_weighted)
     
-    param_grid <- grid_regular(mtry(range = c(1, 8)), levels = 8) 
+    param_grid <- grid_regular(mtry(range = c(1, 9)), levels = 9) 
     
     # set up model workflow
     set.seed(1207)
