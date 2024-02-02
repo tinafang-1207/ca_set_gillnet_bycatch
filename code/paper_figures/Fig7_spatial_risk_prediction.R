@@ -10,7 +10,7 @@ library(tidyverse)
 # read in data
 ################################################################################
 # prediction data
-# data <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/spatial_risk_predict_final.Rds") # Yutian
+data <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/spatial_risk_predict_final.Rds") # Yutian
 data <- readRDS("/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/spatial_risk_predict_final.Rds") # Chris
 
 # geographical data
@@ -117,7 +117,6 @@ g1 <- ggplot() +
   geom_tile(data = data %>% filter(species == "California sea lion"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
-  geom_point(data=obs %>% filter(species == "California sea lion"), mapping=aes(x=long_dd, y=lat_dd), shape=1) +
   scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.2, 0.4)) +
   coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
   scale_x_continuous(breaks=seq(-122, -118, 1)) +
@@ -136,8 +135,7 @@ g2 <- ggplot() +
   geom_tile(data = data %>% filter(species == "Harbor seal"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
-  scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.1, 0.2)) +
-  geom_point(data=obs %>% filter(species == "Harbor seal"), mapping=aes(x=long_dd, y=lat_dd), shape=1) +
+  scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.1, 0.3)) +
   coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
   scale_x_continuous(breaks=seq(-122, -118, 1)) +
   scale_y_continuous(breaks=seq(32, 35, 1)) +
@@ -156,8 +154,7 @@ g3 <- ggplot() +
   geom_tile(data = data %>% filter(species == "Soupfin shark"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
-  scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.1, 0.2)) +
-  geom_point(data=obs %>% filter(species == "Soupfin shark"), mapping=aes(x=long_dd, y=lat_dd), shape=1) +
+  scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.2, 0.4)) +
   coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
   scale_x_continuous(breaks=seq(-122, -118, 1)) +
   scale_y_continuous(breaks=seq(32, 35, 1)) +
@@ -175,8 +172,7 @@ g4 <- ggplot() +
   geom_tile(data = data %>% filter(species == "Common murre"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
-  geom_point(data=obs %>% filter(species == "Common murre"), mapping=aes(x=long_dd, y=lat_dd), shape=1) +
-  scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.2, 0.4)) +
+  scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.1, 0.2)) +
   coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
   scale_x_continuous(breaks=seq(-122, -118, 1)) +
   scale_y_continuous(breaks=seq(32, 35, 1)) +
