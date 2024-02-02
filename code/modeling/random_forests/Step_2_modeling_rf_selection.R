@@ -12,24 +12,28 @@ plotdir <- "figures"
 #### read in model result ####
 
 # sealion
-output_sl_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/california_sea_lion_model_balanced_rf.Rds")
-output_sl_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/california_sea_lion_model_weighted_rf.Rds")
+output_sl_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf_with_long/california_sea_lion_model_balanced_rf.Rds")
+output_sl_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/california_sea_lion_model_weighted_rf.Rds")
 
 # harbor seal
-output_hs_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/harbor_seal_model_balanced_rf.Rds")
-output_hs_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/harbor_seal_model_weighted_rf.Rds")
+output_hs_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf_with_long/harbor_seal_model_balanced_rf.Rds")
+output_hs_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/harbor_seal_model_weighted_rf.Rds")
 
 # soupfin shark
-output_ss_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/soupfin_shark_model_balanced_rf.Rds")
-output_ss_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/soupfin_shark_model_weighted_rf.Rds")
+output_ss_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf_with_long/soupfin_shark_model_balanced_rf.Rds")
+output_ss_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/soupfin_shark_model_weighted_rf.Rds")
+
+# common murre
+output_cm_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf_with_long/common_murre_model_balanced_rf.Rds")
+output_cm_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/common_murre_model_weighted_rf.Rds")
+
+###################################################################
+
+# those species are not going to the model prediction
 
 # giant seabass
 output_gs_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/giant_sea_bass_model_balanced_rf.Rds")
 output_gs_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/giant_sea_bass_model_weighted_rf.Rds")
-
-# common murre
-output_cm_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/common_murre_model_balanced_rf.Rds")
-output_cm_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/common_murre_model_weighted_rf.Rds")
 
 # brandt's cormorant 
 output_bc_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/brandt's_cormorant_model_balanced_rf.Rds")
@@ -84,18 +88,17 @@ bc_weighted_df <- output_bc_weighted[["rf_weighted_final"]] %>%
 
 # make the final table
 
+# add other dfs later
+
 model_df_final <- rbind(sl_balanced_df, 
                         sl_weighted_df, 
                         hs_balanced_df, 
                         hs_weighted_df, 
                         ss_balanced_df, 
                         ss_weighted_df,
-                        gs_balanced_df,
-                        gs_weighted_df,
                         cm_balanced_df,
-                        cm_weighted_df,
-                        bc_balanced_df,
-                        bc_weighted_df) %>%
+                        cm_weighted_df
+                        ) %>%
   rename(metric = .metric) %>%
   mutate(metric = recode_factor(metric, 
                                 "kap" = "Cohen's kappa", 
@@ -192,7 +195,7 @@ select_model_kappa <- best_model_kappa %>%
 
 select_model_roc <- model_df_final %>%
   filter(metric == "Area under the ROC curve") %>%
-  filter(model_id == "Area under the ROC curve-Preprocessor1_Model2-SMOTE-California sea lion-2-NA"|model_id == "Area under the ROC curve-Preprocessor1_Model1-SMOTE-Giant sea bass-1-NA"|model_id == "Area under the ROC curve-Preprocessor1_Model2-Upsample-Soupfin shark-2-NA"|model_id == "Area under the ROC curve-Preprocessor1_Model4-Weighted-Brandt's cormorant-4-50"|model_id == "Area under the ROC curve-Preprocessor1_Model8-Weighted-Common murre-8-25"|model_id == "Area under the ROC curve-Preprocessor1_Model4-Weighted-Harbor seal-4-75")
+  filter(model_id == "Area under the ROC curve-Preprocessor1_Model2-Weighted-California sea lion-2-50"|model_id == "Area under the ROC curve-Preprocessor1_Model3-Weighted-Soupfin shark-3-25"|model_id == "Area under the ROC curve-Preprocessor1_Model2-Upsample-Common murre-1-NA"|model_id == "Area under the ROC curve-Preprocessor1_Model2-Weighted-Harbor seal-2-150")
 
 select_model_final <- rbind(select_model_kappa, select_model_roc) %>%
   mutate(metric = factor(metric, levels = c("Cohen's kappa", "Area under the ROC curve")))
@@ -201,7 +204,7 @@ select_model_final <- rbind(select_model_kappa, select_model_roc) %>%
 
 # All best models
 model_best_all <- model_df_final %>%
-  filter(balanced_type%in%c("Upsample", "Downsample", "SMOTE")|(species == "California sea lion" & weight == "50")|(species == "Harbor seal" & weight == "75")|(species == "Soupfin shark"& weight == "25")|(species == "Common murre"& weight == "25")|(species == "Brandt's cormorant"& weight == "50")|(species == "Giant sea bass"& weight == "75")) %>%
+  filter(balanced_type%in%c("Upsample", "Downsample", "SMOTE")|(species == "California sea lion" & weight == "50")|(species == "Harbor seal" & weight == "150")|(species == "Soupfin shark"& weight == "25")|(species == "Common murre"& weight == "25")|(species == "Brandt's cormorant"& weight == "50")|(species == "Giant sea bass"& weight == "75")) %>%
   mutate(metric = factor(metric, levels = c("Cohen's kappa", "Area under the ROC curve"))) %>%
   select(-weight)
 

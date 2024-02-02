@@ -82,54 +82,64 @@ ss_rate_df <- ss_rate %>%
   as.data.frame(xy=T) %>%
   mutate(species = "Soupfin shark")
 
+# Common murre
+obs_cm <- obs %>%
+  filter(species=="Common murre") %>% 
+  dplyr::select(set_id, long_dd, lat_dd) %>% 
+  unique() %>% 
+  dplyr::select(-set_id) 
+coordinates(obs_cm) <- c("long_dd", "lat_dd")
+
+count_tot <- rasterize(obs_sp, raster_template, fun = "count")
+count_cm <- rasterize(obs_cm, raster_template, fun = "count")
+cm_rate <- count_cm / count_tot
+cm_rate_df <- cm_rate %>% 
+  as.data.frame(xy=T) %>%
+  mutate(species = "Common murre")
+
+
+df_all <- bind_rows(slion_rate_df, seal_rate_df, ss_rate_df, cm_rate_df)
+
 #############################################################
+
+# theme
+base_theme <- theme(axis.text=element_text(size=7),
+                    axis.text.y = element_text(angle = 90, hjust = 0.5),
+                    axis.title=element_text(size=8),
+                    legend.text=element_text(size=6),
+                    legend.title=element_text(size=7),
+                    strip.text = element_text(size=8),
+                    plot.tag =element_text(size=9),
+                    plot.title=element_blank(),
+                    # Gridlines
+                    panel.grid.major = element_blank(),
+                    panel.grid.minor = element_blank(),
+                    panel.background = element_blank(),
+                    axis.line = element_line(colour = "black"),
+                    # Legend
+                    legend.key = element_rect(fill = NA),
+                    legend.background = element_rect(fill=alpha('blue', 0)))
+
+
+
 # make plot below
-
-g_sealion <- ggplot() +
-  geom_tile(data = slion_rate_df, aes(x = x, y = y, fill = layer)) +
-  geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
-  geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
-  coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
-  scale_fill_gradientn(name = "Observed bycatch risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
-  theme_bw()
-
-g_sealion
-
-g_seal <- ggplot() +
-  geom_tile(data = seal_rate_df, aes(x = x, y = y, fill = layer)) +
-  geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
-  geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
-  coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
-  scale_fill_gradientn(name = "Observed bycatch risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
-  theme_bw()
-
-g_seal
-
-
-g_ss <- ggplot() +
-  geom_tile(data = ss_rate_df, aes(x = x, y = y, fill = layer)) +
-  geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
-  geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
-  coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
-  scale_fill_gradientn(name = "Observed bycatch risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
-  theme_bw()
-
-g_ss
-
-df_all <- bind_rows(slion_rate_df, seal_rate_df, ss_rate_df)
 
 g_all <- ggplot() +
   geom_tile(data = df_all, aes(x = x, y = y, fill = layer)) +
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
+  scale_x_continuous(breaks=seq(-122, -118, 1)) +
+  scale_y_continuous(breaks=seq(32, 35, 1)) +
   scale_fill_gradientn(name = "Observed bycatch risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
-  facet_wrap(.~species) +
-  theme_bw()
+  facet_wrap(.~species, ncol=2) +
+  guides(fill = guide_colorbar(ticks.colour = "black", frame.colour = "black")) +
+  theme_bw() + base_theme + theme(axis.title.x = element_blank(),
+                                  axis.title.y = element_blank())
 
 g_all
 
 plotdir <- "figures"
 
 ggsave(g_all, filename=file.path(plotdir, "FigSX_obs_bycatch_ratio_raster.png"), 
-       width=8, height=4.5, units="in", dpi=600)
+       width=5.5, height=4.5, units="in", dpi=600)
