@@ -16,6 +16,11 @@ datadir2 <- "data/historical_estimates/processed"
 # Read data
 data_orig <- readRDS(file=file.path(datadir1, "1981_2021_bycatch_estimate_ratio_stratified.Rds"))
 
+# Read RF predictions
+rf_orig <- read.csv(file=file.path(datadir1, "temporal_prediction.csv"), as.is=T) %>% 
+  rename(comm_name=species) %>% 
+  filter(comm_name!="Soupfin shark")
+
 
 # Build data
 ################################################################################
@@ -68,6 +73,8 @@ g <- ggplot(data, aes(x=year, y=nbycatch, fill=strata)) +
   lemon::facet_rep_wrap(~comm_name, scales="free_y", ncol=3, repeat.tick.labels = 'bottom') +
   # Our estimates
   geom_bar(stat="identity", color="grey30", linewidth=0.1) +
+  # RF estimates
+  geom_line(data=rf_orig, mapping=aes(x=year, y= total_bycatch), inherit.aes = F) +
   # Reference lines
   geom_vline(xintercept=c(1987, 1994, 2002), linetype="dashed", color="grey80", linewidth=0.3) +
   # Plot label
