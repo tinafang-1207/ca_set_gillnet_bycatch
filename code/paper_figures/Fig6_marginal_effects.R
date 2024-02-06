@@ -48,7 +48,7 @@ base_theme <-  theme(axis.text=element_text(size=7),
 species_color <- c("California sea lion" = "#FF3300", "Common murre" = "#669900", "Harbor seal" = "#33CCCC", "Soupfin shark" = "#9966FF")
 
 main_plot <- ggplot(data, aes(x=value, y=prob, color=species)) +
-  facet_wrap(~variable, ncol=4, scales="free") +
+  facet_wrap(~variable, ncol=3, scales="free") +
   geom_line() +
   # Labels
   labs(x="Variable value", y="Marginal effect") +
@@ -80,13 +80,15 @@ insert_plot
 plot_with_insert <-
   ggdraw() +
   draw_plot(main_plot) +
-  draw_plot(insert_plot, x = 0.755, y = 0.125, width = 0.25, height = 0.45)
+  draw_plot(insert_plot, x = 0.67, y = 0.085, width = 0.33, height = 0.31)
+
+plot_with_insert
 
 
   
 # Export
 ggsave(plot_with_insert, filename=file.path(plotdir, "Fig6_marginal_effects.png"), 
-       width=5.6, height=4.19, units="in", dpi=600)
+       width=5.6, height=6.5, units="in", dpi=600)
 
 
 
