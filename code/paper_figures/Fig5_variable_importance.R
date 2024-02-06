@@ -22,13 +22,14 @@ data <- data %>%
                                   "yday"="Julian day",      
                                   "sst_c"="Temperature",             
                                   "lat_dd"="Latitude",
+                                  "long_dd" = "Longitude",
                                   "mesh_size_in"="Mesh size",
                                   "shore_km"="Shore distance",
                                   "depth_fa"="Depth",    
                                   "soak_hr"="Soak hour",
                                   "island_yn_X1" = "Island area?")) %>%
   mutate(category = case_when(variable %in% c("Mesh size", "Soak hour")~"Fishing",
-                              variable %in% c("Latitude", "Depth", "Shore distance", "Island area?")~"Space",
+                              variable %in% c("Latitude", "Longitude","Depth", "Shore distance", "Island area?")~"Space",
                               variable %in% c("Julian day")~"Time",
                               variable%in% c("Temperature")~"Environment"))
 

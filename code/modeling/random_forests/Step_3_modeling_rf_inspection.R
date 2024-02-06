@@ -18,48 +18,48 @@ library(DALEXtra)
 # Common murre
 
 # sealion
-output_sl_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/california_sea_lion_model_balanced_rf.Rds")
-output_sl_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/california_sea_lion_model_weighted_rf.Rds")
+output_sl_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf_with_long/california_sea_lion_model_balanced_rf.Rds")
+output_sl_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/california_sea_lion_model_weighted_rf.Rds")
 # harbor seal
-output_hs_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/harbor_seal_model_balanced_rf.Rds")
-output_hs_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/harbor_seal_model_weighted_rf.Rds")
+output_hs_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf_with_long/harbor_seal_model_balanced_rf.Rds")
+output_hs_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/harbor_seal_model_weighted_rf.Rds")
 
 # soupfin shark
-output_ss_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/soupfin_shark_model_balanced_rf.Rds")
-output_ss_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/soupfin_shark_model_weighted_rf.Rds")
+output_ss_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf_with_long/soupfin_shark_model_balanced_rf.Rds")
+output_ss_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/soupfin_shark_model_weighted_rf.Rds")
 
 # Common murre
-output_cm_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/common_murre_model_balanced_rf.Rds")
-output_cm_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/common_murre_model_weighted_rf.Rds")
+output_cm_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf_with_long/common_murre_model_balanced_rf.Rds")
+output_cm_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/common_murre_model_weighted_rf.Rds")
 
 
 ### Extract the best model object ###
 
-# sealion - SMOTE
-sl_best_model <- output_sl_balanced[["best_models"]][["model_smote_best"]]
+# sealion - weight 50
+sl_best_model <- output_sl_weighted[["best_models"]][[2]]
 
-# harbor seal - weighted - 75
-hs_best_model <- output_hs_weighted[["best_models"]][[3]]
+# harbor seal - weight - 150
+hs_best_model <- output_hs_weighted[["best_models"]][[6]]
 
-# soupfin shark - Upsample
-ss_best_model <- output_ss_balanced[["best_models"]][["model_upsample_best"]]
+# soupfin shark - weight - 25
+ss_best_model <- output_ss_weighted[["best_models"]][[1]]
 
-# common murre - weighted-25
-cm_best_model <- output_cm_weighted[["best_models"]][[1]]
+# common murre - balance - upsample
+cm_best_model <- output_cm_balanced[["best_models"]][["model_up_best"]]
 
 ### Extract the model best fit (to training data)
 
-# sealion - SMOTE
-sl_best_fit <-  output_sl_balanced[["final_fit"]][["model_smote_final_fit"]]
+# sealion - weight 50
+sl_best_fit <- output_sl_weighted[["final_fit"]][[2]]
 
-# harbor seal - weighted - 75
-hs_best_fit <- output_hs_weighted[["final_fit"]][[3]]
+# harbor seal  - weight - 150
+hs_best_fit <- output_hs_weighted[["final_fit"]][[6]]
 
-# soupfin shark - Upsample
-ss_best_fit <- output_ss_balanced[["final_fit"]][["model_up_final_fit"]]
+# soupfin shark - weight - 25
+ss_best_fit <- output_ss_weighted[["final_fit"]][[1]]
 
-# common murre - weighted -25
-cm_best_fit <- output_cm_weighted[["final_fit"]][[1]]
+# common murre - balance - upsample
+cm_best_fit <- output_cm_balanced[["final_fit"]][["model_up_final_fit"]]
 
 
 ######## Variable Importance ########
@@ -112,7 +112,7 @@ cm_vi_df <- cm_best_fit %>%
 
 # training data
 
-model_train_weighted_sl <- output_sl_balanced[["data_train"]]
+model_train_weighted_sl <- output_sl_weighted[["data_train"]]
 
 # marginal effect
 
@@ -131,6 +131,7 @@ pdp_rf_sl <- model_profile(explainer_rf_sl,
                                       "sst_c",
                                       "yday",
                                       "lat_dd",
+                                      "long_dd",
                                       "soak_hr",
                                       "shore_km",
                                       "depth_fa"), 
@@ -144,14 +145,11 @@ pdp_rf_df_sl <- as.data.frame(pdp_rf_sl$agr_profiles) %>%
                                 "yday"="Julian day",      
                                 "sst_c"="Temperature (°C)",             
                                 "lat_dd"="Latitude (°N)",
+                                "long_dd" ="Longitude (°W)",
                                 "mesh_size_in"="Mesh size (cm)",
                                 "shore_km"="Shore distance (km)",
                                 "depth_fa"="Depth (fathoms)",    
-                                "soak_hr"="Soak time (hr)")) %>% 
-  # Remove outlier values (BUT WE SHOULD DO THIS RIGHT SOMEWHERE)
-  filter(!(variable=="Depth (fathoms)" & value>100)) %>% 
-  filter(!(variable=="Shore distance (km)" & value>20)) %>% 
-  filter(!(variable=="Soak time (hr)" & value>96)) %>%
+                                "soak_hr"="Soak time (hr)")) %>%
   # add species column
   mutate(species = "California sea lion")
 
@@ -175,14 +173,14 @@ pdp_rf_sl_cat_df <- as.data.frame(pdp_rf_sl_cat$agr_profiles) %>%
 
 # training data
 
-model_train_balanced_hs <- output_hs_weighted[["data_train"]]
+model_train_weighted_hs <- output_hs_weighted[["data_train"]]
 
 # marginal effect
 
 explainer_rf_hs <- explain_tidymodels(
   hs_best_fit,
-  data = dplyr::select(model_train_balanced_hs, -response),
-  y = as.integer(model_train_balanced_hs$response),
+  data = dplyr::select(model_train_weighted_hs, -response),
+  y = as.integer(model_train_weighted_hs$response),
   verbose = FALSE
 )
 
@@ -192,6 +190,7 @@ pdp_rf_hs <- model_profile(explainer_rf_hs,
                                          "sst_c",
                                          "yday",
                                          "lat_dd",
+                                         "long_dd",
                                          "soak_hr",
                                          "shore_km",
                                          "depth_fa"), 
@@ -206,14 +205,11 @@ pdp_rf_df_hs <- as.data.frame(pdp_rf_hs$agr_profiles) %>%
                                 "yday"="Julian day",      
                                 "sst_c"="Temperature (°C)",             
                                 "lat_dd"="Latitude (°N)",
+                                "long_dd" ="Longitude (°W)",
                                 "mesh_size_in"="Mesh size (cm)",
                                 "shore_km"="Shore distance (km)",
                                 "depth_fa"="Depth (fathoms)",    
-                                "soak_hr"="Soak time (hr)")) %>% 
-  # Remove outlier values (BUT WE SHOULD DO THIS RIGHT SOMEWHERE)
-  filter(!(variable=="Depth (fathoms)" & value>100)) %>% 
-  filter(!(variable=="Shore distance (km)" & value>20)) %>% 
-  filter(!(variable=="Soak time (hr)" & value>96)) %>%
+                                "soak_hr"="Soak time (hr)")) %>%
   # add species column
   mutate(species = "Harbor seal")
 
@@ -235,15 +231,15 @@ pdp_rf_hs_cat_df <- as.data.frame(pdp_rf_hs_cat$agr_profiles) %>%
 
 # training data
 
-model_train_balanced_ss <- output_ss_balanced[["data_train"]]
+model_train_weighted_ss <- output_ss_weighted[["data_train"]]
 
 
 # marginal effect
 
 explainer_rf_ss <- explain_tidymodels(
   ss_best_fit,
-  data = dplyr::select(model_train_balanced_ss, -response),
-  y = as.integer(model_train_balanced_ss$response),
+  data = dplyr::select(model_train_weighted_ss, -response),
+  y = as.integer(model_train_weighted_ss$response),
   verbose = FALSE
 )
 
@@ -253,6 +249,7 @@ pdp_rf_ss <- model_profile(explainer_rf_ss,
                                          "sst_c",
                                          "yday",
                                          "lat_dd",
+                                         "long_dd",
                                          "soak_hr",
                                          "shore_km",
                                          "depth_fa"), 
@@ -267,14 +264,11 @@ pdp_rf_df_ss <- as.data.frame(pdp_rf_ss$agr_profiles) %>%
                                 "yday"="Julian day",      
                                 "sst_c"="Temperature (°C)",             
                                 "lat_dd"="Latitude (°N)",
+                                "long_dd" ="Longitude (°W)",
                                 "mesh_size_in"="Mesh size (cm)",
                                 "shore_km"="Shore distance (km)",
                                 "depth_fa"="Depth (fathoms)",    
                                 "soak_hr"="Soak time (hr)")) %>% 
-  # Remove outlier values (BUT WE SHOULD DO THIS RIGHT SOMEWHERE)
-  filter(!(variable=="Depth (fathoms)" & value>100)) %>% 
-  filter(!(variable=="Shore distance (km)" & value>20)) %>% 
-  filter(!(variable=="Soak time (hr)" & value>96)) %>%
   # add species column
   mutate(species = "Soupfin shark")
 
@@ -298,15 +292,15 @@ pdp_rf_ss_cat_df <- as.data.frame(pdp_rf_ss_cat$agr_profiles) %>%
 
 # training data
 
-model_train_weighted_cm <- output_cm_weighted[["data_train"]]
+model_train_balanced_cm <- output_cm_balanced[["data_train"]]
 
 
 # marginal effect
 
 explainer_rf_cm <- explain_tidymodels(
   cm_best_fit,
-  data = dplyr::select(model_train_weighted_cm, -response),
-  y = as.integer(model_train_weighted_cm$response),
+  data = dplyr::select(model_train_balanced_cm, -response),
+  y = as.integer(model_train_balanced_cm$response),
   verbose = FALSE
 )
 
@@ -316,6 +310,7 @@ pdp_rf_cm <- model_profile(explainer_rf_cm,
                                          "sst_c",
                                          "yday",
                                          "lat_dd",
+                                         "long_dd",
                                          "soak_hr",
                                          "shore_km",
                                          "depth_fa"), 
@@ -330,14 +325,11 @@ pdp_rf_df_cm <- as.data.frame(pdp_rf_cm$agr_profiles) %>%
                                 "yday"="Julian day",      
                                 "sst_c"="Temperature (°C)",             
                                 "lat_dd"="Latitude (°N)",
+                                "long_dd" ="Longitude (°W)",
                                 "mesh_size_in"="Mesh size (cm)",
                                 "shore_km"="Shore distance (km)",
                                 "depth_fa"="Depth (fathoms)",    
-                                "soak_hr"="Soak time (hr)")) %>% 
-  # Remove outlier values (BUT WE SHOULD DO THIS RIGHT SOMEWHERE)
-  filter(!(variable=="Depth (fathoms)" & value>100)) %>% 
-  filter(!(variable=="Shore distance (km)" & value>20)) %>% 
-  filter(!(variable=="Soak time (hr)" & value>96)) %>%
+                                "soak_hr"="Soak time (hr)")) %>%
   # add species column
   mutate(species = "Common murre")
 

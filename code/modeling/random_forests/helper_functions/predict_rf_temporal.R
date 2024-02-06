@@ -9,17 +9,17 @@ predict_temporal <- function(best_model_fit, predict_data, spp){
     scalar <-1
   }
   
-  preds_fac <- predict(best_model_fit, predict_data)
-  preds_prob <- predict(best_model_fit, predict_data, type = "prob")
+  preds_prob <- predict(best_model_fit, predict_data, type = "prob") %>%
+    mutate(species = spp)
   
   #combine columns
   predict_final <- predict_data %>%
-    bind_cols(preds_fac) %>%
-    bind_cols(preds_prob)
+    bind_cols(preds_prob) %>%
+    mutate(threshold = ifelse(species == "Common murre", 0.38, 0.5)) %>%
+    mutate(bycatch_yn = ifelse(.pred_1>=threshold, 1, 0))
   
   # calculate bycatch numbers each year
   data_bycatch <- predict_final %>%
-    rename(bycatch_yn=.pred_class) %>%
     mutate(bycatch_yn = as.numeric(as.character(bycatch_yn))) %>%
     group_by(year) %>%
     summarize(bycatch_sets = sum(bycatch_yn)) %>%
