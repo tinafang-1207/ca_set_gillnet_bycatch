@@ -21,7 +21,7 @@ predict_temporal <- function(best_model_fit, predict_data, spp){
   # calculate bycatch numbers each year
   data_bycatch <- predict_final %>%
     mutate(bycatch_yn = as.numeric(as.character(bycatch_yn))) %>%
-    group_by(year) %>%
+    group_by(year,strata) %>%
     summarize(bycatch_sets = sum(bycatch_yn)) %>%
     mutate(total_bycatch = bycatch_sets*3*scalar)
   
