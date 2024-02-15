@@ -15,6 +15,9 @@ library(randomForest)
 
 data <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/processed/CDFW_1981_2020_gillnet_logbook_data_use.Rds")
 
+# read in block_id
+block_key <- readRDS("data/strata/block_strata_key.Rds")
+
 # read in model results
 
 # read in best model results
@@ -55,7 +58,8 @@ source("code/modeling/random_forests/helper_functions/predict_rf_temporal.R")
 # Format predict data
 
 predict_data <- data %>%
-  select(set_id, year, yday, block_lat_dd, block_long_dd, shore_km, island_yn, depth_fa, mesh_in, soak_hr, sst_c) %>%
+  left_join(block_key, by = "block_id") %>%
+  select(set_id, year, yday, block_lat_dd, block_long_dd, strata, shore_km, island_yn, depth_fa, mesh_in, soak_hr, sst_c) %>%
   rename(lat_dd = block_lat_dd,
          long_dd = block_long_dd, 
          mesh_size_in = mesh_in) %>%
@@ -100,7 +104,12 @@ murre_final <- murre_bycatch_temporal %>%
 
 temporal_final <- bind_rows(sealion_final, seal_final, shark_final, murre_final)
 
+# save temporal trend without strata
 write.csv(temporal_final, file = "model_result/temporal_prediction.csv", row.names = FALSE)
+
+# save temporal trend with strata
+write.csv(temporal_final, file = "model_result/temporal_prediction_strata.csv", row.names = FALSE)
+
 
 
 
