@@ -7,7 +7,7 @@ library(tidyverse)
 library(tidymodels)
 library(vip)
 library(DALEXtra)
-
+library(randomForest)
 ### read in model result ###
 
 ### move forward with four species ONLY
@@ -68,7 +68,7 @@ cm_best_fit <- output_cm_balanced[["final_fit"]][["model_up_final_fit"]]
 
 sl_vi_df <- sl_best_fit %>%
   extract_fit_engine() %>%
-  vi() %>%
+  vi(method = vi_permute()) %>%
   as.data.frame() %>%
   mutate(species = "California sea lion") %>%
   rename(variable = Variable, importance = Importance) %>%
@@ -95,6 +95,7 @@ ss_vi_df <- ss_best_fit %>%
   select(species, variable, importance)
 
 # common murre
+
 cm_vi_df <- cm_best_fit %>%
   extract_fit_engine() %>%
   vi() %>%
@@ -102,8 +103,6 @@ cm_vi_df <- cm_best_fit %>%
   mutate(species = "Common murre") %>%
   rename(variable = Variable, importance = Importance) %>%
   select(species, variable, importance)
-
-
 
 ######## Marginal Effects ########
 
