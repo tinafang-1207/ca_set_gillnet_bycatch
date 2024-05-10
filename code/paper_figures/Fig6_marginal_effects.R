@@ -45,7 +45,8 @@ base_theme <-  theme(axis.text=element_text(size=7),
 
 # Plot
 
-species_color <- c("California sea lion" = "#FF3300", "Common murre" = "#669900", "Harbor seal" = "#33CCCC", "Soupfin shark" = "#9966FF")
+species_color <- c("California sea lion" = "#B83945", "Common murre" = "#4F845C", "Harbor seal" = "#E3E457", "Soupfin shark" = "#377483")
+
 
 main_plot <- ggplot(data, aes(x=value, y=prob, color=species)) +
   facet_wrap(~variable, ncol=3, scales="free") +
@@ -115,7 +116,7 @@ base_theme <-  theme(axis.text=element_text(size=7),
 
 # California sea lion
 
-species_color <- c("California sea lion" = "#FF3300", "Common murre" = "#669900", "Harbor seal" = "#33CCCC", "Soupfin shark" = "#9966FF")
+species_color <- c("California sea lion" = "#B83945", "Common murre" = "#4F845C", "Harbor seal" = "#E3E457", "Soupfin shark" = "#377483")
 
 main_plot <- ggplot(data %>% filter(species == "California sea lion"), aes(x=value, y=prob, color=species)) +
   facet_wrap(~variable, ncol=4, scales="free") +

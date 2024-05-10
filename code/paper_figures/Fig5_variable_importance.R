@@ -50,13 +50,16 @@ base_theme <-  theme(axis.text=element_text(size=7),
                      # Legend
                      legend.background = element_rect(fill=alpha('blue', 0)))
 
+# set species color
+category_color <- c("Space" = "#B83945", "Environment" = "#4F845C", "Time" = "#E3E457", "Fishing" = "#377483")
+
 # Plot
 g <- ggplot(data, aes(x=importance, 
                       y=tidytext::reorder_within(variable, importance, species),
                       fill = category)) +
   facet_wrap(~species, ncol=2, scales="free") +
   geom_bar(stat="identity") +
-  scale_fill_discrete(name = "Category") +
+  scale_fill_manual(name = "Category", values = category_color) +
   # Labels
   labs(x="Variable importance", y="Variables") +
   tidytext::scale_y_reordered() +
