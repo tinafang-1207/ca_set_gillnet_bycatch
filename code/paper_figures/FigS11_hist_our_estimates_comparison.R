@@ -24,8 +24,8 @@ data_hist_orig <- readRDS(file=file.path(datadir2, "ca_set_gillnet_bycatch_estim
 ################################################################################
 
 # Study species
-spp_do <- c("Common murre", "California sea lion", "Harbor seal",
-            "Brandt's cormorant", "Northern elephant seal", "Harbor porpoise")
+spp_do <- c("California sea lion", "Harbor seal", "Common murre", 
+           "Brandt's cormorant", "Northern elephant seal", "Harbor porpoise")
 
 
 # Calculate recent averages
@@ -47,7 +47,7 @@ stats <- data_orig %>%
 
 # Order results
 data <- data_orig %>% 
-  mutate(comm_name=factor(comm_name, levels=levels(stats$comm_name))) %>% 
+  mutate(comm_name=factor(comm_name, levels=spp_do)) %>% 
   mutate(strata=factor(strata, levels=c("Southern California", "Channel Islands", 
                                         "Ventura", "Morro Bay", "Monterey Bay")))
 
@@ -66,7 +66,7 @@ data_hist <- data_hist_orig %>%
   # Rename
   rename(nbycatch=mort) %>% 
   # Factor species
-  mutate(comm_name=factor(comm_name, levels=levels(stats$comm_name))) 
+  mutate(comm_name=factor(comm_name, levels=spp_do )) 
 
 
 # Plot data

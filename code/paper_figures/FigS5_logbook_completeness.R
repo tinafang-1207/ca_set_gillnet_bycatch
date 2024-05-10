@@ -99,26 +99,26 @@ g1 <- ggplot(comp_df, aes(y=reorder(variable, desc(perc)), x=perc)) +
 g1
 
 # Plot 
-g2 <- ggplot(sets, aes(x=soak_hr_num/24, y=after_stat(count)/1000)) +
-  geom_histogram(binwidth = 0.25) +
+g2 <- ggplot(sets, aes(x=depth_fa_num, y=after_stat(count)/1000)) +
+  geom_histogram(breaks=seq(0,2000,10)) +
   # Labels
-  labs(x="Soak time (days)", y="Thousands of pseudo-sets", tag="B") +
-  scale_x_continuous(breaks=seq(0, 11, 1), lim=c(0, 11),
-                     labels=c(breaks=seq(0, 10, 1), "≥11")) +
-  # Plot maximum
-  geom_vline(xintercept=10, linetype="dotted", color="grey30") +
+  labs(x="Depth (fathoms)", y="Thousands of pseudo-sets", tag="B") +
+  scale_x_continuous(lim=c(0,300),
+                     breaks=seq(0,300,100),
+                     labels=c(seq(0,200, 100), "≥300")) +
   # Theme
   theme_bw() + hist_theme
 g2
 
 # Plot 
-g3 <- ggplot(sets, aes(x=depth_fa_num, y=after_stat(count)/1000)) +
-  geom_histogram(breaks=seq(0,2000,10)) +
+g3 <- ggplot(sets, aes(x=soak_hr_num/24, y=after_stat(count)/1000)) +
+  geom_histogram(binwidth = 0.25) +
   # Labels
-  labs(x="Depth (fathoms)", y="Thousands of pseudo-sets", tag="C") +
-  scale_x_continuous(lim=c(0,300),
-                     breaks=seq(0,300,100),
-                     labels=c(seq(0,200, 100), "≥300")) +
+  labs(x="Soak time (days)", y="Thousands of pseudo-sets", tag="C") +
+  scale_x_continuous(breaks=seq(0, 11, 1), lim=c(0, 11),
+                     labels=c(breaks=seq(0, 10, 1), "≥11")) +
+  # Plot maximum
+  geom_vline(xintercept=10, linetype="dotted", color="grey30") +
   # Theme
   theme_bw() + hist_theme
 g3

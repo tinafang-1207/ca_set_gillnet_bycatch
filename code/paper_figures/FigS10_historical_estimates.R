@@ -21,30 +21,14 @@ data_orig <- readRDS(file=file.path(datadir, "ca_set_gillnet_bycatch_estimates_h
 # Build data
 ################################################################################
 
-# Stats
-stats <- data_orig %>% 
-  group_by(species) %>% 
-  summarize(mort_tot=sum(mort, na.rm=T),
-            ymax1=max(mort_hi, na.rm=T),
-            ymax2=max(mort, na.rm=T)) %>% 
-  ungroup() %>% 
-  rowwise() %>% 
-  mutate(ymax=pmax(ymax1, ymax2, na.rm=T)) %>% 
-  ungroup() %>% 
-  arrange(desc(mort_tot)) %>% 
-  mutate(species=factor(species, species))
+# Species
+spp <- c("California sea lion", "Harbor seal", "Common murre", 
+         "Brandt's cormorant", "Northern elephant seal", "Harbor porpoise")
 
 # Order data
 data_ordered <- data_orig %>% 
-  mutate(species=factor(species, levels=stats$species))
-
-# Reduce data
-data_select <- data_ordered %>% 
-  filter(species %in% c("Common murre", "California sea lion", "Harbor seal",
-                        "Brandt's cormorant", "Northern elephant seal", "Harbor porpoise"))
-stats_select <- stats %>% 
-  filter(species %in% c("Common murre", "California sea lion", "Harbor seal",
-                        "Brandt's cormorant", "Northern elephant seal", "Harbor porpoise"))
+  filter(species %in% spp) %>% 
+  mutate(species=factor(species, levels=spp))
 
 
 # Plot data
@@ -63,7 +47,7 @@ my_theme2 <-  theme(axis.text=element_text(size=7),
                      legend.background = element_rect(fill=alpha('blue', 0)))
 
 # Plot data
-g <- ggplot(data_select, aes(x=year, y=mort)) +
+g <- ggplot(data_ordered , aes(x=year, y=mort)) +
   # Facet
   lemon::facet_rep_wrap(~species, scales="free_y", ncol=3, repeat.tick.labels = 'bottom') +
   # Data

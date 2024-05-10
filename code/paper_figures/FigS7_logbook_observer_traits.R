@@ -71,12 +71,12 @@ data <- bind_rows(obs, logs) %>%
 ################################################################################
 
 # Theme
-my_theme <-  theme(axis.text=element_text(size=6),
-                   axis.title=element_text(size=7),
-                   legend.text=element_text(size=6),
-                   legend.title=element_text(size=7),
-                   strip.text = element_text(size=5),
-                   plot.tag = element_text(size=8),
+my_theme <-  theme(axis.text=element_text(size=7),
+                   axis.title=element_text(size=8),
+                   legend.text=element_text(size=7),
+                   legend.title=element_text(size=8),
+                   strip.text = element_text(size=8),
+                   plot.tag = element_text(size=9),
                    # Gridlines
                    panel.grid.major = element_blank(), 
                    panel.grid.minor = element_blank(),

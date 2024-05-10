@@ -54,7 +54,7 @@ g <- ggplot(data, aes(x=year, y=rate_imp, color=strata)) +
   # Labels
   labs(x="Year", y="Bycatch per trip") +
   # Legend
-  scale_color_manual(name="Strata", drop=F,
+  scale_color_manual(name="Strata", drop=F, 
                      values=RColorBrewer::brewer.pal(nlevels(data$strata), "Set1")) +
   scale_shape_manual(name="Data type", values=c(1, 16)) +
   # Theme

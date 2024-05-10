@@ -82,7 +82,7 @@ base_theme <- theme(axis.text=element_text(size=7),
                     panel.background = element_blank(),
                     axis.line = element_line(colour = "black"),
                     # Legend
-                    legend.key = element_rect(fill = NA),
+                    legend.key = element_rect(fill = NA, color=NA),
                     legend.background = element_rect(fill=alpha('blue', 0)))
 
 # Sea lion

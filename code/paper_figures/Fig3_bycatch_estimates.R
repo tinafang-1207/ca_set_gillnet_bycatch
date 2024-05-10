@@ -48,6 +48,10 @@ data <- data_orig %>%
   mutate(strata=factor(strata, levels=c("Southern California", "Channel Islands", 
                                         "Ventura", "Morro Bay", "Monterey Bay")))
 
+# Order RF predictions
+rf <- rf_orig %>% 
+  mutate(comm_name=factor(comm_name, levels=levels(stats$comm_name)))
+
 
 # Plot data
 ################################################################################
@@ -74,9 +78,9 @@ g <- ggplot(data, aes(x=year, y=nbycatch, fill=strata)) +
   # Our estimates
   geom_bar(stat="identity", color="grey30", linewidth=0.1) +
   # RF estimates
-  geom_line(data=rf_orig, mapping=aes(x=year, y= total_bycatch), inherit.aes = F) +
+  geom_line(data=rf, mapping=aes(x=year, y= total_bycatch), inherit.aes = F) +
   # Reference lines
-  geom_vline(xintercept=c(1987, 1994, 2002), linetype="dashed", color="grey80", linewidth=0.3) +
+  geom_vline(xintercept=c(1987, 1994, 2002), linetype="dashed", color="grey50", linewidth=0.3) +
   # Plot label
   geom_text(data=stats, mapping=aes(y=ymax*0.97, label=label),
             x=2021, hjust=1, size=2.2, color="grey30", inherit.aes = F) +
