@@ -94,7 +94,8 @@ g1a <- ggplot(obs_sets_trip,  aes(x=year, y=nsets1, group=year, fill=ntrips)) +
   # Legend
   scale_fill_gradientn(name="# of observed trips", 
                        colors=RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
-  guides(fill = guide_colorbar(ticks.colour = "black", frame.colour = "black", title.position="top")) +
+  guides(fill = guide_colorbar(ticks.colour = "black", frame.colour = "black",
+                               frame.linewidth=0.2, title.position="top")) +
 
   # Theme
   theme_bw() + my_theme +

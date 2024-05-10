@@ -180,7 +180,7 @@ base_theme <- theme(axis.text=element_text(size=7),
                     panel.background = element_blank(),
                     axis.line = element_line(colour = "black"),
                     # Legend
-                    legend.key = element_rect(fill = NA),
+                    legend.key = element_rect(fill = NA, color=NA),
                     legend.background = element_rect(fill=alpha('blue', 0)))
 
 # Strata lines
@@ -221,7 +221,7 @@ g1 <- ggplot(data=stats_blocks_sf, mapping=aes(fill=prop)) +
                        colors=RColorBrewer::brewer.pal(9, "Spectral") %>% rev(),
                        trans="log10",
                        labels = scales::percent) +
-  guides(fill = guide_colorbar(ticks.colour = "black", frame.colour = "black")) +
+  guides(fill = guide_colorbar(ticks.colour = "black", frame.colour = "black", frame.linewidth = 0.2)) +
   # Theme
   theme_bw() + base_theme +
   theme(axis.text=element_text(size=6),

@@ -10,7 +10,7 @@ library(tidyverse)
 # read in data
 ################################################################################
 # prediction data
-data <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/spatial_risk_predict_final.Rds") # Yutian
+# data <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/spatial_risk_predict_final.Rds") # Yutian
 data <- readRDS("/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/spatial_risk_predict_final.Rds") # Chris
 
 # geographical data
@@ -19,7 +19,7 @@ mexico <- rnaturalearth::ne_countries(country="Mexico", returnclass = "sf")
 
 # Read observer data
 
-obs_orig <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/obs_merge/1983_2017_gillnet_observer_data_with_sst_3.5in_set.Rds")
+# obs_orig <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/obs_merge/1983_2017_gillnet_observer_data_with_sst_3.5in_set.Rds")
 obs_orig <- readRDS("/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_merge/1983_2017_gillnet_observer_data_with_sst_3.5in_set.Rds") # Chris
 
 
@@ -104,7 +104,7 @@ g <- ggplot() +
   scale_x_continuous(breaks=seq(-122, -118, 1)) +
   scale_y_continuous(breaks=seq(32, 35, 1)) +
   facet_wrap(.~species) +
-  guides(fill = guide_colorbar(ticks.colour = "black", frame.colour = "black")) +
+  guides(fill = guide_colorbar(ticks.colour = "black", frame.colour = "black", frame.linewidth = 0.2)) +
   theme_bw() + base_theme + theme(axis.title.x = element_blank(),
                                   axis.title.y = element_blank())
 
@@ -122,7 +122,7 @@ g1 <- ggplot() +
   scale_x_continuous(breaks=seq(-122, -118, 1)) +
   scale_y_continuous(breaks=seq(32, 35, 1)) +
   facet_wrap(.~species) +
-  guides(fill = guide_colorbar(ticks.colour = "black", frame.colour = "black")) +
+  guides(fill = guide_colorbar(ticks.colour = "black", frame.colour = "black", frame.linewidth = 0.2)) +
   theme_bw() + base_theme + theme(legend.position= c(0.5, 0.1),
                                   legend.key.size=unit(0.25, "cm"),
                                   legend.direction = "horizontal",
@@ -140,7 +140,7 @@ g2 <- ggplot() +
   scale_x_continuous(breaks=seq(-122, -118, 1)) +
   scale_y_continuous(breaks=seq(32, 35, 1)) +
   facet_wrap(.~species) +
-  guides(fill = guide_colourbar(ticks.colour = "black", frame.colour = "black")) +
+  guides(fill = guide_colorbar(ticks.colour = "black", frame.colour = "black", frame.linewidth = 0.2)) +
   theme_bw() + base_theme + theme(legend.position= c(0.5, 0.1),
                                   legend.key.size=unit(0.25, "cm"),
                                   legend.direction = "horizontal",
@@ -159,7 +159,7 @@ g3 <- ggplot() +
   scale_x_continuous(breaks=seq(-122, -118, 1)) +
   scale_y_continuous(breaks=seq(32, 35, 1)) +
   facet_wrap(.~species) +
-  guides(fill = guide_colorbar(ticks.colour = "black", frame.colour = "black")) +
+  guides(fill = guide_colorbar(ticks.colour = "black", frame.colour = "black", frame.linewidth = 0.2)) +
   theme_bw() + base_theme + theme(legend.position= c(0.5, 0.1),
                                   legend.key.size=unit(0.25, "cm"),
                                   legend.direction = "horizontal",
@@ -177,7 +177,7 @@ g4 <- ggplot() +
   scale_x_continuous(breaks=seq(-122, -118, 1)) +
   scale_y_continuous(breaks=seq(32, 35, 1)) +
   facet_wrap(.~species) +
-  guides(fill = guide_colorbar(ticks.colour = "black", frame.colour = "black")) +
+  guides(fill = guide_colorbar(ticks.colour = "black", frame.colour = "black", frame.linewidth = 0.2)) +
   theme_bw() + base_theme + theme(legend.position= c(0.5, 0.1),
                                   legend.key.size=unit(0.25, "cm"),
                                   legend.direction = "horizontal",

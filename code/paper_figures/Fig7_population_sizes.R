@@ -80,7 +80,7 @@ my_theme <-  theme(axis.text=element_text(size=6),
                    axis.line = element_line(colour = "black"),
                    # Legend
                    legend.key.size = unit(0.2, "cm"),
-                   legend.margin = margin(-7, 0, -7, 0),
+                   legend.margin = margin(-5, 0, -5, 0),
                    legend.background = element_rect(fill=alpha('blue', 0)))
 
 # Sea lion

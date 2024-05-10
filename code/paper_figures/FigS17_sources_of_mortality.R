@@ -14,31 +14,16 @@ outdir <- "data/injury_mortality/processed"
 plotdir <- "figures"
 
 # Read data
-data_orig <- readxl::read_excel(file.path(datadir, "Carretta_etal_2022_Tables.xlsx"))
-key <- readxl::read_excel(file.path(datadir, "Carretta_etal_2022_Tables.xlsx"), sheet=2)
+data_orig <- readRDS(file=file.path(outdir, "injury_mortality_data.Rds"))
+
 
 
 # Format data
-################################################################################
-
-# Format data
-data <- data_orig %>% 
-  rename(source_orig=source) %>% 
-  left_join(key, by=c("source_orig")) %>% 
-  select(species, type, source, cases, msi)
-
-# Export
-saveRDS(data, file=file.path(outdir, "injury_mortality_data.Rds"))
-
-
-
-
-# Subset and plot
 ################################################################################
 
 # Reduce to species of interest
-sort(unique(data$species))
-data_use <- data %>% 
+sort(unique(data_orig$species))
+data_use <- data_orig %>% 
   filter(species %in% c("California sea lion", "Northern elephant seal", "Harbor seal", "Harbor porpoise")) %>% 
   filter(msi>0)
 
@@ -48,6 +33,7 @@ data1 <- data_use %>%
                         "Harbor porpoise"="Harbor\nporpoise"))
 data2 <- data_use %>% 
   filter(!species %in% c("California sea lion", "Harbor porpoise"))
+
 
 # Plot data
 ################################################################################
@@ -106,6 +92,6 @@ g <- gridExtra::grid.arrange(g1, g2, nrow=1)
 g
 
 # Export
-ggsave(g, filename=file.path(plotdir, "FigSX_sources_of_mortality.png"), 
+ggsave(g, filename=file.path(plotdir, "FigS17_sources_of_mortality.png"), 
        width=6.5, height=4.5, units="in", dpi=600)
 
