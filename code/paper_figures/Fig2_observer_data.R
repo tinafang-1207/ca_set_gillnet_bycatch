@@ -198,7 +198,7 @@ g3 <- ggplot(stats_strata, aes(x=as.character(year), y=quarter, fill=ntrips)) +
   labs(x="", y="Quarter", tag="C") +
   # Legend
   scale_fill_gradientn(name="# of trips\nobserved", colors=RColorBrewer::brewer.pal(9, "Spectral") %>% rev()) +
-  guides(fill = guide_colorbar(ticks.colour = "black", frame.colour = "black")) +
+  guides(fill = guide_colorbar(ticks.colour = "black", frame.colour = "black", frame.linewidth = 0.2)) +
   # Theme
   theme_bw() + my_theme +
   theme(axis.title.x=element_blank(),
