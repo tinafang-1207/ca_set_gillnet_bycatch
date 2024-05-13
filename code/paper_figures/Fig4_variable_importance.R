@@ -26,12 +26,12 @@ data <- data %>%
                                   "mesh_size_in"="Mesh size",
                                   "shore_km"="Shore distance",
                                   "depth_fa"="Depth",    
-                                  "soak_hr"="Soak hour",
+                                  "soak_hr"="Soak time",
                                   "island_yn_X1" = "Island area?")) %>%
-  mutate(category = case_when(variable %in% c("Mesh size", "Soak hour")~"Fishing",
-                              variable %in% c("Latitude", "Longitude","Depth", "Shore distance", "Island area?")~"Space",
-                              variable %in% c("Julian day")~"Time",
-                              variable%in% c("Temperature")~"Environment"))
+  mutate(category = case_when(variable %in% c("Mesh size", "Soak time")~"Fishing-related",
+                              variable %in% c("Latitude", "Longitude","Depth", "Shore distance", "Island area?")~"Spatial",
+                              variable %in% c("Julian day")~"Temporal",
+                              variable%in% c("Temperature")~"Environmental"))
 
 # Plot data
 ################################################################################
@@ -51,7 +51,7 @@ base_theme <-  theme(axis.text=element_text(size=7),
                      legend.background = element_rect(fill=alpha('blue', 0)))
 
 # set species color
-category_color <- c("Space" = "#B83945", "Environment" = "#4F845C", "Time" = "#E3E457", "Fishing" = "#377483")
+category_color <- c("Spatial" = "#B83945", "Environmental" = "#4F845C", "Temporal" = "#E3E457", "Fishing-related" = "#377483")
 
 # Plot
 g <- ggplot(data, aes(x=importance, 

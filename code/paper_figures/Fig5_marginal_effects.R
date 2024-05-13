@@ -25,7 +25,6 @@ data_cat <- read.csv("model_result/categorical_marginal_effects.csv")
 data_cat <- data_cat %>%
   mutate(species = species %>% fct_reorder(prob))
 
-
 # Plot data
 ################################################################################
 
