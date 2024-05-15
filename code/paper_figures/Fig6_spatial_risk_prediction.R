@@ -77,6 +77,7 @@ g2 <- ggplot() +
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   # plot landmark
+  geom_point(data = landmark_hs, mappin  = aes(x = long_dd, y = lat_dd)) +
   geom_text(data = landmark_hs, mapping = aes(x = long_dd, y = lat_dd, label = location)) +
   scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.1, 0.3)) +
   coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
