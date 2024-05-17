@@ -18,7 +18,7 @@ usa <- rnaturalearth::ne_states(country = "United States of America", returnclas
 mexico <- rnaturalearth::ne_countries(country="Mexico", returnclass = "sf")
 
 # landmark
-landmark <- read_csv("data/gis_data/figure6_landmark.csv")
+landmark <- read_csv("data/gis_data/landmark_key.csv")
 
 # Plot data
 ################################################################################
@@ -47,8 +47,14 @@ base_theme <- theme(axis.text=element_text(size=7),
 
 g1 <- ggplot() +
   geom_tile(data = data %>% filter(species == "California sea lion"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
+  # plot land
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  # plot landmark
+  geom_point(data = landmark %>% filter(species == "California sea lion"), mapping  = aes(x = long_dd, y = lat_dd), size = 0.2) +
+  geom_text(data = landmark %>% filter(species == "California sea lion"), mapping = aes(x = long_dd, y = lat_dd, label = landmark, hjust = hjust, vjust = vjust), size = 1.5, color = "black") +
+  # plot us-mexico border
+  geom_hline(yintercept = 32.5344, linewidth=0.2, linetype = "dotted") +
   scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.2, 0.4)) +
   coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
   scale_x_continuous(breaks=seq(-122, -118, 1)) +
@@ -63,13 +69,7 @@ g1 <- ggplot() +
 
 g1
 
-landmark_hs <- landmark %>% filter(location%in%c("Santa Barbara",
-                                                "Pismo beach", 
-                                                "Santa Cruz Island", 
-                                                "Santa Catalina Island", 
-                                                "San Clemente Island", 
-                                                "Point Dume", 
-                                                "US-Mexico border"))
+
 
 g2 <- ggplot() +
   geom_tile(data = data %>% filter(species == "Harbor seal"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
@@ -77,8 +77,10 @@ g2 <- ggplot() +
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   # plot landmark
-  geom_point(data = landmark_hs, mappin  = aes(x = long_dd, y = lat_dd)) +
-  geom_text(data = landmark_hs, mapping = aes(x = long_dd, y = lat_dd, label = location)) +
+  geom_point(data = landmark %>% filter(species == "Harbor seal"), mapping  = aes(x = long_dd, y = lat_dd), size = 0.2) +
+  geom_text(data = landmark %>% filter(species == "Harbor seal"), mapping = aes(x = long_dd, y = lat_dd, label = landmark, hjust = hjust, vjust = vjust), size = 1.5) +
+  # plot us-mexico border
+  geom_hline(yintercept = 32.5344, linewidth=0.2, linetype = "dotted") +
   scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.1, 0.3)) +
   coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
   scale_x_continuous(breaks=seq(-122, -118, 1)) +
@@ -96,8 +98,14 @@ g2
 
 g3 <- ggplot() +
   geom_tile(data = data %>% filter(species == "Soupfin shark"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
+  # plot land
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  # plot landmark
+  geom_point(data = landmark %>% filter(species == "Soupfin shark"), mapping  = aes(x = long_dd, y = lat_dd), size = 0.2) +
+  geom_text(data = landmark %>% filter(species == "Soupfin shark"), mapping = aes(x = long_dd, y = lat_dd, label = landmark, hjust = hjust, vjust = vjust), size = 1.5) +
+  # plot us-mexico border
+  geom_hline(yintercept = 32.5344, linewidth=0.2, linetype = "dotted") +
   scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.2, 0.4)) +
   coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
   scale_x_continuous(breaks=seq(-122, -118, 1)) +
@@ -114,8 +122,14 @@ g3
 
 g4 <- ggplot() +
   geom_tile(data = data %>% filter(species == "Common murre"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
+  # plot land
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
+  # plot landmark
+  geom_point(data = landmark %>% filter(species == "Common murre"), mapping  = aes(x = long_dd, y = lat_dd), size = 0.2) +
+  geom_text(data = landmark %>% filter(species == "Common murre"), mapping = aes(x = long_dd, y = lat_dd, label = landmark, hjust = hjust, vjust = vjust), size = 1.5) +
+  # plot us-mexico border
+  geom_hline(yintercept = 32.5344, linewidth=0.2, linetype = "dotted") +
   scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.1, 0.2)) +
   coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
   scale_x_continuous(breaks=seq(-122, -118, 1)) +
@@ -147,7 +161,7 @@ ggsave(g, filename=file.path(plotdir, "Fig6_spatial_prediction_one_legend.png"),
 
 # multiple legend plot
 ggsave(g_total, filename=file.path(plotdir, "Fig6_spatial_prediction_multi_legend.png"), 
-       width=4, height=4.5, units="in", dpi=600)
+       width=5.5, height=4.5, units="in", dpi=600)
 
 
 
