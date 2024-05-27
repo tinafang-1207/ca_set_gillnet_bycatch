@@ -51,8 +51,8 @@ g1 <- ggplot() +
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   # plot landmark
-  geom_point(data = landmark %>% filter(species == "California sea lion"), mapping  = aes(x = long_dd, y = lat_dd), size = 0.2) +
-  geom_text(data = landmark %>% filter(species == "California sea lion"), mapping = aes(x = long_dd, y = lat_dd, label = landmark, hjust = hjust, vjust = vjust), size = 1.5, color = "black") +
+  geom_point(data = landmark %>% filter(species == "California sea lion"), mapping  = aes(x = long_dd, y = lat_dd), size = 1, pch = 1) +
+  geom_text(data = landmark %>% filter(species == "California sea lion"), mapping = aes(x = long_dd, y = lat_dd, label = landmark, hjust = hjust, vjust = vjust), size = 2, color = "black") +
   # plot us-mexico border
   geom_hline(yintercept = 32.5344, linewidth=0.2, linetype = "dotted") +
   scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.2, 0.4)) +
@@ -77,8 +77,8 @@ g2 <- ggplot() +
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   # plot landmark
-  geom_point(data = landmark %>% filter(species == "Harbor seal"), mapping  = aes(x = long_dd, y = lat_dd), size = 0.2) +
-  geom_text(data = landmark %>% filter(species == "Harbor seal"), mapping = aes(x = long_dd, y = lat_dd, label = landmark, hjust = hjust, vjust = vjust), size = 1.5) +
+  geom_point(data = landmark %>% filter(species == "Harbor seal"), mapping  = aes(x = long_dd, y = lat_dd), size = 1, pch = 1) +
+  geom_text(data = landmark %>% filter(species == "Harbor seal"), mapping = aes(x = long_dd, y = lat_dd, label = landmark, hjust = hjust, vjust = vjust), size = 2) +
   # plot us-mexico border
   geom_hline(yintercept = 32.5344, linewidth=0.2, linetype = "dotted") +
   scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.1, 0.3)) +
@@ -102,8 +102,8 @@ g3 <- ggplot() +
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   # plot landmark
-  geom_point(data = landmark %>% filter(species == "Soupfin shark"), mapping  = aes(x = long_dd, y = lat_dd), size = 0.2) +
-  geom_text(data = landmark %>% filter(species == "Soupfin shark"), mapping = aes(x = long_dd, y = lat_dd, label = landmark, hjust = hjust, vjust = vjust), size = 1.5) +
+  geom_point(data = landmark %>% filter(species == "Soupfin shark"), mapping  = aes(x = long_dd, y = lat_dd), size = 1, pch = 1) +
+  geom_text(data = landmark %>% filter(species == "Soupfin shark"), mapping = aes(x = long_dd, y = lat_dd, label = landmark, hjust = hjust, vjust = vjust), size = 2) +
   # plot us-mexico border
   geom_hline(yintercept = 32.5344, linewidth=0.2, linetype = "dotted") +
   scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.2, 0.4)) +
@@ -126,8 +126,8 @@ g4 <- ggplot() +
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   # plot landmark
-  geom_point(data = landmark %>% filter(species == "Common murre"), mapping  = aes(x = long_dd, y = lat_dd), size = 0.2) +
-  geom_text(data = landmark %>% filter(species == "Common murre"), mapping = aes(x = long_dd, y = lat_dd, label = landmark, hjust = hjust, vjust = vjust), size = 1.5) +
+  geom_point(data = landmark %>% filter(species == "Common murre"), mapping  = aes(x = long_dd, y = lat_dd), size = 1, pch = 1) +
+  geom_text(data = landmark %>% filter(species == "Common murre"), mapping = aes(x = long_dd, y = lat_dd, label = landmark, hjust = hjust, vjust = vjust), size = 2) +
   # plot us-mexico border
   geom_hline(yintercept = 32.5344, linewidth=0.2, linetype = "dotted") +
   scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.1, 0.2)) +
@@ -154,10 +154,6 @@ g_total
 ################################################################################
 
 plotdir <- "figures"
-
-# one legend plot
-ggsave(g, filename=file.path(plotdir, "Fig6_spatial_prediction_one_legend.png"), 
-       width=5.5, height=4.5, units="in", dpi=600)
 
 # multiple legend plot
 ggsave(g_total, filename=file.path(plotdir, "Fig6_spatial_prediction_multi_legend.png"), 
