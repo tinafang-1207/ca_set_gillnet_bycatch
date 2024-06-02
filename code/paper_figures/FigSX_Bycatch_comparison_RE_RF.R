@@ -60,7 +60,7 @@ g <- ggplot(data_all, aes(x = year, y = total_bycatch, fill = strata)) +
   facet_grid(species~method, scale = "free_y") +
   # shading
   geom_rect(data = data_all %>% filter(species == "California sea lion"), aes(xmin = 1980, xmax = 1990, ymin = 0, ymax = Inf), alpha = 0.1, fill = "grey80") +
-  geom_rect(data = data_all %>% filter(species == "Harbor seal"), aes(xmin = 1980, xmax = 1995, ymin = 0, ymax = Inf), alpha = 0.1, fill = "grey80") +
+  geom_rect(data = data_all %>% filter(species == "Harbor seal"), aes(xmin = 1980, xmax = 2000, ymin = 0, ymax = Inf), alpha = 0.1, fill = "grey80") +
   geom_rect(data = data_all %>% filter(species == "Common murre"), aes(xmin = 1980, xmax = 1992, ymin = 0, ymax = Inf), alpha = 0.1, fill = "grey80") +
   # estimates
   geom_bar(stat="identity", color="grey30", linewidth=0.1) +
