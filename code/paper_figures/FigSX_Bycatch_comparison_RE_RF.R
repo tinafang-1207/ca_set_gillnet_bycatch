@@ -13,6 +13,10 @@ rf_orig <- read.csv("model_result/temporal_prediction_strata.csv")
 
 re_orig <- readRDS("model_result/1981_2021_bycatch_estimate_ratio_stratified.Rds")
 
+# set plot directory
+################################################################################
+plotdir <- "figures"
+
 # modify data 
 ################################################################################
 
@@ -54,7 +58,11 @@ base_theme <-  theme(axis.text=element_text(size=7),
 g <- ggplot(data_all, aes(x = year, y = total_bycatch, fill = strata)) +
   # Facet
   facet_grid(species~method, scale = "free_y") +
-  # Our estimates
+  # shading
+  geom_rect(data = data_all %>% filter(species == "California sea lion"), aes(xmin = 1980, xmax = 1990, ymin = 0, ymax = Inf), alpha = 0.1, fill = "grey80") +
+  geom_rect(data = data_all %>% filter(species == "Harbor seal"), aes(xmin = 1980, xmax = 1995, ymin = 0, ymax = Inf), alpha = 0.1, fill = "grey80") +
+  geom_rect(data = data_all %>% filter(species == "Common murre"), aes(xmin = 1980, xmax = 1992, ymin = 0, ymax = Inf), alpha = 0.1, fill = "grey80") +
+  # estimates
   geom_bar(stat="identity", color="grey30", linewidth=0.1) +
   # Labels
   labs(x="", y="Estimated bycatch") +
@@ -66,6 +74,8 @@ g <- ggplot(data_all, aes(x = year, y = total_bycatch, fill = strata)) +
 
 g
 
+ggsave(g, filename=file.path(plotdir, "FigSX_RE_RF_strata_comparison.png"), 
+       width=5.5, height=4, units="in", dpi=600)
 
 
 
