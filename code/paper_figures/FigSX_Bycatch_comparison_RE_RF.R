@@ -34,9 +34,13 @@ re_data <- re_orig %>%
   select(comm_name, strata, year, nbycatch) %>%
   rename(species = comm_name,
          total_bycatch = nbycatch) %>%
+  mutate(strata=factor(strata, levels=c("Southern California", "Channel Islands", 
+                                        "Ventura", "Morro Bay", "Monterey Bay"))) %>%
   mutate(method = "Ratio Estimation") 
 
-data_all <- rbind(rf_data, re_data)
+data_all <- rbind(re_data, rf_data) %>%
+  mutate(method = factor(method, levels = c("Ratio Estimation", "Random Forest")))
+
 
 # plot data
 ################################################################################
@@ -74,7 +78,7 @@ g <- ggplot(data_all, aes(x = year, y = total_bycatch, fill = strata)) +
 
 g
 
-ggsave(g, filename=file.path(plotdir, "FigSX_RE_RF_strata_comparison.png"), 
+ggsave(g, filename=file.path(plotdir, "FigS15_re_rf_strata_comparison.png"), 
        width=5.5, height=4, units="in", dpi=600)
 
 
