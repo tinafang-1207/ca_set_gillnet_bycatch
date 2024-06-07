@@ -68,7 +68,7 @@ cm_best_fit <- output_cm_balanced[["final_fit"]][["model_up_final_fit"]]
 
 sl_vi_df <- sl_best_fit %>%
   extract_fit_engine() %>%
-  vi(method = vi_permute()) %>%
+  vi() %>%
   as.data.frame() %>%
   mutate(species = "California sea lion") %>%
   rename(variable = Variable, importance = Importance) %>%
