@@ -53,8 +53,6 @@ g1 <- ggplot() +
   # plot landmark
   geom_point(data = landmark %>% filter(species == "California sea lion"), mapping  = aes(x = long_dd, y = lat_dd), size = 1, pch = 1) +
   geom_text(data = landmark %>% filter(species == "California sea lion"), mapping = aes(x = long_dd, y = lat_dd, label = landmark, hjust = hjust, vjust = vjust), size = 2, color = "black") +
-  # plot us-mexico border
-  geom_hline(yintercept = 32.5344, linewidth=0.2, linetype = "dotted") +
   scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.2, 0.4)) +
   coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
   scale_x_continuous(breaks=seq(-122, -118, 1)) +
@@ -79,8 +77,6 @@ g2 <- ggplot() +
   # plot landmark
   geom_point(data = landmark %>% filter(species == "Harbor seal"), mapping  = aes(x = long_dd, y = lat_dd), size = 1, pch = 1) +
   geom_text(data = landmark %>% filter(species == "Harbor seal"), mapping = aes(x = long_dd, y = lat_dd, label = landmark, hjust = hjust, vjust = vjust), size = 2) +
-  # plot us-mexico border
-  geom_hline(yintercept = 32.5344, linewidth=0.2, linetype = "dotted") +
   scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.1, 0.3)) +
   coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
   scale_x_continuous(breaks=seq(-122, -118, 1)) +
@@ -104,8 +100,6 @@ g3 <- ggplot() +
   # plot landmark
   geom_point(data = landmark %>% filter(species == "Soupfin shark"), mapping  = aes(x = long_dd, y = lat_dd), size = 1, pch = 1) +
   geom_text(data = landmark %>% filter(species == "Soupfin shark"), mapping = aes(x = long_dd, y = lat_dd, label = landmark, hjust = hjust, vjust = vjust), size = 2) +
-  # plot us-mexico border
-  geom_hline(yintercept = 32.5344, linewidth=0.2, linetype = "dotted") +
   scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.2, 0.4)) +
   coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
   scale_x_continuous(breaks=seq(-122, -118, 1)) +
@@ -128,8 +122,6 @@ g4 <- ggplot() +
   # plot landmark
   geom_point(data = landmark %>% filter(species == "Common murre"), mapping  = aes(x = long_dd, y = lat_dd), size = 1, pch = 1) +
   geom_text(data = landmark %>% filter(species == "Common murre"), mapping = aes(x = long_dd, y = lat_dd, label = landmark, hjust = hjust, vjust = vjust), size = 2) +
-  # plot us-mexico border
-  geom_hline(yintercept = 32.5344, linewidth=0.2, linetype = "dotted") +
   scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.1, 0.2)) +
   coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
   scale_x_continuous(breaks=seq(-122, -118, 1)) +
