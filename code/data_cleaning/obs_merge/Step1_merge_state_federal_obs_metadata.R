@@ -23,6 +23,10 @@ cdfw_key_orig <- readRDS(file.path(cdfwdir, "CDFW_1983_1989_gillnet_observer_set
 swfscdir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_federal/processed"
 swfsc_key_orig <- readRDS(file.path(swfscdir, "SWFSC_1990_2017_set_net_observer_trips_merged.Rds"))
 
+# Read Karin daata
+karindir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_state_karin/processed/"
+karin_key_orig <- readRDS(file.path(karindir, "1987_1990_observer_metadata_from_karin.Rds"))
+
 # Read logbook data
 logs <- readRDS("/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/processed/CDFW_1981_2020_gillnet_logbook_data_imputed.Rds")
 
@@ -39,7 +43,7 @@ log_key <- logs %>%
 # Format keys
 ################################################################################
 
-# Format key
+# Format CDFW key
 cdfw_key <- cdfw_key_orig %>% 
   # Add dataset
   mutate(dataset="State") %>% 
@@ -61,7 +65,7 @@ cdfw_key <- cdfw_key_orig %>%
          depth_fa=bottom_depth_fa,
          mesh_size_in=mesh_size1_in)
 
-# Format key
+# Format SWFSC key
 swfsc_key <- swfsc_key_orig %>% 
   # Add dataset
   mutate(dataset="Federal") %>% 
@@ -84,8 +88,7 @@ swfsc_key <- swfsc_key_orig %>%
          long_dd=long_dd_haul,
          depth_fa=depth_fa_haul,
          net_length_fa=net_mesh_panel_length_fathoms,
-         mesh_size_in=net_mesh_size_in)
-
+         mesh_size_in=net_mesh_size_in) 
 
 # Merge keys
 set_key_orig <- bind_rows(cdfw_key, swfsc_key) %>% 

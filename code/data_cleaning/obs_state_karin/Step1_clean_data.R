@@ -16,29 +16,26 @@ outdir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_state_ka
 # Read key
 spp_key <- readRDS("data/keys/CDFW_species_key.Rds")
 port_key <- readRDS("data/keys/CDFW_port_key.Rds")
+block_key <- readRDS("data/strata/block_strata_key.Rds")
+spp_key_mammals <- readxl::read_excel(file.path(indir, "mammal_codes.xlsx"))
 
 # Read 1987-1990 counts
 data1_orig <- readxl::read_excel(file.path(indir, "data1.xlsx")) # 1987-1990 meta-data
 data2_orig <- readxl::read_excel(file.path(indir, "data2.xlsx")) # 1987-1990 counts w/ limited meta-data
 
 # Read 1989-1990 counts with limited meta-data
-data3b_orig <- readxl::read_excel(file.path(indir, "data3b.xlsx")) # 1989 counts w/ limited meta-data
-data3c_orig <- readxl::read_excel(file.path(indir, "data3c.xlsx")) # 1990 counts w/ limited meta-data
+data3b_orig <- readxl::read_excel(file.path(indir, "data3b.xlsx")) # 1989 Monterey mammal/seabird counts
+data3c_orig <- readxl::read_excel(file.path(indir, "data3c.xlsx")) # 1990 Monterey mammal/seabird counts w/ limited meta-data
 
-# Read 1987-1988 meta-data 
+# Read 1987-1988 Monterey meta-data 
 data4_orig <- readxl::read_excel(file.path(indir, "data4.xlsx")) # 1987 meta-data
 data7_orig <- readxl::read_excel(file.path(indir, "data7.xlsx")) # 1988 meta-data
 
-# Read 1987-1988 counts
-data5_orig <- readxl::read_excel(file.path(indir, "data5.xlsx")) # 1987 counts
-data6_orig <- readxl::read_excel(file.path(indir, "data6.xlsx")) # 1987 counts
-data8_orig <- readxl::read_excel(file.path(indir, "data8.xlsx")) # 1988 counts
-data9_orig <- readxl::read_excel(file.path(indir, "data9.xlsx")) # 1988 counts
-
-
-sum(nrow(data3b_orig), nrow(data3c_orig), nrow(data4_orig), nrow(data7_orig))
-
-
+# Read 1987-1988 Monterey mammal/seabird counts
+data5_orig <- readxl::read_excel(file.path(indir, "data5.xlsx")) # 1987 Monterey mammal counts
+data6_orig <- readxl::read_excel(file.path(indir, "data6.xlsx")) # 1987 Monterey seabird counts
+data8_orig <- readxl::read_excel(file.path(indir, "data8.xlsx")) # 1988 Monterey mammal counts
+data9_orig <- readxl::read_excel(file.path(indir, "data9.xlsx")) # 1988 Monterey seabird counts
 
 # Inspect
 str(data1_orig)
@@ -53,23 +50,126 @@ str(data8_orig)
 str(data9_orig)
 
 
-# Format overall meta-data
+# Format 1987-1988 meta-data
 ################################################################################
 
-# Format overall 
-sets0 <- data1_orig %>% 
-  mutate(year=lubridate::year(date)) %>% 
-  select(column, year, date, everything()) %>% 
-  arrange(date)
+# What is target species 199?
 
-table(sets0$year)
+# Merge 1987-1988 data
+sets8788 <- bind_rows(data4_orig, data7_orig) %>% 
+  # Remove useless column
+  select(-page) %>% 
+  # Remove useless row from data7
+  filter(net_length!=18650) %>% 
+  # Add strata
+  left_join(block_key) %>% 
+  # Add port code
+  left_join(port_key %>% select(port_code, port), by="port_code") %>% 
+  relocate(port, .after=port_code) %>%
+  # Add target species 
+  left_join(spp_key %>% select(spp_code_num, comm_name), by=c("target_spp_code"="spp_code_num")) %>% 
+  rename(target_spp=comm_name) %>% 
+  # Set a few 0s to NAs
+  mutate(depth_min=ifelse(depth_min==0, NA, depth_min),
+         depth_max=ifelse(depth_max==0, NA, depth_max),
+         mesh_size_in=ifelse(mesh_size_in==0, NA, mesh_size_in)) %>%
+  # Build set id
+  mutate(set_id=paste(date, vessel_id, set_num,sep="-")) %>% 
+  # Arrange
+  select(set_id, date, vessel_id, set_num, nsets, 
+         strata, port_code, port, block_id, 
+         target_spp_code, target_spp,
+         depth_min, depth_max, 
+         mesh_size_in, net_length, net_length_obs, everything()) %>% 
+  #  Take the very first set data of repeated values
+  group_by(set_id) %>% 
+  slice(1) %>% 
+  ungroup()
+
+# Inspect
+freeR::complete(sets8788)
+
+# Any duplicate set ids
+freeR::which_duplicated(sets8788$set_id) # NO B/C you took first unique value
+
+
+# Merge 1987-1988 counts
+################################################################################
+
+# Merge counts
+counts8788 <- bind_rows(data5_orig, data6_orig, data8_orig, data9_orig) %>% 
+  # Add set number
+  mutate(set_id=paste(date, vessel_id, set_num, sep="-")) %>% 
+  # Add species 
+  left_join(spp_key_mammals, by="spp_code") %>% 
+  rename(species=comm_name) %>% 
+  # Add target species
+  left_join(spp_key %>% select(spp_code_num, comm_name), by=c("target_spp_code"="spp_code_num")) %>% 
+  rename(target_spp=comm_name) %>% 
+  # Arrange
+  select(set_id, date, vessel_id, set_num, nsets, 
+         target_spp_code, target_spp, 
+         spp_code, species, ncaught, comments)
+
+# Inspect
+str(counts8788)
+freeR::complete(counts8788)
+
+# Do all of the sets in the counts data have set ids?
+counts8788sets <- unique(counts8788$set_id)
+counts8788sets[!counts8788sets %in% sets8788$set_id] # IF ZERO THEY ALL HAVE META-DATA
+
+
+# Format 1989-1990 meta-data
+################################################################################
+
+data1_orig <- readxl::read_excel(file.path(indir, "data1.xlsx")) # 1987-1990 meta-data
+data2_orig <- readxl::read_excel(file.path(indir, "data2.xlsx")) # 1987-1990 counts w/ limited meta-data
+
+# Read 1989-1990 counts with limited meta-data
+data3b_orig <- readxl::read_excel(file.path(indir, "data3b.xlsx")) # 1989 Monterey mammal/seabird counts
+data3c_orig <- readxl::read_excel(file.path(indir, "data3c.xlsx")) # 1990 Monterey mammal/seabird counts w/ limited meta-data
+
+# Format 1
+sets8889a <- data1_orig %>% 
+  # Simplify
+  select(-column) %>% 
+  # Reduce to 88-90 sets
+  mutate(year=lubridate::year(date)) %>% 
+  filter(year %in% 1988:1989) %>% 
+  # Arrange
+  select(year, date, set_num, block_id, location, everything())
+
+# Format 2
+sets8889b <- data2_orig %>% 
+  # Simplify
+  select(date:depth_max) %>% 
+  unique() %>% 
+  # Add set id
+  mutate(set_id=paste(date, set_num, sep="-")) %>% 
+  # Add missing block id
+  mutate(block_id=ifelse(location=="Hurricane Pt" & !is.na(location), 532, block_id)) %>%
+  # Add strata
+  left_join(block_key) %>% 
+  # Take the very first set data of repeated values
+  group_by(set_id) %>% 
+  slice(1) %>% 
+  ungroup()
+
+# Inspect
+freeR::complete(sets8889b)
+  
+# Are set ids unique?
+freeR::which_duplicated(sets8889b$set_id)
 
 
 # Merge 1989-1990 counts
 ################################################################################
 
 # Build data
-counts1 <- bind_rows(data3b_orig, data3c_orig) %>% 
+counts8990 <- bind_rows(data3b_orig, data3c_orig) %>% 
+  # Remove useless
+  select(-note) %>% 
   # Add date
   mutate(date=paste(year, month, day, sep="-") %>% lubridate::ymd(.)) %>% 
   select(-c(year, month, day)) %>% 
@@ -82,118 +182,84 @@ counts1 <- bind_rows(data3b_orig, data3c_orig) %>%
                          "Terrace Pt."="Terrace Point")) %>% 
   # Add year
   mutate(year=lubridate::year(date)) %>% 
+  # Add set id
+  mutate(set_id=paste(date, set_num, sep="-")) %>% 
   # Arrange
-  select(note, year, date, location, everything()) %>% 
-  arrange(year, date, location, set_num)
+  select(set_id, year, date, location, everything()) %>% 
+  arrange(year, date, location, set_num) %>% 
+  # Gather
+  gather(key="species", value="ncaught", 7:ncol(.)) %>% 
+  mutate(species=recode(species, 
+                        "cormorant"="Unidentified cormorant",     
+                        "elephant_seal"="Northern elephant seal", 
+                        "guillemot"="Pigeon guillemot",    
+                        "harbor_seal"="Harbor seal",
+                        "murre"="Common murre",
+                        "otter"="Sea otter",      
+                        "porpoise"="Harbor porpoise",
+                        "sea_lion"="California sea lion",    
+                        "seabird"="Unidentified seabird"))
 
 # Inspect
-str(counts1)
-freeR::complete(counts1)
-table(counts1$location)
-table(counts1$year)
+str(counts8990)
+freeR::complete(counts8990)
+table(counts8990$location)
+table(counts8990$year)
 
-# Extract sets
+# Confirm if all sets have metadata
+counts8990sets <- sort(unique(counts8990$set_id))
+counts8990sets[!counts8990sets %in% sets8889b$set_id] 
 
 
-# Merge 1987-1988 count files
+################################################################################
+################################################################################
+# Merge 1987-90 data
+################################################################################
 ################################################################################
 
-# Build data
-counts2 <- bind_rows(data5_orig, data6_orig, data8_orig, data9_orig) %>% 
-  # Add species
-  mutate(species=recode(spp_code, 
-                        "20"="Harbor porpoise",
-                        "25"="Harbor seal",
-                        "26"="Elephant seal",
-                        "27"="California sea lion",
-                        "30"="Sea otter",
-                        "39"="Unidentified marine mammal",
-                        "60"="Common murre", 
-                        "61"="Pigeon guillemot", 
-                        "62"="Pelagic cormorant",
-                        "63"="Brandt's cormorant",
-                        "64"="Pacific loon",
-                        "65"="Common loon",
-                        "70"="Western grebe",
-                        "72"="Unidentified cormorant",
-                        "73"="Unidentified loon",
-                        "79"="Unidentified seabird")) %>% 
-  relocate(species, .after=spp_code) %>% 
-  # Add trip and set ids
-  mutate(trip_id=paste(date, vessel_id, sep="-"),
-         set_id=paste(date, vessel_id, set_num, sep="-")) %>% 
-  # Arrange
-  select(trip_id, set_id, everything()) %>% 
-  arrange(set_id)
-
-# Inspect
-str(counts2)
-freeR::complete(counts2)
-
-
-# Merge 1987-1988 meta-data files
-################################################################################
-
-# Build data
-sets2 <- bind_rows(data4_orig, data7_orig) %>% 
-  # Remove columns
-  select(-page) %>% 
-  # Remove blank rows
-  filter(!is.na(date)) %>% 
-  # Format date
-  mutate(date=lubridate::ymd(date)) %>% 
-  # Add target species
-  left_join(spp_key %>% select(spp_code_num, comm_name), by=c("target_spp_code"="spp_code_num")) %>% 
-  rename(target_spp=comm_name) %>% 
-  relocate(target_spp, .after=target_spp_code) %>%
-  # Add port code
-  left_join(port_key %>% select(port_code, port), by="port_code") %>% 
-  relocate(port, .after=port_code) %>%
-  # Set a few 0s to NAs
-  mutate(depth_min=ifelse(depth_min==0, NA, depth_min),
-         depth_max=ifelse(depth_max==0, NA, depth_max),
-         mesh_size_in=ifelse(mesh_size_in==0, NA, mesh_size_in)) %>%
-  # Calculate percent observed
-  mutate(obs_perc=net_length_obs/net_length) %>%
-  # Add trip id and set id
-  mutate(trip_id=paste(date, vessel_id, sep="-"),
-         set_id=paste(date, vessel_id, set_num, sep="-")) %>% 
+# Merge counts
+counts <- bind_rows(counts8788, counts8990) %>% 
   # Add year
   mutate(year=lubridate::year(date)) %>% 
+  # Reduce to count specific data
+  select(year, date, vessel_id, set_num, species, ncaught, comments) %>% 
   # Arrange
-  arrange(date) %>% 
-  select(year, trip_id, set_id, everything())
+  arrange(date, vessel_id, set_num) %>% 
+  # Eliminate zero catch
+  filter(!is.na(ncaught))
 
 # Inspect
-str(sets2)
-freeR::complete(sets2)
+freeR::complete(counts)
+
+# Merge sets
+sets <- bind_rows(sets8788, sets8889b) %>% 
+  # Remove useless
+  select(-nsets) %>% 
+  # Rename
+  rename(net_length_fa=net_length,
+         net_length_obs_fa=net_length_obs,
+         depth_fa_min=depth_min,
+         depth_fa_max=depth_max) %>% 
+  # Arrange
+  select(set_id, date, vessel_id, set_num, 
+         strata, port_code, port, block_id, location,
+         depth_fa_min, depth_fa_max, 
+         target_spp_code, target_spp, 
+         mesh_size_in, net_length_fa, net_length_obs_fa,
+         everything())
 
 # Inspect
-table(sets2$year)
-range(sets2$date)
-table(sets2$mesh_size_in)
-range(sets2$net_length)
-range(sets2$net_length_obs)
-range(sets2$obs_perc)
-
-# Set id unique
-freeR::which_duplicated(sets2$set_id) # FIX THIS
-
-# Check depths
-sum(sets2$depth_max<sets2$depth_min, na.rm=T) # must be 0
-
-# Check set counts
-# 1987-09-25-33828 may be missing the 3rd set
-check1 <- sets2 %>% 
-  group_by(trip_id) %>% 
-  summarize(nsets=unique(nsets),
-            nsets_max=max(set_num),
-            nsets_present=n()) %>% 
-  mutate(max_check=nsets==nsets_max,
-         present_check=nsets==nsets_present)
+freeR::complete(sets)
 
 
 
+# Export data
+################################################################################
 
+# Export
+saveRDS(counts, file=file.path(outdir, "1987_1990_observer_data_from_karin.Rds"))
+saveRDS(sets, file=file.path(outdir, "1987_1990_observer_metadata_from_karin.Rds"))
+write.csv(counts, file=file.path(outdir, "1987_1990_observer_data_from_karin.csv"), row.names = F)
+write.csv(sets, file=file.path(outdir, "1987_1990_observer_metadata_from_karin.csv"), row.names = F)
 
 
