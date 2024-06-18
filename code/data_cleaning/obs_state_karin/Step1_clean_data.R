@@ -17,7 +17,7 @@ outdir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_state_ka
 spp_key <- readRDS("data/keys/CDFW_species_key.Rds")
 port_key <- readRDS("data/keys/CDFW_port_key.Rds")
 
-# Read
+# Read 1987-1990 counts
 data1_orig <- readxl::read_excel(file.path(indir, "data1.xlsx")) # 1987-1990 meta-data
 data2_orig <- readxl::read_excel(file.path(indir, "data2.xlsx")) # 1987-1990 counts w/ limited meta-data
 
@@ -34,6 +34,9 @@ data5_orig <- readxl::read_excel(file.path(indir, "data5.xlsx")) # 1987 counts
 data6_orig <- readxl::read_excel(file.path(indir, "data6.xlsx")) # 1987 counts
 data8_orig <- readxl::read_excel(file.path(indir, "data8.xlsx")) # 1988 counts
 data9_orig <- readxl::read_excel(file.path(indir, "data9.xlsx")) # 1988 counts
+
+
+sum(nrow(data3b_orig), nrow(data3c_orig), nrow(data4_orig), nrow(data7_orig))
 
 
 

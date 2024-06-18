@@ -78,7 +78,7 @@ g <- ggplot(data_all, aes(x = year, y = total_bycatch, fill = strata)) +
 
 g
 
-ggsave(g, filename=file.path(plotdir, "FigS15_re_rf_strata_comparison.png"), 
+ggsave(g, filename=file.path(plotdir, "FigS16_re_rf_strata_comparison.png"), 
        width=5.5, height=4, units="in", dpi=600)
 
 

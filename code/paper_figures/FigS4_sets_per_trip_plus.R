@@ -48,7 +48,7 @@ logs_sets_trip <- logs_orig %>%
 # Observed sets with bycatch of species of interest
 obs <- obs_orig %>% 
   filter(comm_name %in% c("California sea lion", "Harbor seal", "Common murre", "Northern elephant seal", "Soupfin shark",
-                          "Brandt's cormorant", "Harbor porpoise"))
+                          "Brandt's cormorant", "Harbor porpoise", "Giant sea bass"))
 
 # Max observed
 obs_stats <- obs %>% 
