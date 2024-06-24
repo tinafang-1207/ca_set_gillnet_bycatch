@@ -400,8 +400,8 @@ utm11 <- "+proj=utm +zone=11 +datum=NAD83"
 # Land
 usa <- rnaturalearth::ne_countries(country = "United States of America", returnclass = "sf", scale="large") 
 usa_sp <- usa %>% 
-  sf::st_transform(utm11) %>% 
-  sf::as_Spatial()
+  sf::st_transform(utm11)# %>% 
+# sf::as_Spatial()
 
 # Lat/long key
 latlong_key <- set_key5 %>% 
@@ -411,33 +411,36 @@ latlong_key <- set_key5 %>%
 # Convert to sp
 latlong_key_sp <- latlong_key %>% 
   sf::st_as_sf(coords=c("long_dd", "lat_dd"), crs=wgs84) %>% 
-  sf::st_transform(utm11) %>% 
-  sf::as_Spatial()
+  sf::st_transform(utm11) #%>% 
+#sf::as_Spatial()
+
+# Calculate the distances between points and the polygon
+distances_m <- sf::st_distance(latlong_key_sp, usa_sp)
 
 # Calculate distance to shore
-dist_mat <- rgeos::gDistance(latlong_key_sp, usa_sp, byid = T)
-
+# rgeos is deprecated to I know longer user this code blcok
+#dist_mat <- rgeos::gDistance(latlong_key_sp, usa_sp, byid = T)
 # Format distance matrix
-dist_df <- dist_mat %>%
-  # Convert to data frame
-  as.data.frame() %>%
-  # Add land polygon id
-  mutate(land_id=1:nrow(.)) %>% 
-  select(land_id, everything()) %>% 
-  # Gather
-  gather(key="latlong_id", value="dist_m", 2:ncol(.)) %>% 
-  mutate(latlong_id=as.numeric(latlong_id)) %>% 
-  # Find minimum distance
-  arrange(latlong_id, dist_m) %>% 
-  group_by(latlong_id) %>% 
-  slice(1) %>% 
-  ungroup() %>% 
-  # Remove land id
-  select(-land_id)
+# dist_df <- dist_mat %>%
+#   # Convert to data frame
+#   as.data.frame() %>%
+#   # Add land polygon id
+#   mutate(land_id=1:nrow(.)) %>% 
+#   select(land_id, everything()) %>% 
+#   # Gather
+#   gather(key="latlong_id", value="dist_m", 2:ncol(.)) %>% 
+#   mutate(latlong_id=as.numeric(latlong_id)) %>% 
+#   # Find minimum distance
+#   arrange(latlong_id, dist_m) %>% 
+#   group_by(latlong_id) %>% 
+#   slice(1) %>% 
+#   ungroup() %>% 
+#   # Remove land id
+#   select(-land_id)
 
 # Add distance to latlong key
 latlong_key1 <- latlong_key %>% 
-  mutate(shore_km=dist_df$dist_m/1000)
+  mutate(shore_km=as.numeric(distances_m)/1000)
 
 # Plot check
 ggplot(latlong_key1, aes(x=long_dd, y=lat_dd, color=pmin(shore_km,10))) +
@@ -583,5 +586,5 @@ table(set_key8$depth_type)
 ################################################################################
 
 # Export
-saveRDS(set_key8, file.path(outdir, "1983_2017_gillnet_observer_metadata_all.Rds"))
+saveRDS(set_key8, file.path(outdir, "1983_2017_gillnet_observer_metadata_all_no_karin.Rds"))
 

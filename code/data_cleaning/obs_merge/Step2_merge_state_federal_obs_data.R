@@ -109,5 +109,5 @@ freeR::complete(data2)
 ################################################################################
 
 # Export data
-saveRDS(data2, file=file.path(outdir, "1983_2017_gillnet_observer_data.Rds"))
+saveRDS(data2, file=file.path(outdir, "1983_2017_gillnet_observer_data_no_karin.Rds"))
 

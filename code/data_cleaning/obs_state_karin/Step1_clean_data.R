@@ -222,7 +222,7 @@ counts <- bind_rows(counts8788, counts8990) %>%
   # Add year
   mutate(year=lubridate::year(date)) %>% 
   # Reduce to count specific data
-  select(year, date, vessel_id, set_num, species, ncaught, comments) %>% 
+  select(year, date, vessel_id, set_num, set_id, species, ncaught, comments) %>% 
   # Arrange
   arrange(date, vessel_id, set_num) %>% 
   # Eliminate zero catch
