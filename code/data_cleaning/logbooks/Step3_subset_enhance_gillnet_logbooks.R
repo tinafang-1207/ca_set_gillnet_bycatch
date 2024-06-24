@@ -29,6 +29,22 @@ sst_key <- readRDS("data/gis_data/1981_2022_block_sst_expperience.Rds") %>%
   rename(sst_c=sst_c_imp)
 
 
+# Calculate median block lat/long and distance to shore based on observer data
+################################################################################
+
+# Read obersver meta-dataa
+obs_orig <- readRDS("/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_merge/1983_2017_gillnet_observer_metadata_all.Rds")
+
+# Median lat/long/dist to shore
+stats <- obs_orig %>% 
+  filter(gps_type=="Reported") %>% 
+  group_by(block_id) %>% 
+  summarize(lat_dd_med=median(lat_dd),
+            long_dd_med=median(long_dd),
+            shore_km_med=median(shore_km)) %>% 
+  ungroup()
+
+
 # Build data
 ################################################################################
 
@@ -49,7 +65,13 @@ data <- data_orig %>%
   relocate(yday, .after=date) %>% 
   relocate(shore_km, .after=block_long_dd) %>% 
   relocate(island_yn, .after=shore_km) %>% 
-  relocate(sst_c, .after=island_yn)
+  relocate(sst_c, .after=island_yn) %>% 
+  # Add median lat/long/dist2shore from observer data
+  left_join(stats) %>% 
+  mutate(block_lat_dd=ifelse(!is.na(lat_dd_med), lat_dd_med, block_lat_dd),
+         block_long_dd=ifelse(!is.na(long_dd_med), long_dd_med, block_long_dd),
+         shore_km=ifelse(!is.na(shore_km_med), shore_km_med, shore_km)) %>% 
+  select(-c(lat_dd_med, long_dd_med, shore_km_med))
 
 # Inspect
 freeR::complete(data)

@@ -100,6 +100,7 @@ data <- data_orig %>%
 
 # Inspect
 freeR::complete(data)
+table(data$dataset)
 
 # Export
 saveRDS(data, file=file.path(file=file.path(outdir, "1983_2017_gillnet_observer_data_with_sst.Rds")))
