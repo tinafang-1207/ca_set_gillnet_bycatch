@@ -67,6 +67,28 @@ data <- bind_rows(obs, logs) %>%
                          "shore_km"="Shore distance (km)"))
   
 
+# Compare distributons
+################################################################################
+
+# Variables
+vars <- sort(unique(data$variable))
+x <- vars[1]
+stats <- purrr::map_df(vars, function(x){
+  
+  # Subset data
+  sdata <- data %>% 
+    filter(variable==x)
+
+  # Perform test
+  test <- ks.test(value ~ dataset, sdata)
+  
+  # Record results
+  df <- tibble(variable=x,
+               pvalue=test$p.value)
+  
+})
+
+
 # Plot data
 ################################################################################
 
@@ -102,9 +124,4 @@ g
 # Export
 ggsave(g, filename=file.path(plotdir, "FigS7_logbook_observer_traits.png"), 
        width=6.5, height=4.5, units="in", dpi=600)
-
-
-
-
-
 

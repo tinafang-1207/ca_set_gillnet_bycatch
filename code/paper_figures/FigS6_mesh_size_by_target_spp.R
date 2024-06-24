@@ -30,6 +30,8 @@ obs <- obs_orig %>%
   # Simplify
   select(set_id, target_spp, mesh_size_in) %>% 
   unique() %>% 
+  # Specie sof interest
+  filter(target_spp %in% c("California halibut", "White seabass", "Pacific angel shark")) %>% 
   # Add
   mutate(dataset="Observer data")
   
