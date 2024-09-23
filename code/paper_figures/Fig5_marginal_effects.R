@@ -23,12 +23,8 @@ data_cat <- read.csv("model_result/categorical_marginal_effects.csv")
 # Reorder categorical data
 ################################################################################
 
-data <- data %>%
-  filter(species != "Harbor porpoise")
-
 data_cat <- data_cat %>%
-  mutate(species = species %>% fct_reorder(prob)) %>%
-  filter(species != "Harbor porpoise")
+  mutate(species = species %>% fct_reorder(prob))
 
 # Plot data
 ################################################################################

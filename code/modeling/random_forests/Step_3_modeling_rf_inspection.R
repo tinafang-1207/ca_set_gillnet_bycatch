@@ -414,9 +414,9 @@ vi_df_final <- rbind(sl_vi_df, hs_vi_df, ss_vi_df, cm_vi_df)
 
 # marginal effects (once have more species, we'll add them)
 
-me_df_final <- rbind(pdp_rf_df_sl, pdp_rf_df_hs, pdp_rf_df_hp, pdp_rf_df_cm, pdp_rf_df_ns)
+me_df_final <- rbind(pdp_rf_df_sl, pdp_rf_df_hs, pdp_rf_df_cm, pdp_rf_df_ns)
 
-me_df_cat_final <- rbind(pdp_rf_sl_cat_df, pdp_rf_hs_cat_df, pdp_rf_hp_cat_df, pdp_rf_cm_cat_df, pdp_rf_ns_cat_df) %>%
+me_df_cat_final <- rbind(pdp_rf_sl_cat_df, pdp_rf_hs_cat_df, pdp_rf_cm_cat_df, pdp_rf_ns_cat_df) %>%
   mutate(value = case_when(value == "0"~"No",
                            value == "1"~"Yes"))
 
