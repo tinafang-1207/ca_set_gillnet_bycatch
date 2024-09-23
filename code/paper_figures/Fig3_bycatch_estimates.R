@@ -17,9 +17,8 @@ datadir2 <- "data/historical_estimates/processed"
 data_orig <- readRDS(file=file.path(datadir1, "1981_2021_bycatch_estimate_ratio_stratified.Rds"))
 
 # Read RF predictions
-rf_orig <- read.csv(file=file.path(datadir1, "temporal_prediction.csv"), as.is=T) %>% 
-  rename(comm_name=species) %>% 
-  filter(comm_name!="Soupfin shark")
+rf_orig <- read.csv(file=file.path(datadir1, "temporal_prediction.csv"), as.is=T) %>%
+  rename(comm_name = species)
 
 
 # Build data

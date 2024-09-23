@@ -5,6 +5,7 @@ rm(list = ls())
 
 #### read in library ####
 library(tidyverse)
+library(tidymodels)
 
 ### output directory ###
 plotdir <- "figures"
@@ -19,25 +20,21 @@ output_sl_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/
 output_hs_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf_with_long/harbor_seal_model_balanced_rf.Rds")
 output_hs_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/harbor_seal_model_weighted_rf.Rds")
 
-# soupfin shark
-output_ss_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf_with_long/soupfin_shark_model_balanced_rf.Rds")
-output_ss_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/soupfin_shark_model_weighted_rf.Rds")
+# harbor porpoise
+output_hp_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf_with_long/harbor_porpoise_model_balanced_rf.Rds")
+output_hp_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/harbor_porpoise_model_weighted_rf.Rds")
 
 # common murre
 output_cm_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf_with_long/common_murre_model_balanced_rf.Rds")
 output_cm_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/common_murre_model_weighted_rf.Rds")
 
-###################################################################
-
-# those species are not going to the model prediction
-
-# giant seabass
-output_gs_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/giant_sea_bass_model_balanced_rf.Rds")
-output_gs_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/giant_sea_bass_model_weighted_rf.Rds")
+# norther elephant seal
+output_ns_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf_with_long/northern_elephant_seal_model_balanced_rf.Rds")
+output_ns_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/northern_elephant_seal_model_weighted_rf.Rds")
 
 # brandt's cormorant 
-output_bc_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf/brandt's_cormorant_model_balanced_rf.Rds")
-output_bc_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf/brandt's_cormorant_model_weighted_rf.Rds")
+output_bc_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf_with_long/brandt's_cormorant_model_balanced_rf.Rds")
+output_bc_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/brandt's_cormorant_model_weighted_rf.Rds")
 
 #### Extract output from model result ####
 
@@ -55,19 +52,19 @@ hs_balanced_df <- output_hs_balanced[["rf_all_df"]] %>%
 hs_weighted_df <- output_hs_weighted[["rf_weighted_final"]] %>%
   mutate(species = "Harbor seal")
 
-#soupfin shark
-ss_balanced_df <- output_ss_balanced[["rf_all_df"]] %>%
-  mutate(species = "Soupfin shark", weight = NA)
+#harbor porpoise
+hp_balanced_df <- output_hp_balanced[["rf_all_df"]] %>%
+  mutate(species = "Harbor porpoise", weight = NA)
 
-ss_weighted_df <- output_ss_weighted[["rf_weighted_final"]] %>%
-  mutate(species = "Soupfin shark")
+hp_weighted_df <- output_hp_weighted[["rf_weighted_final"]] %>%
+  mutate(species = "Harbor porpoise")
 
-#giant seabass
-gs_balanced_df <- output_gs_balanced[["rf_all_df"]] %>%
-  mutate(species = "Giant sea bass", weight = NA)
+#northern elephant seal
+ns_balanced_df <- output_ns_balanced[["rf_all_df"]] %>%
+  mutate(species = "Northern elephant seal", weight = NA)
 
-gs_weighted_df <- output_gs_weighted[["rf_weighted_final"]] %>%
-  mutate(species = "Giant sea bass")
+ns_weighted_df <- output_ns_weighted[["rf_weighted_final"]] %>%
+  mutate(species = "Northern elephant seal")
 
 #common murre
 cm_balanced_df <- output_cm_balanced[["rf_all_df"]] %>%
@@ -83,7 +80,85 @@ bc_balanced_df <-  output_bc_balanced[["rf_all_df"]] %>%
 bc_weighted_df <- output_bc_weighted[["rf_weighted_final"]] %>%
   mutate(species = "Brandt's cormorant")
 
-  
+###################################################################
+
+# Get roc_auc and kappa for test datasets
+
+### Extract the model best fit (to training data)
+
+# sealion - weight 25
+sl_best_fit <- output_sl_weighted[["final_fit"]][[1]]
+
+# harbor seal  - weight 75
+hs_best_fit <- output_hs_weighted[["final_fit"]][[3]]
+
+# harbor porpoise - weight 50
+hp_best_fit <- output_hp_weighted[["final_fit"]][[2]]
+
+# common murre - weight 25
+cm_best_fit <- output_cm_weighted[["final_fit"]][[1]]
+
+# northern elephant seal - weight 25
+ns_best_fit <- output_ns_weighted[["final_fit"]][[1]]
+
+# Brandt's cormorant - weight 25
+bc_best_fit <- output_bc_weighted[["final_fit"]][[1]]
+
+### Extract test dataset
+
+sl_test <- output_sl_weighted[["data_test"]]
+
+hs_test <- output_hs_weighted[["data_test"]]
+
+cm_test <- output_cm_weighted[["data_test"]]
+
+ns_test <- output_ns_weighted[["data_test"]]
+
+hp_test <- output_hp_weighted[["data_test"]]
+
+bc_test <- output_bc_weighted[["data_test"]]
+
+
+bycatch_metrics <- metric_set(roc_auc, kap)
+
+augment(sl_best_fit, new_data = sl_test) %>%
+ kap(truth = response, estimate = .pred_class)
+
+augment(hs_best_fit, new_data = hs_test) %>%
+  kap(truth = response, estimate = .pred_class)
+
+augment(ns_best_fit, new_data = ns_test) %>%
+  kap(truth = response, estimate = .pred_class)
+
+augment(hp_best_fit, new_data = hp_test) %>%
+  kap(truth = response, estimate = .pred_class)
+
+augment(cm_best_fit, new_data = cm_test) %>%
+  kap(truth = response, estimate = .pred_class)
+
+augment(bc_best_fit, new_data = bc_test) %>%
+  kap(truth = response, estimate = .pred_class)
+
+# roc_auc
+
+augment(sl_best_fit, new_data = sl_test) %>%
+  roc_auc(response,.pred_1, event_level = "second")
+
+augment(hs_best_fit, new_data = hs_test) %>%
+  roc_auc(response,.pred_1, event_level = "second")
+
+augment(cm_best_fit, new_data = cm_test) %>%
+  roc_auc(response,.pred_1, event_level = "second")
+
+augment(hp_best_fit, new_data = hp_test) %>%
+  roc_auc(response,.pred_1, event_level = "second")
+
+augment(bc_best_fit, new_data = bc_test) %>%
+  roc_auc(response,.pred_1, event_level = "second")
+
+augment(ns_best_fit, new_data = ns_test) %>%
+  roc_auc(response,.pred_1, event_level = "second")
+
 #### Make plots to show the result ####
 
 # make the final table
@@ -94,10 +169,14 @@ model_df_final <- rbind(sl_balanced_df,
                         sl_weighted_df, 
                         hs_balanced_df, 
                         hs_weighted_df, 
-                        ss_balanced_df, 
-                        ss_weighted_df,
+                        hp_balanced_df, 
+                        hp_weighted_df,
                         cm_balanced_df,
-                        cm_weighted_df
+                        cm_weighted_df,
+                        ns_balanced_df,
+                        ns_weighted_df,
+                        bc_balanced_df,
+                        bc_weighted_df
                         ) %>%
   rename(metric = .metric) %>%
   mutate(metric = recode_factor(metric, 
@@ -195,7 +274,7 @@ select_model_kappa <- best_model_kappa %>%
 
 select_model_roc <- model_df_final %>%
   filter(metric == "Area under the ROC curve") %>%
-  filter(model_id == "Area under the ROC curve-Preprocessor1_Model2-Weighted-California sea lion-2-50"|model_id == "Area under the ROC curve-Preprocessor1_Model3-Weighted-Soupfin shark-3-25"|model_id == "Area under the ROC curve-Preprocessor1_Model2-Upsample-Common murre-1-NA"|model_id == "Area under the ROC curve-Preprocessor1_Model2-Weighted-Harbor seal-2-150")
+  filter(model_id == "Area under the ROC curve-Preprocessor1_Model3-Weighted-California sea lion-3-25"|model_id == "Area under the ROC curve-Preprocessor1_Model1-Weighted-Northern elephant seal-1-25"|model_id == "Area under the ROC curve-Preprocessor1_Model6-Weighted-Common murre-6-25"|model_id == "Area under the ROC curve-Preprocessor1_Model2-Weighted-Harbor seal-2-75"|model_id == "Area under the ROC curve-Preprocessor1_Model2-Weighted-Harbor porpoise-2-50"|model_id == "Area under the ROC curve-Preprocessor1_Model8-Weighted-Brandt's cormorant-8-25")
 
 select_model_final <- rbind(select_model_kappa, select_model_roc) %>%
   mutate(metric = factor(metric, levels = c("Cohen's kappa", "Area under the ROC curve")))
@@ -204,7 +283,7 @@ select_model_final <- rbind(select_model_kappa, select_model_roc) %>%
 
 # All best models
 model_best_all <- model_df_final %>%
-  filter(balanced_type%in%c("Upsample", "Downsample", "SMOTE")|(species == "California sea lion" & weight == "50")|(species == "Harbor seal" & weight == "150")|(species == "Soupfin shark"& weight == "25")|(species == "Common murre"& weight == "25")|(species == "Brandt's cormorant"& weight == "50")|(species == "Giant sea bass"& weight == "75")) %>%
+  filter(balanced_type%in%c("Upsample", "Downsample", "SMOTE")|(species == "California sea lion" & weight == "25")|(species == "Harbor seal" & weight == "75")|(species == "Harbor porpoise"& weight == "50")|(species == "Common murre"& weight == "25")|(species == "Brandt's cormorant"& weight == "25")|(species == "Northern elephant seal"& weight == "25")) %>%
   mutate(metric = factor(metric, levels = c("Cohen's kappa", "Area under the ROC curve"))) %>%
   select(-weight)
 
@@ -213,6 +292,7 @@ g_best <- ggplot(data = model_best_all, mapping = aes(x = mtry, y = mean)) +
   geom_point(data = select_model_final, aes(x = mtry, y = mean, color = balanced_type), shape = 20, size = 3) +
   geom_hline(data = ref_df, mapping = aes(yintercept = value), color = "grey70",linetype = "dashed") +
   labs(x = "Number of variables (mtry)", y = "Value",tag = "A" ) +
+  scale_x_continuous(breaks = seq(2,8,2)) +
   facet_grid(metric~species, scales = "free_y") +
   scale_color_discrete(name = "Balance type") +
   theme_bw()+base_theme
@@ -232,7 +312,7 @@ model_best_weight_kappa <- model_df_final %>%
 model_best_weight_roc <- model_df_final %>%
   filter(balanced_type == "Weighted") %>%
   filter(metric == "Area under the ROC curve") %>%
-  filter(model_id == "Area under the ROC curve-Preprocessor1_Model5-Weighted-California sea lion-5-50"|model_id == "Area under the ROC curve-Preprocessor1_Model4-Weighted-Harbor seal-4-75"|model_id == "Area under the ROC curve-Preprocessor1_Model2-Weighted-Soupfin shark-2-25"|model_id == "Area under the ROC curve-Preprocessor1_Model4-Weighted-Brandt's cormorant-4-50"|model_id == "Area under the ROC curve-Preprocessor1_Model8-Weighted-Common murre-8-25"|model_id == "Area under the ROC curve-Preprocessor1_Model1-Weighted-Giant sea bass-1-75")
+  filter(model_id == "Area under the ROC curve-Preprocessor1_Model3-Weighted-California sea lion-3-25"|model_id == "Area under the ROC curve-Preprocessor1_Model1-Weighted-Northern elephant seal-1-25"|model_id == "Area under the ROC curve-Preprocessor1_Model6-Weighted-Common murre-6-25"|model_id == "Area under the ROC curve-Preprocessor1_Model2-Weighted-Harbor seal-2-75"|model_id == "Area under the ROC curve-Preprocessor1_Model2-Weighted-Harbor porpoise-2-50"|model_id == "Area under the ROC curve-Preprocessor1_Model8-Weighted-Brandt's cormorant-8-25")
 
 model_best_weight_final<-rbind(model_best_weight_kappa, model_best_weight_roc)
 
@@ -242,6 +322,7 @@ g_best_weight <- ggplot(data = model_df_final %>% filter(balanced_type == "Weigh
   geom_point(data = model_best_weight_final, aes(x = mtry, y = mean, color = weight), shape = 20, size = 3) +
   geom_hline(data = ref_df, mapping = aes(yintercept = value), color = "grey70",linetype = "dashed") +
   labs(x = "Number of variables (mtry)", y = "Value", tag = "B" ) +
+  scale_x_continuous(breaks = seq(2,8,2)) +
   facet_grid(metric~species, scales = "free_y") +
   scale_color_gradientn(name = "Weight                ", 
                         colors = RColorBrewer::brewer.pal(9, "YlOrRd")[2:9]) +
@@ -253,53 +334,10 @@ g_best_weight
 
 g <- gridExtra::grid.arrange(g_best, g_best_weight, ncol = 1)
 
+g
 
 
-ggsave(g, filename=file.path(plotdir, "FigSX_rf_model_selection.png"),
-       width=7.5, height=7, units="in", dpi=600)
-
-
-
-
-##########################################################################
-# Experiment with long below
-
-output_sl_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf_with_long/california_sea_lion_model_balanced_rf.Rds")
-output_sl_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/california_sea_lion_model_weighted_rf.Rds")
-
-sl_balanced_df <- output_sl_balanced[["rf_all_df"]] %>%
-  mutate(species = "California sea lion", weight = NA)
-
-sl_weighted_df <- output_sl_weighted[["rf_weighted_final"]] %>%
-  mutate(species = "California sea lion")
-
-
-
-model_df_final <- rbind(sl_balanced_df, 
-                        sl_weighted_df) %>%
-  rename(metric = .metric) %>%
-  mutate(metric = recode_factor(metric, 
-                                "kap" = "Cohen's kappa", 
-                                "roc_auc" = "Area under the ROC curve"),
-         balanced_type = recode_factor(balanced_type, 
-                                       "downsample" = "Downsample", 
-                                       "upsample" = "Upsample",
-                                       "smote" = "SMOTE",
-                                       "weighted" = "Weighted")) %>%
-  mutate(model_id = paste(metric, .config, balanced_type, species, mtry, weight, sep = "-")) %>%
-  mutate(species = species %>% fct_reorder(mean))
-
-model_df_final_kappa <- model_df_final %>%
-  filter(metric == "Cohen's kappa") %>%
-  group_by(balanced_type) %>%
-  filter(mean == max(mean))
-
-
-
-
-
-
-
-
+ggsave(g, filename=file.path(plotdir, "FigS13_rf_model_selection.png"),
+       width=8.5, height=7, units="in", dpi=600)
 
 

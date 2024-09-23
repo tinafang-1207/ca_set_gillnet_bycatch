@@ -21,7 +21,6 @@ plotdir <- "figures"
 ################################################################################
 
 rf_data <- rf_orig %>%
-  filter(species!= "Soupfin shark") %>%
   mutate(method = "Random Forest") %>%
   mutate(strata=factor(strata, levels=c("Southern California", "Channel Islands", 
                                         "Ventura", "Morro Bay", "Monterey Bay"))) %>%
@@ -30,7 +29,7 @@ rf_data <- rf_orig %>%
 
 
 re_data <- re_orig %>%
-  filter(comm_name %in% c("California sea lion", "Harbor seal", "Common murre")) %>%
+  filter(comm_name %in% c("California sea lion", "Harbor seal", "Common murre", "Northern elephant seal")) %>%
   select(comm_name, strata, year, nbycatch) %>%
   rename(species = comm_name,
          total_bycatch = nbycatch) %>%
@@ -66,6 +65,7 @@ g <- ggplot(data_all, aes(x = year, y = total_bycatch, fill = strata)) +
   geom_rect(data = data_all %>% filter(species == "California sea lion"), aes(xmin = 1980, xmax = 1990, ymin = 0, ymax = Inf), alpha = 0.1, fill = "grey80") +
   geom_rect(data = data_all %>% filter(species == "Harbor seal"), aes(xmin = 1980, xmax = 2000, ymin = 0, ymax = Inf), alpha = 0.1, fill = "grey80") +
   geom_rect(data = data_all %>% filter(species == "Common murre"), aes(xmin = 1980, xmax = 1992, ymin = 0, ymax = Inf), alpha = 0.1, fill = "grey80") +
+  geom_rect(data = data_all %>% filter(species == "Northern elephant seal"), aes(xmin = 1980, xmax = 2000, ymin = 0, ymax = Inf), alpha = 0.1, fill = "grey80") +
   # estimates
   geom_bar(stat="identity", color="grey30", linewidth=0.1) +
   # Labels
@@ -79,7 +79,7 @@ g <- ggplot(data_all, aes(x = year, y = total_bycatch, fill = strata)) +
 g
 
 ggsave(g, filename=file.path(plotdir, "FigS16_re_rf_strata_comparison.png"), 
-       width=5.5, height=4, units="in", dpi=600)
+       width=5.5, height=6, units="in", dpi=600)
 
 
 

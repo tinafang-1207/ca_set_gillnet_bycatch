@@ -10,8 +10,12 @@ library(tidyverse)
 # read in data
 ################################################################################
 # prediction data
-data <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/spatial_risk_predict_final.Rds") # Yutian
-data <- readRDS("/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/spatial_risk_predict_final.Rds") # Chris
+
+# Yutian
+data <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/spatial_risk_predict_final.Rds") 
+
+# Chris
+data <- readRDS("/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/spatial_risk_predict_final.Rds")
 
 # geographical data
 usa <- rnaturalearth::ne_states(country = "United States of America", returnclass = "sf")
@@ -77,7 +81,7 @@ g2 <- ggplot() +
   # plot landmark
   geom_point(data = landmark %>% filter(species == "Harbor seal"), mapping  = aes(x = long_dd, y = lat_dd), size = 1, pch = 1) +
   geom_text(data = landmark %>% filter(species == "Harbor seal"), mapping = aes(x = long_dd, y = lat_dd, label = landmark, hjust = hjust, vjust = vjust), size = 2) +
-  scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.1, 0.3)) +
+  scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.1, 0.2)) +
   coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
   scale_x_continuous(breaks=seq(-122, -118, 1)) +
   scale_y_continuous(breaks=seq(32, 35, 1)) +
@@ -92,15 +96,17 @@ g2 <- ggplot() +
 
 g2
 
+
+
 g3 <- ggplot() +
-  geom_tile(data = data %>% filter(species == "Soupfin shark"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
+  geom_tile(data = data %>% filter(species == "Common murre"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
   # plot land
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   # plot landmark
-  geom_point(data = landmark %>% filter(species == "Soupfin shark"), mapping  = aes(x = long_dd, y = lat_dd), size = 1, pch = 1) +
-  geom_text(data = landmark %>% filter(species == "Soupfin shark"), mapping = aes(x = long_dd, y = lat_dd, label = landmark, hjust = hjust, vjust = vjust), size = 2) +
-  scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.2, 0.4)) +
+  geom_point(data = landmark %>% filter(species == "Common murre"), mapping  = aes(x = long_dd, y = lat_dd), size = 1, pch = 1) +
+  geom_text(data = landmark %>% filter(species == "Common murre"), mapping = aes(x = long_dd, y = lat_dd, label = landmark, hjust = hjust, vjust = vjust), size = 2) +
+  scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.1, 0.3)) +
   coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
   scale_x_continuous(breaks=seq(-122, -118, 1)) +
   scale_y_continuous(breaks=seq(32, 35, 1)) +
@@ -114,14 +120,16 @@ g3 <- ggplot() +
 
 g3
 
+
+
 g4 <- ggplot() +
-  geom_tile(data = data %>% filter(species == "Common murre"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
+  geom_tile(data = data %>% filter(species == "Northern elephant seal"), aes(x = Longitude, y = Latitude, fill = spatial_risk)) +
   # plot land
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   # plot landmark
-  geom_point(data = landmark %>% filter(species == "Common murre"), mapping  = aes(x = long_dd, y = lat_dd), size = 1, pch = 1) +
-  geom_text(data = landmark %>% filter(species == "Common murre"), mapping = aes(x = long_dd, y = lat_dd, label = landmark, hjust = hjust, vjust = vjust), size = 2) +
+  geom_point(data = landmark %>% filter(species == "Northern elephant seal"), mapping  = aes(x = long_dd, y = lat_dd), size = 1, pch = 1) +
+  geom_text(data = landmark %>% filter(species == "Northern elephant seal"), mapping = aes(x = long_dd, y = lat_dd, label = landmark, hjust = hjust, vjust = vjust), size = 2) +
   scale_fill_gradientn(name = "Spatial risk", colors = RColorBrewer::brewer.pal(9, "Spectral") %>% rev(), breaks = c(0.1, 0.2)) +
   coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
   scale_x_continuous(breaks=seq(-122, -118, 1)) +
@@ -137,6 +145,7 @@ g4 <- ggplot() +
 g4
 
 
+
 g_total <- gridExtra::grid.arrange(g1, g2, g3, g4, ncol = 2)
 
 g_total
@@ -149,7 +158,7 @@ plotdir <- "figures"
 
 # multiple legend plot
 ggsave(g_total, filename=file.path(plotdir, "Fig6_spatial_prediction_multi_legend.png"), 
-       width=5.5, height=4.5, units="in", dpi=600)
+       width=5, height=4.5, units="in", dpi=600)
 
 
 

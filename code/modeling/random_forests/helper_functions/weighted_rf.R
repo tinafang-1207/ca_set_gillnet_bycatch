@@ -87,7 +87,7 @@ fit_weighted_rf_model <- function(spp, model_orig) {
     
     # set up model engine
     rf_spec_weighted <- rand_forest(mtry = tune()) %>%
-      set_engine("ranger", importance = "impurity") %>%
+      set_engine("ranger", importance = "permutation") %>%
       set_mode("classification")
     
     # hyperparameter tuning

@@ -22,32 +22,39 @@ block_key <- readRDS("data/strata/block_strata_key.Rds")
 
 # read in best model results
 
-# sealion - weight 50
+# sealion
 output_sl_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/california_sea_lion_model_weighted_rf.Rds")
 
-# harbor seal-weight 150
+# harbor seal
 output_hs_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/harbor_seal_model_weighted_rf.Rds")
 
-# soupfin shark - weight 25
-output_ss_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/soupfin_shark_model_weighted_rf.Rds")
+# Harbor porpoise
+output_hp_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/harbor_porpoise_model_weighted_rf.Rds")
 
-# common murre - Upsample
-output_cm_balanced <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/balanced_rf_with_long/common_murre_model_balanced_rf.Rds")
+# Common murre
+output_cm_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/common_murre_model_weighted_rf.Rds")
+
+# Northern elephant seal
+output_ns_weighted <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/weighted_rf_with_long/northern_elephant_seal_model_weighted_rf.Rds")
+
 
 
 ### Extract the model best fit (to training data)
 
-# sealion - weight 50
-sl_best_fit <- output_sl_weighted[["final_fit"]][[2]]
+# sealion - weight 25
+sl_best_fit <- output_sl_weighted[["final_fit"]][[1]]
 
-# harbor seal - weight - 150
-hs_best_fit <- output_hs_weighted[["final_fit"]][[6]]
+# harbor seal  - weight 75
+hs_best_fit <- output_hs_weighted[["final_fit"]][[3]]
 
-# soupfin shark - weight 25
-ss_best_fit <- output_ss_weighted[["final_fit"]][[1]]
+# harbor porpoise - weight 50
+hp_best_fit <- output_hp_weighted[["final_fit"]][[2]]
 
-# common murre - Upsample
-cm_best_fit <- output_cm_balanced[["final_fit"]][["model_up_final_fit"]]
+# common murre - weight 25
+cm_best_fit <- output_cm_weighted[["final_fit"]][[1]]
+
+# northern elephant seal - weight 25
+ns_best_fit <- output_ns_weighted[["final_fit"]][[1]]
 
 
 # source function
@@ -82,7 +89,7 @@ sealion_bycatch_temporal <- predict_temporal(best_model_fit = sl_best_fit, predi
 
 seal_bycatch_temporal <- predict_temporal(best_model_fit = hs_best_fit, predict_data = predict_data, spp = "Harbor seal")
 
-soupfin_bycatch_temporal <- predict_temporal(best_model_fit = ss_best_fit, predict_data = predict_data, spp = "Soupfin shark")
+elephant_seal_bycatch_temporal <- predict_temporal(best_model_fit = ns_best_fit, predict_data = predict_data, spp = "Northern elephant seal")
 
 murre_bycatch_temporal <- predict_temporal(best_model_fit = cm_best_fit, predict_data = predict_data, spp = "Common murre")
 
@@ -96,19 +103,26 @@ sealion_final <- sealion_bycatch_temporal %>%
 seal_final <- seal_bycatch_temporal %>%
   mutate(species = "Harbor seal")
 
-shark_final <- soupfin_bycatch_temporal %>%
-  mutate(species = "Soupfin shark")
+elephant_seal_final <- elephant_seal_bycatch_temporal %>%
+  mutate(species = "Northern elephant seal")
 
 murre_final <- murre_bycatch_temporal %>%
   mutate(species = "Common murre")
 
-temporal_final <- bind_rows(sealion_final, seal_final, shark_final, murre_final)
+temporal_strata_final <- bind_rows(sealion_final, seal_final, elephant_seal_final, murre_final)
+
+temporal_total_final <- bind_rows(sealion_final, seal_final, elephant_seal_final, murre_final) %>%
+  group_by(year, species) %>%
+  summarize(total_bycatch = sum(total_bycatch),
+            bycatch_sets = sum(bycatch_sets))
+
+
 
 # save temporal trend without strata
-write.csv(temporal_final, file = "model_result/temporal_prediction.csv", row.names = FALSE)
+write.csv(temporal_total_final, file = "model_result/temporal_prediction.csv", row.names = FALSE)
 
 # save temporal trend with strata
-write.csv(temporal_final, file = "model_result/temporal_prediction_strata.csv", row.names = FALSE)
+write.csv(temporal_strata_final, file = "model_result/temporal_prediction_strata.csv", row.names = FALSE)
 
 
 
