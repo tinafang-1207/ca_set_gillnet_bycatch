@@ -69,11 +69,11 @@ stats_tots <- data %>%
   # Add species meta-data
   # left_join(spp_key %>% select(comm_name, type), by="comm_name") %>% 
   # Reduce to species of interest
-  filter(type %in% c("bird", "mammal", "turtle") | comm_name %in% c("Giant sea bass", "Soupfin shark", "White shark")) %>% 
+  filter(type %in% c("bird", "mammal", "turtle")) %>% # | comm_name %in% c("Giant sea bass", "Soupfin shark", "White shark")
   # Recode type
   mutate(type=recode_factor(type,
-                            "finfish"="Fish",
-                            "shark/ray"="Fish",
+                            # "finfish"="Fish",
+                            # "shark/ray"="Fish",
                             "bird"="Seabird",
                             "mammal"="Marine mammal",
                             "turtle"="Sea turtle")) %>% 
@@ -146,7 +146,7 @@ data_rescued <- stats_strata %>%
   # Reduce to rescued data
   filter(dataset=="State (Karin)") %>% 
   # Add rescue tag
-  mutate(status="Rescued") %>% 
+  mutate(status="Recovered") %>% 
   mutate(quarter=as.numeric(quarter)) %>% 
   # Simplify
   select(status, year, strata, quarter, ntrips, nsets)
@@ -171,7 +171,7 @@ data_lost <- hist_obs_n %>%
                               "Channel Islands"="Channel\nIslands",     
                               "Southern California"="Southern\nCalifornia"))
 lost_rescue_key <- bind_rows(data_rescued, data_lost) %>% 
-  mutate(status=factor(status, levels=c("Lost", "Rescued", "Provided")))
+  mutate(status=factor(status, levels=c("Lost", "Recovered", "Provided")))
 
 
 # Plot data

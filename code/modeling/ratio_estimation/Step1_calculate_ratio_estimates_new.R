@@ -17,10 +17,15 @@ logbookdir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks
 logs_orig <- readRDS(file.path(logbookdir, "CDFW_1981_2020_gillnet_logbook_data_use.Rds"))
 
 # Read data
-obs_orig <- readRDS(file=file.path(obsdir, "1983_2017_gillnet_observer_data_with_sst_3.5in_set.Rds"))
+obs_orig <- readRDS(file=file.path(obsdir, "1983_2017_gillnet_observer_data_with_sst_3.5in_set.Rds")) %>% 
+  # Remove Karin data b/c don't know if it is complete
+  filter(dataset!="State (Karin)")
 
 # Read block key
 block_key <- readRDS("data/strata/block_strata_key.Rds")
+
+# Read historical rates
+hist_rates_orig <- readxl::read_excel("data/historical_estimates/processed/historical_regional_bycatch_rates.xlsx", sheet=3)
 
 
 # Compute bycatch rate
@@ -36,8 +41,8 @@ effort <- logs_orig %>%
   group_by(year, strata) %>% 
   summarize(ntrips=n_distinct(trip_id)) %>%
   ungroup() %>% 
+  # Remove ones missing strata assignment
   filter(!is.na(strata))
-
 
 
 # Compute bycatch rate
@@ -60,7 +65,7 @@ freeR::complete(obs)
 table(obs$strata)
 
 # Stratas
-stratas <- c("Monterey Bay", "Morro Bay", 
+stratas <- c("San Francisco", "Monterey Bay", "Morro Bay", 
              "Ventura", "Channel Islands", "Southern California")
 
 # Number of trips by year and strata
@@ -133,9 +138,10 @@ for(i in 1:nrow(data)){
 
   # Identify closest rate
   rate_closest <- sdata$rate_use[sdata$year==year_closest]
+  rate_closest <- ifelse(length(rate_closest)==0, NA, rate_closest)
   
   # Record
-  data$rate_imp[i] <- rate_closest
+  data$rate_use[i] <- rate_closest
   
 }
 
@@ -148,7 +154,7 @@ saveRDS(data, file=file.path(outputdir, "1981_2022_bycatch_rates.Rds"))
 ################################################################################
 
 # Plot data
-ggplot(data, aes(x=year, y=rate_imp, color=strata)) +
+ggplot(data, aes(x=year, y=rate_use, color=strata)) +
   facet_wrap(~comm_name, ncol=3, scales="free_y") +
   geom_point(mapping=aes(shape=rate_type)) +
   geom_line() +
@@ -174,7 +180,7 @@ data1 <- data %>%
   # Add number of logged trips
   left_join(effort) %>% 
   # Compute bycatch
-  mutate(nbycatch=ntrips * rate_imp) %>% 
+  mutate(nbycatch=ntrips * rate_use) %>% 
   # Remove 2022
   filter(year!=2022)
 
