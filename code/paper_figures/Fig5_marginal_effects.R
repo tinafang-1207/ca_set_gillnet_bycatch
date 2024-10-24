@@ -22,6 +22,7 @@ data_cat <- read.csv("model_result/categorical_marginal_effects.csv")
 
 # Reorder categorical data
 ################################################################################
+
 data_cat <- data_cat %>%
   mutate(species = species %>% fct_reorder(prob))
 
@@ -45,11 +46,11 @@ base_theme <-  theme(axis.text=element_text(size=7),
 # Plot
 
 # specify the species color
-species_color <- c("California sea lion" = "#B83945", "Common murre" = "#4F845C", "Harbor seal" = "#E3E457", "Soupfin shark" = "#377483")
+species_color <- c("California sea lion" = "#1B9E77", "Common murre" = "#D95F02", "Harbor seal" = "#7570B3", "Northern elephant seal" = "#66A61E")
 
 # create dataframe of vertical dashed lines
-vline <- data.frame(xintercept = c(40, 60, 3),
-                    variable = c("Depth (fathoms)", "Depth (fathoms)", "Shore distance (km)"))
+vline <- data.frame(xintercept = c(40, 60, 3, 8.5),
+                    variable = c("Depth (fathoms)", "Depth (fathoms)", "Shore distance (km)", "Mesh size (cm)"))
 
 main_plot <- ggplot(data, aes(x=value, y=prob, color=species)) +
   facet_wrap(~variable, ncol=3, scales="free") +
@@ -93,7 +94,7 @@ plot_with_insert
   
 # Export
 ggsave(plot_with_insert, filename=file.path(plotdir, "Fig5_marginal_effects.png"), 
-       width=5.6, height=6.5, units="in", dpi=600)
+       width=6, height=6.5, units="in", dpi=600)
 
 
 

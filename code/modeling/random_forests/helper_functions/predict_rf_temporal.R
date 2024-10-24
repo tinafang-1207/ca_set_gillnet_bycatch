@@ -15,7 +15,10 @@ predict_temporal <- function(best_model_fit, predict_data, spp){
   #combine columns
   predict_final <- predict_data %>%
     bind_cols(preds_prob) %>%
-    mutate(threshold = ifelse(species == "Common murre", 0.38, 0.5)) %>%
+    mutate(threshold = case_when(spp == "California sea lion"~0.49,
+                                 spp == "Harbor seal"~0.53,
+                                 spp == "Common murre"~0.51,
+                                 spp == "Northern elephant seal"~0.5)) %>%
     mutate(bycatch_yn = ifelse(.pred_1>=threshold, 1, 0))
   
   # calculate bycatch numbers each year

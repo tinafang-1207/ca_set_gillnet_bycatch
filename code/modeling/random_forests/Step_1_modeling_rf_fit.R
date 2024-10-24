@@ -24,7 +24,6 @@ model_orig <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confiden
 # Chris
 model_orig <- readRDS("/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_merge/1983_2017_gillnet_observer_data_with_sst_3.5in_set.Rds") 
 
-
 ### Source the function
 
 # balanced rf
@@ -35,9 +34,7 @@ source("code/modeling/random_forests/helper_functions/weighted_rf.R")
 
 ### set up the species list ###
 
-spp_do <- c("Harbor seal", "Soupfin shark", "Common murre")
-
-spp_do <- c("California sea lion", "Harbor seal", "Soupfin shark", "Common murre", "Giant sea bass", "Brandt's cormorant")
+spp_do <- c("California sea lion", "Harbor seal", "Harbor porpoise", "Brandt's cormorant","Common murre", "Northern elephant seal")
 
 
 ########### Fit balanced rf below ###############

@@ -13,7 +13,16 @@ plotdir <- "figures"
 
 # read in data
 
-data <- read_csv("model_result/variable_importance.csv")
+sl_vi <- read_csv("model_result/sl_vi_ranger_weighted_impurity_corrected.csv")
+
+hs_vi <- read_csv("model_result/hs_vi_ranger_weighted_impurity_corrected.csv")
+
+cm_vi <- read_csv("model_result/cm_vi_ranger_weighted_impurity_corrected.csv")
+
+ns_vi <- read_csv("model_result/ns_vi_ranger_weighted_impurity_corrected.csv")
+
+
+data <- bind_rows(sl_vi, hs_vi, cm_vi, ns_vi)
 
 # Format data 
 
@@ -51,7 +60,7 @@ base_theme <-  theme(axis.text=element_text(size=7),
                      legend.background = element_rect(fill=alpha('blue', 0)))
 
 # set species color
-category_color <- c("Spatial" = "#B83945", "Environmental" = "#4F845C", "Temporal" = "#E3E457", "Fishing-related" = "#377483")
+category_color <- c("Spatial" = "#1B9E77", "Environmental" = "#D95F02", "Temporal" = "#7570B3", "Fishing-related" = "#66A61E")
 
 # Plot
 g <- ggplot(data, aes(x=importance, 
@@ -71,5 +80,7 @@ g
 # Export
 ggsave(g, filename=file.path(plotdir, "Fig4_variable_importance.png"), 
        width=5.5, height=4, units="in", dpi=600)
+
+
 
 
