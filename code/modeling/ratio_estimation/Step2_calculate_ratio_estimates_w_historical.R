@@ -234,7 +234,7 @@ for(i in 1:nrow(data)){
 }
 
 # Export data
-saveRDS(data, file=file.path(outputdir, "1981_2022_bycatch_rates_new.Rds"))
+saveRDS(data, file=file.path(outputdir, "1981_2022_bycatch_rates_w_historical.Rds"))
 
 
 
@@ -255,9 +255,6 @@ ggplot(data, aes(x=year, y=rate_imp, color=strata)) +
   theme_bw()
 
 
-
-
-
 # Compute bycatch
 ################################################################################
 
@@ -268,12 +265,14 @@ data1 <- data %>%
   # Compute bycatch
   mutate(nbycatch=ntrips * rate_imp) %>% 
   # Remove 2022
-  filter(year!=2022)
+  filter(year!=2022) %>% 
+  # Rename
+  rename(comm_name=species)
 
 
 # Plot
 ggplot(data1, aes(x=year, y=nbycatch, fill=strata)) +
-  facet_wrap(~species, ncol=3, scales="free_y") +
+  facet_wrap(~comm_name, ncol=3, scales="free_y") +
   geom_bar(stat="identity") +
   # Labels
   labs(x="Year", y="Estimated bycatch") +
@@ -286,5 +285,5 @@ ggplot(data1, aes(x=year, y=nbycatch, fill=strata)) +
 # Export bycatch
 ################################################################################
 
-saveRDS(data1, file=file.path(outputdir, "1981_2021_bycatch_estimate_ratio_stratified.Rds"))
+saveRDS(data1, file=file.path(outputdir, "1981_2021_bycatch_estimate_ratio_stratified_w_historical.Rds"))
 

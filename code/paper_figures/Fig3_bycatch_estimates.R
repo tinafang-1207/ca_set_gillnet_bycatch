@@ -14,7 +14,7 @@ datadir1 <- "model_result"
 datadir2 <- "data/historical_estimates/processed"
 
 # Read data
-data_orig <- readRDS(file=file.path(datadir1, "1981_2021_bycatch_estimate_ratio_stratified.Rds"))
+data_orig <- readRDS(file=file.path(datadir1, "1981_2021_bycatch_estimate_ratio_stratified_w_historical.Rds"))
 
 # Read RF predictions
 rf_orig <- read.csv(file=file.path(datadir1, "temporal_prediction.csv"), as.is=T) %>%
@@ -45,11 +45,20 @@ stats <- data_orig %>%
 data <- data_orig %>% 
   mutate(comm_name=factor(comm_name, levels=levels(stats$comm_name))) %>% 
   mutate(strata=factor(strata, levels=c("Southern California", "Channel Islands", 
-                                        "Ventura", "Morro Bay", "Monterey Bay")))
+                                        "Ventura", "Morro Bay", "Monterey Bay", "San Francisco")))
 
 # Order RF predictions
 rf <- rf_orig %>% 
   mutate(comm_name=factor(comm_name, levels=levels(stats$comm_name)))
+rf_stats <- rf %>% 
+  group_by(comm_name) %>% 
+  summarize(ymax_rf=max(total_bycatch, na.rm=T))
+
+# Add stats
+stats1 <- stats %>% 
+  left_join(rf_stats) %>% 
+  mutate(ymax_rf=ifelse(is.na(ymax_rf), 0, ymax_rf)) %>% 
+  mutate(ymax_use=pmax(ymax, ymax_rf))
 
 
 # Plot data
@@ -81,11 +90,12 @@ g <- ggplot(data, aes(x=year, y=nbycatch, fill=strata)) +
   # Reference lines
   geom_vline(xintercept=c(1987, 1994, 2002), linetype="dashed", color="grey50", linewidth=0.3) +
   # Plot label
-  geom_text(data=stats, mapping=aes(y=ymax*0.97, label=label),
+  geom_text(data=stats1, mapping=aes(y=ymax_use*0.97, label=label),
             x=2021, hjust=1, size=2.2, color="grey30", inherit.aes = F) +
   # Labels
   labs(x="", y="Estimated bycatch") +
   scale_fill_discrete(name="") +
+  guides(fill = guide_legend(nrow = 1)) +
   # Theme
   theme_bw() + base_theme +
   theme(legend.position="top",

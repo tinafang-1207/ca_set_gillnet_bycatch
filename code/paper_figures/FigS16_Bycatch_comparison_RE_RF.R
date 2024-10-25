@@ -11,7 +11,7 @@ library(tidyverse)
 ################################################################################
 rf_orig <- read.csv("model_result/temporal_prediction_strata.csv")
 
-re_orig <- readRDS("model_result/1981_2021_bycatch_estimate_ratio_stratified.Rds")
+re_orig <- readRDS("model_result/1981_2021_bycatch_estimate_ratio_stratified_w_historical.Rds")
 
 # set plot directory
 ################################################################################
@@ -23,7 +23,7 @@ plotdir <- "figures"
 rf_data <- rf_orig %>%
   mutate(method = "Random Forest") %>%
   mutate(strata=factor(strata, levels=c("Southern California", "Channel Islands", 
-                                        "Ventura", "Morro Bay", "Monterey Bay"))) %>%
+                                        "Ventura", "Morro Bay", "Monterey Bay", "San Francisco"))) %>%
   select(-bycatch_sets) %>%
   drop_na()
 
@@ -34,7 +34,7 @@ re_data <- re_orig %>%
   rename(species = comm_name,
          total_bycatch = nbycatch) %>%
   mutate(strata=factor(strata, levels=c("Southern California", "Channel Islands", 
-                                        "Ventura", "Morro Bay", "Monterey Bay"))) %>%
+                                        "Ventura", "Morro Bay", "Monterey Bay", "San Francisco"))) %>%
   mutate(method = "Ratio Estimation") 
 
 data_all <- rbind(re_data, rf_data) %>%

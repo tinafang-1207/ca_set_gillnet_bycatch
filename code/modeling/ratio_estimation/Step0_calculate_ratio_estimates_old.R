@@ -16,8 +16,8 @@ logbookdir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks
 # Read effort time series
 effort_orig <- read.csv(file.path(logbookdir, "CA_3.5in_set_gillnet_effort_by_year.csv"), as.is=T)
 
-# Read data
-obs_orig <- readRDS(file=file.path(obsdir, "1983_2017_gillnet_observer_data_3.5in_set_halibut.Rds"))
+# Read data (originally said 1983_2017_gillnet_observer_data_3.5in_set_halibut.Rds)
+obs_orig <- readRDS(file=file.path(obsdir, "1983_2017_gillnet_observer_data_with_sst_3.5in_set.Rds")) 
 
 # Read year key
 year_key <- readxl::read_excel("code/modeling/ratio_estimation/year_key.xlsx")
