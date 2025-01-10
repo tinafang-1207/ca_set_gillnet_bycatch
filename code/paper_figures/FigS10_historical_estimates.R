@@ -41,7 +41,7 @@ data_cv <- data_orig %>%
 # Build stats
 stats_cv <- data_cv %>% 
   group_by(species) %>% 
-  summarize(mort_cv=median(mort_cv_calc)) %>% 
+  summarize(mort_cv=median(mort_cv_calc) %>% round(2)) %>% 
   ungroup() %>% 
   arrange(desc(mort_cv))
 
@@ -83,6 +83,8 @@ g1
 # Plot data
 g2 <- ggplot(data_cv , aes(x=mort_cv_calc, y=species %>% factor(., levels=stats_cv$species), fill=species)) +
   geom_boxplot(alpha=0.5) +
+  # CV label
+  geom_text(data=stats_cv, mapping=aes(x=0, y=species, label=mort_cv), size=2) +
   # Labels
   labs(x="CV of bycatch estimate", y="", tag="B") +
   scale_x_continuous(breaks=seq(0, 1.3, 0.1)) +

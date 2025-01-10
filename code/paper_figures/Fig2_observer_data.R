@@ -13,6 +13,7 @@ library(tidyverse)
 plotdir <- "figures"
 datadir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_merge" # Chris
 datadir2 <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/processed" # Chris
+tabledir <- "tables"
 
 # Read obersever data
 data_orig <- readRDS(file=file.path(datadir, "1983_2017_gillnet_observer_data_with_sst_3.5in_set.Rds"))
@@ -172,6 +173,25 @@ data_lost <- hist_obs_n %>%
                               "Southern California"="Southern\nCalifornia"))
 lost_rescue_key <- bind_rows(data_rescued, data_lost) %>% 
   mutate(status=factor(status, levels=c("Lost", "Recovered", "Provided")))
+
+# Build Table S2
+################################################################################
+
+# Build table
+tableS2 <- effort_df %>% 
+  # Simplify
+  select(year, nvessels, ntrips_tot) %>% 
+  # Add number observed
+  left_join(stats_nsets %>% select(year, ntrips), by="year") %>% 
+  rename(ntrips_obs=ntrips) %>% 
+  mutate(ntrips_obs=ifelse(is.na(ntrips_obs), 0, ntrips_obs)) %>% 
+  # Calculate percentages
+  mutate(ntrips_not_obs=ntrips_tot- ntrips_obs,
+         ptrips_obs=ntrips_obs/ntrips_tot,
+         ptrips_not_obs=ntrips_not_obs/ntrips_tot)
+
+# Export table
+write.csv(tableS2, file=file.path(tabledir, "TableS2_trip_sample_sizes.csv"), row.names = F)
 
 
 # Plot data
