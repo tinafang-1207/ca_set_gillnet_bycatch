@@ -61,6 +61,16 @@ stats1 <- stats %>%
   mutate(ymax_use=pmax(ymax, ymax_rf))
 
 
+# Calculate peak bycatch
+stats2 <- data %>% 
+  group_by(comm_name, year) %>% 
+  summarize(nbycatch=sum(nbycatch, na.rm=T)) %>% 
+  ungroup() %>% 
+  arrange(comm_name, desc(nbycatch)) %>% 
+  group_by(comm_name) %>% 
+  slice(1)
+
+
 # Plot data
 ################################################################################
 

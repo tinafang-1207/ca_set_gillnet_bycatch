@@ -9,6 +9,7 @@ rm(list = ls())
 library(tidyverse)
 
 # Directories
+tabledir <- "tables"
 outputdir <- "model_result"
 obsdir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_merge" # Chris
 logbookdir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/processed"
@@ -51,6 +52,7 @@ species <- c("California sea lion", "Northern elephant seal", "Harbor seal", "Ha
 # Stratas
 stratas <- c("San Francisco", "Monterey Bay", "Morro Bay", 
              "Ventura", "Channel Islands", "Southern California")
+
 
 # Calculate number of trips by year and strata
 ################################################################################
@@ -142,7 +144,7 @@ rates_raw <- purrr::map_df(species, function(x){
   # Rename
   rename(ntrips_obs=ntrips) %>% 
   # Add columns
-  mutate(type="Report summary",
+  mutate(type="Observer data",
          reference="Observer data") %>% 
   # Add bycatch
   left_join(bycatch, by=c("year", "strata", "species"="comm_name")) %>% 
@@ -160,7 +162,7 @@ rates_raw <- purrr::map_df(species, function(x){
 # Merge rates
 ################################################################################
 
-# Isolate rates from summaries that are not redudant with raw data
+# Isolate rates from summaries that are not redundant with raw data
 rates_sum_use <- rates_sum %>% 
   filter(!strata_id %in% rates_raw$strata_id) %>% 
   select(-nsets_obs)
@@ -171,6 +173,21 @@ rates <- bind_rows(rates_sum_use, rates_raw) %>%
   arrange(species, strata, year) %>% 
   select(-strata_id)
 
+# Inspect
+freeR::complete(rates)
+
+
+# Supplemental table
+################################################################################
+
+out <- rates_sum %>% 
+  # Mark if observer data is available
+  mutate(obs_data_yn=ifelse(strata_id %in% rates_raw$strata_id, "*", "")) %>% 
+  # Simplify
+  select(-c(type, strata_id))
+
+# Export
+write.csv(out, file=file.path(tabledir, "TableSX_historical_report_data.csv"), row.names=F)
 
 
 # Expand rates
@@ -196,9 +213,12 @@ data <- temp %>%
   # Add rate use
   mutate(rate_use=ifelse(rate_type=="Observed", catch_per_trip, NA)) %>% 
   # Add assumed zeros
-  mutate(rate_use=case_when(species=="Harbor porpoise" & strata %in% c("Ventura", "Channel Islands", "Southern California") ~ 0,
-                            species=="Common murre" & strata %in% c("Channel Islands", "Southern California") ~ 0,
+  mutate(rate_use=case_when(species=="Harbor porpoise" & strata %in% c("Ventura", "Channel Islands", "Southern California") & is.na(catch_per_trip) ~ 0,
+                            species=="Common murre" & strata %in% c("Channel Islands", "Southern California") & is.na(catch_per_trip) ~ 0,
                             T ~ rate_use)) %>% 
+  mutate(type=case_when(species=="Harbor porpoise" & strata %in% c("Ventura", "Channel Islands", "Southern California") & is.na(catch_per_trip) ~ "Assumed 0",
+                               species=="Common murre" & strata %in% c("Channel Islands", "Southern California") & is.na(catch_per_trip) ~ "Assumed 0",
+                               T ~ type)) %>% 
   # Order
   mutate(strata=factor(strata, levels=stratas))
 
@@ -232,6 +252,9 @@ for(i in 1:nrow(data)){
   data$rate_source[i] <- rate_closest_source
   
 }
+
+# Inspect
+freeR::complete(data)
 
 # Export data
 saveRDS(data, file=file.path(outputdir, "1981_2022_bycatch_rates_w_historical.Rds"))
