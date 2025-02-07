@@ -132,7 +132,7 @@ g <- ggplot(data, aes(x=year, y=nbycatch, fill=strata)) +
   # Reference lines
   geom_vline(xintercept=c(1987, 1994, 2002), linetype="dashed", color="grey50", linewidth=0.3) +
   # Plot label
-  geom_text(data=stats1, mapping=aes(y=ymax_use*0.97, label=label),
+  geom_text(data=stats1, mapping=aes(y=ymax*0.97, label=label),
             x=2021, hjust=1, size=2.2, color="grey30", inherit.aes = F) +
   # Labels
   labs(x="", y="Estimated bycatch") +

@@ -31,6 +31,9 @@ block_key <- readRDS("data/strata/block_strata_key.Rds")
 # Read historical observer sample sizes
 hist_obs_n <- readxl::read_excel("data/historical_estimates/processed/historical_regional_bycatch_rates.xlsx", sheet=2) 
 
+# Read report values
+rep_orig <- read.csv("tables/TableSX_historical_report_data.csv", as.is=T)
+
 
 
 # Build data
@@ -142,6 +145,27 @@ year_key <- tibble(year=c(1995:1998, 2001:2005,2008,2009, 2014:2016)) %>%
                             year == 2015 ~ 2017,
                             year == 2016 ~ 2017))
 
+# Report data
+data_rep <- rep_orig %>% 
+  # Years without observer data
+  filter(obs_data_yn=="") %>% 
+  # Unique region-years
+  group_by(strata, year) %>% 
+  unique() %>% 
+  # Factor strata
+  mutate(strata=recode_factor(strata,
+                              "San Francisco"="San\nFrancisco",       
+                              "Monterey Bay"="Monterey\nBay",         
+                              "Morro Bay"="Morro\nBay",            
+                              "Ventura"="Ventura",              
+                              "Channel Islands"="Channel\nIslands",     
+                              "Southern California"="Southern\nCalifornia")) %>% 
+  # Add status
+  mutate(status="Report summary", 
+         quarter=1) %>% 
+  # Simplify
+  select(status, year, strata, quarter)
+
 # Build data rescue/lost key
 data_rescued <- stats_strata %>% 
   # Reduce to rescued data
@@ -171,8 +195,9 @@ data_lost <- hist_obs_n %>%
                               "Ventura"="Ventura",              
                               "Channel Islands"="Channel\nIslands",     
                               "Southern California"="Southern\nCalifornia"))
-lost_rescue_key <- bind_rows(data_rescued, data_lost) %>% 
-  mutate(status=factor(status, levels=c("Lost", "Recovered", "Provided")))
+lost_rescue_key <- bind_rows(data_rescued, data_lost) %>% #, data_rep
+  mutate(status=factor(status, levels=c("Lost", "Recovered", "Provided"))) # "Report summary", 
+
 
 # Build Table S2
 ################################################################################
@@ -242,7 +267,7 @@ g2 <- ggplot(stats_nsets, aes(x=year, y=ntrips)) +
   # Labels
   labs(x="", y="Number of observed trips", tag="B") +
   # Axes
-  scale_y_continuous(lim=c(0, 1050), breaks=seq(0,1000,200)) +
+  scale_y_continuous(lim=c(0, 1150), breaks=seq(0,1000,200)) +
   scale_x_continuous(breaks=stats_nsets$year) +
   # scale_x_continuous(breaks=seq(1980,2020,5)) +
   # Theme

@@ -143,6 +143,14 @@ stats_blocks_sf <- stats_blocks %>%
 count(data, period, year)
 
 
+# Check out effort in northern strata
+df <- stats_yr_strata %>% 
+  filter(strata %in% c("Morro Bay", "Monterey Bay",
+                       "San Francisco"))
+ggplot(df, aes(x=year, y=nvesseldays)) + 
+  geom_bar(stat="identity")
+
+
 # Plot data
 ################################################################################
 
@@ -151,7 +159,8 @@ bays_df <- matrix(c("San\nFrancisco", 37.8, -122.1,
                     "Monterey\nBay", 36.8, -121.7,
                     "Morro\nBay", 35.4, -120.7,
                     "Ventura", 34.7, -120,
-                    "Southern\nCalifornia", 34.2,  -118.5), ncol=3, byrow = T) %>% 
+                    "Southern\nCalifornia", 34.2,  -118.5,
+                    "Channel\nIslands", 33, -122.2), ncol=3, byrow = T) %>% 
   as.data.frame() %>% setNames(c("bay", "lat_dd", "long_dd")) %>% 
   mutate(lat_dd=as.numeric(lat_dd),
          long_dd=as.numeric(long_dd)) %>% 
