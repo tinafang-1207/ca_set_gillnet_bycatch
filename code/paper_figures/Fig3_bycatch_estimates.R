@@ -14,7 +14,7 @@ datadir1 <- "model_result"
 datadir2 <- "data/historical_estimates/processed"
 
 # Read data
-data_orig <- readRDS(file=file.path(datadir1, "1981_2021_bycatch_estimate_ratio_stratified.Rds"))
+data_orig <- readRDS(file=file.path(datadir1, "1981_2021_bycatch_estimate_ratio_stratified_w_historical.Rds"))
 
 # Read RF predictions
 rf_orig <- read.csv(file=file.path(datadir1, "temporal_prediction.csv"), as.is=T) %>%
@@ -45,11 +45,30 @@ stats <- data_orig %>%
 data <- data_orig %>% 
   mutate(comm_name=factor(comm_name, levels=levels(stats$comm_name))) %>% 
   mutate(strata=factor(strata, levels=c("Southern California", "Channel Islands", 
-                                        "Ventura", "Morro Bay", "Monterey Bay")))
+                                        "Ventura", "Morro Bay", "Monterey Bay", "San Francisco")))
 
 # Order RF predictions
 rf <- rf_orig %>% 
   mutate(comm_name=factor(comm_name, levels=levels(stats$comm_name)))
+rf_stats <- rf %>% 
+  group_by(comm_name) %>% 
+  summarize(ymax_rf=max(total_bycatch, na.rm=T))
+
+# Add stats
+stats1 <- stats %>% 
+  left_join(rf_stats) %>% 
+  mutate(ymax_rf=ifelse(is.na(ymax_rf), 0, ymax_rf)) %>% 
+  mutate(ymax_use=pmax(ymax, ymax_rf))
+
+
+# Calculate peak bycatch
+stats2 <- data %>% 
+  group_by(comm_name, year) %>% 
+  summarize(nbycatch=sum(nbycatch, na.rm=T)) %>% 
+  ungroup() %>% 
+  arrange(comm_name, desc(nbycatch)) %>% 
+  group_by(comm_name) %>% 
+  slice(1)
 
 
 # Plot data
@@ -81,11 +100,12 @@ g <- ggplot(data, aes(x=year, y=nbycatch, fill=strata)) +
   # Reference lines
   geom_vline(xintercept=c(1987, 1994, 2002), linetype="dashed", color="grey50", linewidth=0.3) +
   # Plot label
-  geom_text(data=stats, mapping=aes(y=ymax*0.97, label=label),
+  geom_text(data=stats1, mapping=aes(y=ymax_use*0.97, label=label),
             x=2021, hjust=1, size=2.2, color="grey30", inherit.aes = F) +
   # Labels
   labs(x="", y="Estimated bycatch") +
   scale_fill_discrete(name="") +
+  guides(fill = guide_legend(nrow = 1)) +
   # Theme
   theme_bw() + base_theme +
   theme(legend.position="top",
@@ -95,6 +115,38 @@ g
 
 # Export
 ggsave(g, filename=file.path(plotdir, "Fig3_bycatch_estimates.png"), 
+       width=6.5, height=4, units="in", dpi=600)
+
+
+# Plot data - no random forest
+################################################################################
+
+# Plot
+g <- ggplot(data, aes(x=year, y=nbycatch, fill=strata)) +
+  # Facet
+  lemon::facet_rep_wrap(~comm_name, scales="free_y", ncol=3, repeat.tick.labels = 'bottom') +
+  # Our estimates
+  geom_bar(stat="identity", color="grey30", linewidth=0.1) +
+  # RF estimates
+  # geom_line(data=rf, mapping=aes(x=year, y= total_bycatch), inherit.aes = F) +
+  # Reference lines
+  geom_vline(xintercept=c(1987, 1994, 2002), linetype="dashed", color="grey50", linewidth=0.3) +
+  # Plot label
+  geom_text(data=stats1, mapping=aes(y=ymax*0.97, label=label),
+            x=2021, hjust=1, size=2.2, color="grey30", inherit.aes = F) +
+  # Labels
+  labs(x="", y="Estimated bycatch") +
+  scale_fill_discrete(name="") +
+  guides(fill = guide_legend(nrow = 1)) +
+  # Theme
+  theme_bw() + base_theme +
+  theme(legend.position="top",
+        legend.key.size=unit(0.3, "cm"))
+g
+
+
+# Export
+ggsave(g, filename=file.path(plotdir, "Fig3_bycatch_estimates_no_rf.png"), 
        width=6.5, height=4, units="in", dpi=600)
 
 

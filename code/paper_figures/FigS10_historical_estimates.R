@@ -30,6 +30,22 @@ data_ordered <- data_orig %>%
   filter(species %in% spp) %>% 
   mutate(species=factor(species, levels=spp))
 
+# Build data
+data_cv <- data_orig %>% 
+  # Species of interest
+  filter(species %in% spp) %>% 
+  # Calculate CV
+  mutate(mort_cv_calc=mort_se_calc/mort) %>% 
+  filter(!is.na(mort_cv_calc))
+
+# Build stats
+stats_cv <- data_cv %>% 
+  group_by(species) %>% 
+  summarize(mort_cv=median(mort_cv_calc) %>% round(2)) %>% 
+  ungroup() %>% 
+  arrange(desc(mort_cv))
+
+
 
 # Plot data
 ################################################################################
@@ -38,6 +54,7 @@ data_ordered <- data_orig %>%
 my_theme2 <-  theme(axis.text=element_text(size=7),
                     axis.title = element_text(size=8),
                      strip.text=element_text(size=8),
+                    plot.tag=element_text(size=8),
                      # Gridlines
                      panel.grid.major = element_blank(), 
                      panel.grid.minor = element_blank(),
@@ -47,7 +64,7 @@ my_theme2 <-  theme(axis.text=element_text(size=7),
                      legend.background = element_rect(fill=alpha('blue', 0)))
 
 # Plot data
-g <- ggplot(data_ordered , aes(x=year, y=mort)) +
+g1 <- ggplot(data_ordered , aes(x=year, y=mort)) +
   # Facet
   lemon::facet_rep_wrap(~species, scales="free_y", ncol=3, repeat.tick.labels = 'bottom') +
   # Data
@@ -58,14 +75,31 @@ g <- ggplot(data_ordered , aes(x=year, y=mort)) +
   #           size=2.4, hjust=1) +
   scale_x_continuous(breaks=seq(1980,2020,5)) +
   # Labels
-  labs(x="Year", y="Bycatch estimate") +
+  labs(x="Year", y="Bycatch estimate", tag="A") +
   # Theme
   theme_bw() + my_theme2
+g1
+
+# Plot data
+g2 <- ggplot(data_cv , aes(x=mort_cv_calc, y=species %>% factor(., levels=stats_cv$species), fill=species)) +
+  geom_boxplot(alpha=0.5) +
+  # CV label
+  geom_text(data=stats_cv, mapping=aes(x=0, y=species, label=mort_cv), size=2) +
+  # Labels
+  labs(x="CV of bycatch estimate", y="", tag="B") +
+  scale_x_continuous(breaks=seq(0, 1.3, 0.1)) +
+  # Theme
+  theme_bw() + my_theme2 +
+  theme(legend.position = "none")
+g2
+
+# Merge 
+g <- gridExtra::grid.arrange(g1, g2, heights=c(0.8, 0.2))
 g
 
 # Export plot
 ggsave(g, filename=file.path(plotdir, "FigS10_historical_estimates.png"), 
-       width=6.5, height=4, units="in", dpi=600)
+       width=6.5, height=6, units="in", dpi=600)
 
 
 

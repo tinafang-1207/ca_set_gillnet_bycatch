@@ -13,6 +13,7 @@ library(tidyverse)
 plotdir <- "figures"
 datadir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/obs_merge" # Chris
 datadir2 <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/processed" # Chris
+tabledir <- "tables"
 
 # Read obersever data
 data_orig <- readRDS(file=file.path(datadir, "1983_2017_gillnet_observer_data_with_sst_3.5in_set.Rds"))
@@ -29,6 +30,9 @@ block_key <- readRDS("data/strata/block_strata_key.Rds")
 
 # Read historical observer sample sizes
 hist_obs_n <- readxl::read_excel("data/historical_estimates/processed/historical_regional_bycatch_rates.xlsx", sheet=2) 
+
+# Read report values
+rep_orig <- read.csv("tables/TableSX_historical_report_data.csv", as.is=T)
 
 
 
@@ -69,11 +73,11 @@ stats_tots <- data %>%
   # Add species meta-data
   # left_join(spp_key %>% select(comm_name, type), by="comm_name") %>% 
   # Reduce to species of interest
-  filter(type %in% c("bird", "mammal", "turtle") | comm_name %in% c("Giant sea bass", "Soupfin shark", "White shark")) %>% 
+  filter(type %in% c("bird", "mammal", "turtle")) %>% # | comm_name %in% c("Giant sea bass", "Soupfin shark", "White shark")
   # Recode type
   mutate(type=recode_factor(type,
-                            "finfish"="Fish",
-                            "shark/ray"="Fish",
+                            # "finfish"="Fish",
+                            # "shark/ray"="Fish",
                             "bird"="Seabird",
                             "mammal"="Marine mammal",
                             "turtle"="Sea turtle")) %>% 
@@ -141,12 +145,33 @@ year_key <- tibble(year=c(1995:1998, 2001:2005,2008,2009, 2014:2016)) %>%
                             year == 2015 ~ 2017,
                             year == 2016 ~ 2017))
 
+# Report data
+data_rep <- rep_orig %>% 
+  # Years without observer data
+  filter(obs_data_yn=="") %>% 
+  # Unique region-years
+  group_by(strata, year) %>% 
+  unique() %>% 
+  # Factor strata
+  mutate(strata=recode_factor(strata,
+                              "San Francisco"="San\nFrancisco",       
+                              "Monterey Bay"="Monterey\nBay",         
+                              "Morro Bay"="Morro\nBay",            
+                              "Ventura"="Ventura",              
+                              "Channel Islands"="Channel\nIslands",     
+                              "Southern California"="Southern\nCalifornia")) %>% 
+  # Add status
+  mutate(status="Report summary", 
+         quarter=1) %>% 
+  # Simplify
+  select(status, year, strata, quarter)
+
 # Build data rescue/lost key
 data_rescued <- stats_strata %>% 
   # Reduce to rescued data
   filter(dataset=="State (Karin)") %>% 
   # Add rescue tag
-  mutate(status="Rescued") %>% 
+  mutate(status="Recovered") %>% 
   mutate(quarter=as.numeric(quarter)) %>% 
   # Simplify
   select(status, year, strata, quarter, ntrips, nsets)
@@ -170,8 +195,28 @@ data_lost <- hist_obs_n %>%
                               "Ventura"="Ventura",              
                               "Channel Islands"="Channel\nIslands",     
                               "Southern California"="Southern\nCalifornia"))
-lost_rescue_key <- bind_rows(data_rescued, data_lost) %>% 
-  mutate(status=factor(status, levels=c("Lost", "Rescued", "Provided")))
+lost_rescue_key <- bind_rows(data_rescued, data_lost) %>% #, data_rep
+  mutate(status=factor(status, levels=c("Lost", "Recovered", "Provided"))) # "Report summary", 
+
+
+# Build Table S2
+################################################################################
+
+# Build table
+tableS2 <- effort_df %>% 
+  # Simplify
+  select(year, nvessels, ntrips_tot) %>% 
+  # Add number observed
+  left_join(stats_nsets %>% select(year, ntrips), by="year") %>% 
+  rename(ntrips_obs=ntrips) %>% 
+  mutate(ntrips_obs=ifelse(is.na(ntrips_obs), 0, ntrips_obs)) %>% 
+  # Calculate percentages
+  mutate(ntrips_not_obs=ntrips_tot- ntrips_obs,
+         ptrips_obs=ntrips_obs/ntrips_tot,
+         ptrips_not_obs=ntrips_not_obs/ntrips_tot)
+
+# Export table
+write.csv(tableS2, file=file.path(tabledir, "TableS2_trip_sample_sizes.csv"), row.names = F)
 
 
 # Plot data
@@ -222,7 +267,7 @@ g2 <- ggplot(stats_nsets, aes(x=year, y=ntrips)) +
   # Labels
   labs(x="", y="Number of observed trips", tag="B") +
   # Axes
-  scale_y_continuous(lim=c(0, 1050), breaks=seq(0,1000,200)) +
+  scale_y_continuous(lim=c(0, 1150), breaks=seq(0,1000,200)) +
   scale_x_continuous(breaks=stats_nsets$year) +
   # scale_x_continuous(breaks=seq(1980,2020,5)) +
   # Theme

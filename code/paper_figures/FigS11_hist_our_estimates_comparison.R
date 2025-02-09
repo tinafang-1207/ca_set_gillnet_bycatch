@@ -14,7 +14,7 @@ datadir1 <- "model_result"
 datadir2 <- "data/historical_estimates/processed"
 
 # Read data
-data_orig <- readRDS(file=file.path(datadir1, "1981_2021_bycatch_estimate_ratio_stratified.Rds"))
+data_orig <- readRDS(file=file.path(datadir1, "1981_2021_bycatch_estimate_ratio_stratified_w_historical.Rds"))
 
 # Read historical data
 data_hist_orig <- readRDS(file=file.path(datadir2, "ca_set_gillnet_bycatch_estimates_historical.Rds")) 
@@ -49,7 +49,7 @@ stats <- data_orig %>%
 data <- data_orig %>% 
   mutate(comm_name=factor(comm_name, levels=spp_do)) %>% 
   mutate(strata=factor(strata, levels=c("Southern California", "Channel Islands", 
-                                        "Ventura", "Morro Bay", "Monterey Bay")))
+                                        "Ventura", "Morro Bay", "Monterey Bay", "San Francisco")))
 
 # Format data
 data_hist <- data_hist_orig %>% 
@@ -101,6 +101,7 @@ g <- ggplot(data, aes(x=year, y=nbycatch)) +
   labs(x="", y="Estimated bycatch") +
   # Legend
   scale_fill_discrete(name="") +
+  guides(fill = guide_legend(nrow = 1)) +
   # Theme
   theme_bw() + base_theme +
   theme(legend.position="top",

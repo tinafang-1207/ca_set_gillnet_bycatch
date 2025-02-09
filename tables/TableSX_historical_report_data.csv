@@ -1,0 +1,56 @@
+reference,species,strata,year,nsets_obs,ntrips_obs,ncaught,catch_per_trip,obs_data_yn
+Hanan et al. 1988,California sea lion,Channel Islands,1985,180,60,44,0.733333333,*
+Hanan & Diamon 1989,California sea lion,Channel Islands,1986,66,22,54,2.454545455,*
+Hanan et al. 1988,California sea lion,Monterey Bay,1983,22,7.333333333,12,1.636363636,
+Hanan et al. 1988,California sea lion,Monterey Bay,1984,126,42,19,0.452380952,
+Hanan et al. 1988,California sea lion,Monterey Bay,1985,49,16.33333333,5,0.306122449,
+Hanan & Diamon 1989,California sea lion,Monterey Bay,1986,36,12,4,0.333333333,
+Hanan et al. 1988,California sea lion,Morro Bay,1983,288,96,41,0.427083333,
+Hanan et al. 1988,California sea lion,Morro Bay,1984,374,124.6666667,22,0.176470588,
+Hanan et al. 1988,California sea lion,Morro Bay,1985,317,105.6666667,25,0.23659306,
+Hanan & Diamon 1989,California sea lion,Morro Bay,1986,137,45.66666667,13,0.284671533,*
+Hanan et al. 1988,California sea lion,San Francisco,1983,158,52.66666667,4,0.075949367,
+Hanan et al. 1988,California sea lion,San Francisco,1984,300,100,8,0.08,
+Hanan et al. 1988,California sea lion,San Francisco,1985,348,116,3,0.025862069,
+Hanan & Diamon 1989,California sea lion,San Francisco,1986,419,139.6666667,2,0.014319809,
+Hanan et al. 1988,California sea lion,Southern California,1983,430,143.3333333,16,0.111627907,*
+Hanan et al. 1988,California sea lion,Southern California,1984,571,190.3333333,13,0.068301226,*
+Hanan et al. 1988,California sea lion,Southern California,1985,339,113,5,0.044247788,*
+Hanan & Diamon 1989,California sea lion,Southern California,1986,425,141.6666667,15,0.105882353,*
+Hanan et al. 1988,California sea lion,Ventura,1983,430,143.3333333,16,0.111627907,*
+Hanan et al. 1988,California sea lion,Ventura,1984,571,190.3333333,13,0.068301226,*
+Hanan et al. 1988,California sea lion,Ventura,1985,339,113,5,0.044247788,*
+Hanan & Diamon 1989,California sea lion,Ventura,1986,425,141.6666667,15,0.105882353,*
+Diamond & Hanan 1986,Harbor porpoise,Monterey Bay,1983,22,7.333333333,2,0.272727273,
+Hanan et al. 1986,Harbor porpoise,Monterey Bay,1984,126,42,2,0.047619048,
+Hanan et al. 1987,Harbor porpoise,Monterey Bay,1985,49,16.33333333,2,0.12244898,
+Hanan & Diamon 1989,Harbor porpoise,Monterey Bay,1986,36,12,1,0.083333333,
+Diamond & Hanan 1986,Harbor porpoise,Morro Bay,1983,288,96,7,0.072916667,
+Hanan et al. 1986,Harbor porpoise,Morro Bay,1984,374,124.6666667,3,0.024064171,
+Hanan et al. 1987,Harbor porpoise,Morro Bay,1985,317,105.6666667,3,0.028391167,
+Hanan & Diamon 1989,Harbor porpoise,Morro Bay,1986,137,45.66666667,3,0.065693431,*
+Diamond & Hanan 1986,Harbor porpoise,San Francisco,1983,151,50.33333333,5,0.099337748,
+Hanan et al. 1986,Harbor porpoise,San Francisco,1984,299,99.66666667,14,0.140468227,
+Hanan et al. 1987,Harbor porpoise,San Francisco,1985,348,116,28,0.24137931,
+Hanan & Diamon 1989,Harbor porpoise,San Francisco,1986,419,139.6666667,12,0.085918854,
+Hanan et al. 1988,Harbor seal,Channel Islands,1985,180,60,13,0.216666667,*
+Hanan et al. 1988,Harbor seal,Monterey Bay,1983,22,7.333333333,0,0,
+Hanan et al. 1988,Harbor seal,Monterey Bay,1984,126,42,10,0.238095238,
+Hanan et al. 1988,Harbor seal,Monterey Bay,1985,49,16.33333333,7,0.428571429,
+Hanan & Diamon 1989,Harbor seal,Monterey Bay,1986,36,12,9,0.75,
+Hanan et al. 1988,Harbor seal,Morro Bay,1983,288,96,17,0.177083333,
+Hanan et al. 1988,Harbor seal,Morro Bay,1984,374,124.6666667,29,0.232620321,
+Hanan et al. 1988,Harbor seal,Morro Bay,1985,317,105.6666667,84,0.794952681,
+Hanan & Diamon 1989,Harbor seal,Morro Bay,1986,137,45.66666667,25,0.547445255,*
+Hanan et al. 1988,Harbor seal,San Francisco,1983,158,52.66666667,11,0.208860759,
+Hanan et al. 1988,Harbor seal,San Francisco,1984,300,100,22,0.22,
+Hanan et al. 1988,Harbor seal,San Francisco,1985,348,116,38,0.327586207,
+Hanan & Diamon 1989,Harbor seal,San Francisco,1986,419,139.6666667,60,0.429594272,
+Hanan et al. 1988,Harbor seal,Southern California,1983,430,143.3333333,0,0,*
+Hanan et al. 1988,Harbor seal,Southern California,1984,571,190.3333333,4,0.021015762,*
+Hanan et al. 1988,Harbor seal,Southern California,1985,339,113,2,0.017699115,*
+Hanan & Diamon 1989,Harbor seal,Southern California,1986,425,141.6666667,8,0.056470588,*
+Hanan et al. 1988,Harbor seal,Ventura,1983,430,143.3333333,0,0,*
+Hanan et al. 1988,Harbor seal,Ventura,1984,571,190.3333333,4,0.021015762,*
+Hanan et al. 1988,Harbor seal,Ventura,1985,339,113,2,0.017699115,*
+Hanan & Diamon 1989,Harbor seal,Ventura,1986,425,141.6666667,8,0.056470588,*
