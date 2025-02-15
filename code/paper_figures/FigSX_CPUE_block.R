@@ -8,7 +8,6 @@ library(tidyverse)
 ### read in data ###
 datadir <- "/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/processed/"
 data_orig <- readRDS(file.path(datadir, "CDFW_1981_2020_gillnet_logbook_data_use.Rds"))
-hotspot <- readRDS(file.path("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/spatial_risk_predict_final.Rds"))
 
 # world
 usa <- rnaturalearth::ne_states(country = "United States of America", returnclass = "sf")
@@ -22,6 +21,10 @@ block_key <- readRDS("data/strata/block_strata_key.Rds")
 
 # State waters
 state_waters <- readRDS(file.path("data/gis_data/CA_state_waters_polyline.Rds"))
+
+# risk contour
+sl_contour <- sf::st_read("data/gis_data/predict_risk_contour/sealion_predict_risk_contour.shp")
+hs_contour <- sf::st_read("data/gis_data/predict_risk_contour/harbor_seal_predict_risk_contour.shp")
 
 
 # Format data
@@ -131,7 +134,8 @@ lat_df <- tibble(x=-117,
                  yend=lats)
 
 # Plot map
-g1 <- ggplot(data=stats_blocks_sf, mapping=aes(fill=prop)) +
+g1 <- ggplot() +
+  geom_sf(data = stats_blocks_sf, mapping = aes(fill = prop)) +
   facet_wrap(~fishing_season, nrow = 1) +
   # Blocks
   geom_sf(color="grey50", linewidth=0.1) +
@@ -144,8 +148,10 @@ g1 <- ggplot(data=stats_blocks_sf, mapping=aes(fill=prop)) +
   # Land
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data=mexico, fill="grey85", col="white", linewidth=0.2, inherit.aes = F) +
+  geom_sf(data = sl_contour, color = "red") +
+  geom_sf(data = hs_contour, color = "blue") +
   # Crop
-  coord_sf(xlim = c(-124, -117), ylim = c(32.3, 36.5)) +
+  coord_sf(xlim = c(-122, -117), ylim = c(32.3, 35.5)) +
   # Axes
   scale_x_continuous(breaks=seq(-124, -118, 2)) +
   scale_y_continuous(breaks=seq(32, 38, 2)) +
@@ -164,8 +170,5 @@ g1 <- ggplot(data=stats_blocks_sf, mapping=aes(fill=prop)) +
         legend.position = c(0.6, 0.25),
         plot.subtitle=element_text(size=4, face="italic"))
 g1
-
-###############################################################
-# 
 
 
