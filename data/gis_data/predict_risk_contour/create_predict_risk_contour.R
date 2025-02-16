@@ -88,7 +88,7 @@ contour_hs_sf <- sf::st_as_sf(contour_hs) %>%
   # Add id
   mutate(id=1:nrow(.)) %>% 
   # Remove the two small contours (ask Chris!)
-  filter(id != 6) %>%
+  filter(id == 7) %>%
   # Reproject
   sf::st_transform(crs = sf::st_crs(wgs84))
 
