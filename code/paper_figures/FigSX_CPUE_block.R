@@ -20,11 +20,13 @@ blocks_df <- blocks %>% sf::st_drop_geometry()
 block_key <- readRDS("data/strata/block_strata_key.Rds")
 
 # State waters
-state_waters <- readRDS(file.path("data/gis_data/CA_state_waters_polyline.Rds"))
+#state_waters <- readRDS(file.path("data/gis_data/CA_state_waters_polyline.Rds"))
 
 # risk contour
 sl_contour <- sf::st_read("data/gis_data/predict_risk_contour/sealion_predict_risk_contour.shp")
 hs_contour <- sf::st_read("data/gis_data/predict_risk_contour/harbor_seal_predict_risk_contour.shp")
+cm_contour <- sf::st_read("data/gis_data/predict_risk_contour/common_murre_predict_risk_contour.shp")
+ns_contour <- sf::st_read("data/gis_data/predict_risk_contour/ne_seal_predict_risk_contour.shp")
 
 
 # Format data
@@ -84,13 +86,6 @@ base_theme <- theme(axis.text=element_text(size=7),
                     legend.key = element_rect(fill = NA, color=NA),
                     legend.background = element_rect(fill=alpha('blue', 0)))
 
-# Strata lines
-lats <- c(33.84, 34.5, 35.66, 37.33, 38.84)
-xends <- c(-121.5, -122, -122.5, -124, -125)
-lat_df <- tibble(x=-117,
-                 xend=xends,
-                 y=lats,
-                 yend=lats)
 
 # Plot map
 g1 <- ggplot() +
@@ -101,8 +96,10 @@ g1 <- ggplot() +
   # Land
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.2, inherit.aes = F) +
   geom_sf(data=mexico, fill="grey85", col="white", linewidth=0.2, inherit.aes = F) +
-  geom_sf(data = sl_contour, color = "#dc143c", linewidth = 0.4, linetype = 1, inherit.aes = F) +
-  geom_sf(data = hs_contour, color = "#0073e6", linewidth = 0.4, linetype = 1, inherit.aes = F) +
+  geom_sf(data = sl_contour, color = "#1B9E77", linewidth = 0.4, linetype = 1, inherit.aes = F) +
+  geom_sf(data = hs_contour, color = "#7570B3", linewidth = 0.4, linetype = 1, inherit.aes = F) +
+  geom_sf(data = cm_contour, color = "#D95F02", linewidth = 0.4, linetype = 1, inherit.aes = F) +
+  geom_sf(data = ns_contour, color = "#66A61E", linewidth = 0.4, linetype = 1, inherit.aes = F) +
   # Crop
   coord_sf(xlim = c(-121.5, -117), ylim = c(32, 36)) +
   # Axes
@@ -123,6 +120,7 @@ g1 <- ggplot() +
         legend.position = c(0.6, 0.25),
         plot.subtitle=element_text(size=4, face="italic"))
 g1
+
 #######################################################################
 # Save the plot
 plotdir <- "figures"
