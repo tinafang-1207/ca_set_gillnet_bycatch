@@ -366,8 +366,8 @@ g6 <- ggplot() +
   scale_fill_gradientn(name="% of trips", 
                        colors=RColorBrewer::brewer.pal(9, "Spectral") %>% rev(),
                        trans="log10",
-                       breaks=c(1, 10)/100,
-                       labels = c("1%", "10%")) +
+                       breaks=c(c(0.1, 1, 10)/100),
+                       labels = c("0.1%", "1%", "10%")) +
   scale_color_manual(name = "Species", values = species) +
   guides(fill = guide_colorbar(ticks.colour = "black", 
                                frame.colour = "black", 
