@@ -14,6 +14,11 @@ model_predictor <- model_orig %>%
   select(lat_dd, long_dd, depth_fa, soak_hr, mesh_size_in, shore_km, yday, sst_c, island_yn) %>%
   cor()
 
+model_variables <-  model_orig %>%
+  select(lat_dd, long_dd, depth_fa, soak_hr, mesh_size_in, shore_km, yday, sst_c, island_yn) %>%
+  slice(1:10000)
+  
+
 g_corr <- ggcorrplot::ggcorrplot(
   model_predictor,
   method = "circle",
@@ -26,11 +31,20 @@ g_corr <- ggcorrplot::ggcorrplot(
         axis.title.y = element_blank())
 
 g_corr
+
+
+g <- GGally::ggpairs(model_variables)
+  
+g
+  
+  
+  
+
 #######################################################
 # save the figure
 plotdir <- "figures"
 
-ggsave(g_corr, filename=file.path(plotdir, "FigSX_rf_variable_correlation.png"), 
-       width=6, height=4, units="in", dpi=600)
+ggsave(g, filename=file.path(plotdir, "FigSX_rf_variable_correlation.png"), 
+       width=8, height=8, units="in", dpi=600)
 
 

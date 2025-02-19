@@ -29,13 +29,32 @@ landmark <- read_csv("data/gis_data/landmark_key.csv")
 state_water <- readRDS("data/gis_data/CA_state_waters_polyline.Rds")
 
 # read in island exclusion area
-island_exclusion <- sf::st_read("data/gis_data/island_gillnet_exclusion_areas.shp")
+island_exclusion <- sf::st_read("data/gis_data/exclusion_zone/island_gillnet_exclusion_areas.shp")
 
 # read in california marine protected area
 ca_mpa <- wcfish::mpas_ca
+####################################################################
+# Fishing efforts data and risk contour
 
-# format data
+datadir <- "/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/processed/"
+data_orig <- readRDS(file.path(datadir, "CDFW_1981_2020_gillnet_logbook_data_use.Rds"))
+
+# blocks
+blocks <- wcfish::blocks
+blocks_df <- blocks %>% sf::st_drop_geometry()
+
+block_key <- readRDS("data/strata/block_strata_key.Rds")
+
+# risk contour
+sl_contour <- sf::st_read("data/gis_data/predict_risk_contour/sealion_predict_risk_contour.shp")
+hs_contour <- sf::st_read("data/gis_data/predict_risk_contour/harbor_seal_predict_risk_contour.shp")
+cm_contour <- sf::st_read("data/gis_data/predict_risk_contour/common_murre_predict_risk_contour.shp")
+ns_contour <- sf::st_read("data/gis_data/predict_risk_contour/ne_seal_predict_risk_contour.shp")
+
+
+
 ##################################################
+# format data (spatial risk prediction)
 
 wgs84 <- "+proj=longlat +datum=WGS84"
 
@@ -84,11 +103,44 @@ ca_mpa_valid <- sf::st_make_valid(ca_mpa_clean)
 ca_mpa_dissolve <- ca_mpa_valid %>%
   sf::st_buffer(dist = 50) %>%
   sf::st_union()
+#############################################################################
+# format data (fishing efforts)
+data_fe <- data_orig %>%
+  # Filter years after 2002
+  filter(year >= 2002 & year <= 2021) %>%
+  # add hotspot seasons and normal seasons
+  mutate(fishing_season = case_when(yday>=91 & yday <=166~"Closure period (4/1-6/15)",
+                                    yday<91|yday>166~"Open period (rest of the year)") )%>% 
+  filter(!is.na(fishing_season)) %>%
+  # Add strata
+  left_join(block_key)
 
 
+# build block data
+stats_blocks <- data_fe %>%
+  # Summarize by fishing season and block
+  group_by(fishing_season, block_id) %>% 
+  summarize(nvessels=n_distinct(vessel_id),
+            nvesseldays=n_distinct(trip_id)) %>% 
+  ungroup() %>% 
+  # Calculate proportion by period
+  group_by(fishing_season) %>% 
+  mutate(prop=nvesseldays/sum(nvesseldays)) %>% 
+  ungroup() %>% 
+  # Add block props
+  mutate(block_id=as.numeric(block_id)) %>% 
+  left_join(blocks_df %>% select(block_id, block_type, block_lat_dd, block_long_dd), by="block_id") %>% 
+  filter(block_type=="Inshore") %>% 
+  # Remove confidential data
+  filter(nvessels>=3)
 
-# Plot data
+stats_blocks_sf <- stats_blocks %>% 
+  left_join(blocks %>% select(block_id)) %>% 
+  sf::st_as_sf()
+
 ################################################################################
+# Plot data (spatial risk prediction)
+
 
 # theme
 base_theme <- theme(axis.text=element_text(size=7),
@@ -218,10 +270,83 @@ g4 <- ggplot() +
                                   axis.title.y = element_blank())
 
 g4
+#######################################################################
+# Plot data (fishing efforts)
+
+g5 <- ggplot() +
+  geom_sf(data = stats_blocks_sf %>% filter(fishing_season == "Closure period (4/1-6/15)"), mapping = aes(fill = prop), alpha = 0.8) +
+  facet_wrap(~fishing_season, nrow = 2) +
+  # Blocks
+  geom_sf(color="grey50", linewidth=0.1) +
+  # Land
+  geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.01, inherit.aes = F) +
+  geom_sf(data=mexico, fill="grey85", col="white", linewidth=0.01, inherit.aes = F) +
+  geom_sf(data = sl_contour, color = "#1B9E77", linewidth = 0.4, linetype = 1, inherit.aes = F) +
+  geom_sf(data = hs_contour, color = "#7570B3", linewidth = 0.4, linetype = 1, inherit.aes = F) +
+  geom_sf(data = cm_contour, color = "#D95F02", linewidth = 0.4, linetype = 1, inherit.aes = F) +
+  geom_sf(data = ns_contour, color = "#66A61E", linewidth = 0.4, linetype = 1, inherit.aes = F) +
+  # Crop
+  coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
+  # Axes
+  scale_x_continuous(breaks=seq(-122, -118, 1)) +
+  scale_y_continuous(breaks=seq(32, 35, 1)) +
+  # Legend
+  scale_fill_gradientn(name="% of trips", 
+                       colors=RColorBrewer::brewer.pal(9, "Spectral") %>% rev(),
+                       trans="log10",
+                       breaks=c(1, 10)/100,
+                       labels = c("1%", "10%")) +
+  guides(fill = guide_colorbar(ticks.colour = "black", frame.colour = "black", frame.linewidth = 0.2)) +
+  # Theme
+  theme_bw() + base_theme +
+  theme(axis.text=element_text(size=6),
+        axis.title.x=element_blank(),
+        legend.key.size = unit(0.25, "cm"),
+        legend.position = c(0.2, 0.25),
+        plot.subtitle=element_text(size=4, face="italic"))
+
+g5
+
+g6 <- ggplot() +
+  geom_sf(data = stats_blocks_sf %>% filter(fishing_season == "Open period (rest of the year)"), mapping = aes(fill = prop), alpha = 0.8) +
+  facet_wrap(~fishing_season, nrow = 2) +
+  # Blocks
+  geom_sf(color="grey50", linewidth=0.1) +
+  # Land
+  geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.01, inherit.aes = F) +
+  geom_sf(data=mexico, fill="grey85", col="white", linewidth=0.01, inherit.aes = F) +
+  geom_sf(data = sl_contour, color = "#1B9E77", linewidth = 0.4, linetype = 1, inherit.aes = F) +
+  geom_sf(data = hs_contour, color = "#7570B3", linewidth = 0.4, linetype = 1, inherit.aes = F) +
+  geom_sf(data = cm_contour, color = "#D95F02", linewidth = 0.4, linetype = 1, inherit.aes = F) +
+  geom_sf(data = ns_contour, color = "#66A61E", linewidth = 0.4, linetype = 1, inherit.aes = F) +
+  # Crop
+  coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
+  # Axes
+  scale_x_continuous(breaks=seq(-122, -118, 1)) +
+  scale_y_continuous(breaks=seq(32, 35, 1)) +
+  # Legend
+  scale_fill_gradientn(name="% of trips", 
+                       colors=RColorBrewer::brewer.pal(9, "Spectral") %>% rev(),
+                       trans="log10",
+                       breaks=c(1, 10)/100,
+                       labels = c("1%", "10%")) +
+  guides(fill = guide_colorbar(ticks.colour = "black", frame.colour = "black", frame.linewidth = 0.2)) +
+  # Theme
+  theme_bw() + base_theme +
+  theme(axis.text=element_text(size=6),
+        axis.title.x=element_blank(),
+        legend.key.size = unit(0.25, "cm"),
+        legend.position = c(0.2, 0.25),
+        plot.subtitle=element_text(size=4, face="italic"))
+
+g6
 
 
 
-g_total <- gridExtra::grid.arrange(g1, g2, g3, g4, ncol = 2)
+
+
+#####################################################################
+g_total <- gridExtra::grid.arrange(g1, g2, g5, g3, g4, g6, ncol = 3)
 
 g_total
 
@@ -233,7 +358,7 @@ plotdir <- "figures"
 
 # multiple legend plot
 ggsave(g_total, filename=file.path(plotdir, "Fig6_spatial_prediction_multi_legend.png"), 
-       width=5, height=4.5, units="in", dpi=600)
+       width=6.5, height=4.5, units="in", dpi=600)
 
 
 

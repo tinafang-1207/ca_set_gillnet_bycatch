@@ -12,28 +12,35 @@ islands <- sf::st_read("data/gis_data/california_islands/california_islands.shp"
 # wgs 84
 wgs84 <- "+proj=longlat +datum=WGS84"
 ####################################################################
+lat <- seq(32,35, 0.02)
+long <- seq(-121, -117, 0.02)
+spatial_xy <- expand.grid(lat = lat, long = long)
+
 # California sea lion
 hotspot_sl <- hotspot %>%
   filter(species == "California sea lion") %>%
   select(-species) %>%
   rename(long = Longitude, lat = Latitude)
 
+hotspot_sl_all <- left_join(spatial_xy, hotspot_sl, by = c("lat", "long")) %>%
+  mutate(spatial_risk = ifelse(is.na(spatial_risk), 0, spatial_risk))
+  
 
 # find the 90th percentile of California sealion
 quantile(hotspot_sl$spatial_risk, 0.95)
 
 
 # Convert to spatvect object that recognized by terra
-hotspot_sl_vect <- terra::vect(hotspot_sl, geom = c("long", "lat"))
+hotspot_sl_vect <- terra::vect(hotspot_sl_all , geom = c("long", "lat"))
 # set crs
 terra::crs(hotspot_sl_vect) <- wgs84
 
 # Define the extent of the raster
 # For this example, use a bounding box covering the points.
-bbox <- terra::ext(min(hotspot_sl$long), max(hotspot_sl$long), min(hotspot_sl$lat), max(hotspot_sl$lat))
+bbox <- terra::ext(min(hotspot_sl_all$long), max(hotspot_sl_all$long), min(hotspot_sl_all$lat), max(hotspot_sl_all$lat))
 
 # Create an empty raster with the same extent, and define resolution
-r_sl <- terra::rast(bbox, resolution = 0.0201)  # Set resolution, adjust as needed
+r_sl <- terra::rast(bbox, resolution = 0.02001)  # Set resolution, adjust as needed
 
 # Rasterize the spatial data (the risk values)
 r_risk_sl <- terra::rasterize(hotspot_sl_vect, r_sl, field = "spatial_risk")
@@ -65,20 +72,24 @@ hotspot_hs <- hotspot %>%
   select(-species) %>%
   rename(long = Longitude, lat = Latitude)
 
+hotspot_hs_all <- left_join(spatial_xy, hotspot_hs, by = c("lat", "long")) %>%
+  mutate(spatial_risk = ifelse(is.na(spatial_risk), 0, spatial_risk))
+
+
 # find the 95% quantile
 quantile(hotspot_hs$spatial_risk, 0.95)
 
 # Convert to spatvect object that recognized by terra
-hotspot_hs_vect <- terra::vect(hotspot_hs, geom = c("long", "lat"))
+hotspot_hs_vect <- terra::vect(hotspot_hs_all, geom = c("long", "lat"))
 # set crs
 terra::crs(hotspot_hs_vect) <- wgs84
 
 # Define the extent of the raster (you may need to adjust it)
 # For this example, use a bounding box covering the points.
-bbox <- terra::ext(min(hotspot_hs$long), max(hotspot_hs$long), min(hotspot_hs$lat), max(hotspot_hs$lat))
+bbox <- terra::ext(min(hotspot_hs_all$long), max(hotspot_hs_all$long), min(hotspot_hs_all$lat), max(hotspot_hs_all$lat))
 
 # Create an empty raster with the same extent, and define resolution
-r_hs <- terra::rast(bbox, resolution = 0.0201)  # Set resolution, adjust as needed
+r_hs <- terra::rast(bbox, resolution = 0.02001)  # Set resolution, adjust as needed
 
 # Rasterize the spatial data (the risk values)
 r_risk_hs <- terra::rasterize(hotspot_hs_vect, r_hs, field = "spatial_risk")
@@ -96,7 +107,7 @@ contour_hs_sf <- sf::st_as_sf(contour_hs) %>%
   # Add id
   mutate(id=1:nrow(.)) %>% 
   # Remove the two small contours (ask Chris!)
-  filter(id %in%c(1,11,12)) %>%
+  filter(id %in%c(1,9,10)) %>%
   # Reproject
   sf::st_transform(crs = sf::st_crs(wgs84))
 
@@ -112,17 +123,21 @@ hotspot_cm <- hotspot %>%
   select(-species) %>%
   rename(long = Longitude, lat = Latitude)
 
+hotspot_cm_all <- left_join(spatial_xy, hotspot_cm, by = c("lat", "long")) %>%
+  mutate(spatial_risk = ifelse(is.na(spatial_risk), 0, spatial_risk))
+
+
 # check the 95% percentile
 quantile(hotspot_cm$spatial_risk, 0.99)
 
 # Convert to spatvect object that recognized by terra
-hotspot_cm_vect <- terra::vect(hotspot_cm, geom = c("long", "lat"))
+hotspot_cm_vect <- terra::vect(hotspot_cm_all, geom = c("long", "lat"))
 # set crs
 terra::crs(hotspot_cm_vect) <- wgs84
 
 # Define the extent of the raster (you may need to adjust it)
 # For this example, use a bounding box covering the points.
-bbox <- terra::ext(min(hotspot_cm$long), max(hotspot_cm$long), min(hotspot_cm$lat), max(hotspot_cm$lat))
+bbox <- terra::ext(min(hotspot_cm_all$long), max(hotspot_cm_all$long), min(hotspot_cm_all$lat), max(hotspot_cm_all$lat))
 
 # Create an empty raster with the same extent, and define resolution
 r_cm <- terra::rast(bbox, resolution = 0.0201)  # Set resolution, adjust as needed
@@ -188,7 +203,7 @@ contour_ns_sf <- sf::st_as_sf(contour_ns) %>%
   # Add id
   mutate(id=1:nrow(.)) %>% 
   # Remove the two small contours (ask Chris!)
-  filter(id%in%c(1,3)) %>%
+  filter(id == 1) %>%
   # Reproject
   sf::st_transform(crs = sf::st_crs(wgs84))
 
@@ -209,7 +224,7 @@ sf::st_write(contour_ns_sf, dsn = "data/gis_data/predict_risk_contour/ne_seal_pr
 # Check result
 
 ggplot() +
-  geom_sf(data = contour_ns_sf, mapping=aes(color =as.character(id))) +
+  geom_sf(data = contour_sl_sf, mapping=aes(color =as.character(id))) +
   geom_sf(data = islands %>% sf::st_transform(wgs84)) +
   coord_sf(xlim = c(-121, -118), ylim = c(32, 35)) +
   theme_bw()
