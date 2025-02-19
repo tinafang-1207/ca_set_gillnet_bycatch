@@ -1,12 +1,12 @@
 ﻿species,landmark,lat_dd,long_dd,hjust,vjust
-California sea lion,Santa Rosa,33.9773,-120.0896,0.1,2
+California sea lion,Santa Rosa Island,33.9773,-120.0896,0.5,3
 California sea lion,Santa Barbara,34.4208,-119.6982,-0.1,-0.7
-California sea lion,Santa Catalina,33.3879,-118.4163,-0.1,-0.5
-California sea lion,San Clemente,32.9029,-118.4981,0.1,2
+California sea lion,Santa Catalina Island,33.3879,-118.4163,0.5,2.5
+California sea lion,San Clemente Island,32.9029,-118.4981,0.5,2.5
 California sea lion,Point Mugu,34.0856,-119.0609,-0.1,-0.7
 Harbor seal,Santa Barbara,34.4208,-119.6982,-0.1,-0.7
 Harbor seal,Point Sal,34.9021,-120.6535,-0.1,1.5
-Harbor seal,Santa Cruz,34.0232,-119.7658,0.1,2
+Harbor seal,Santa Cruz Island,34.0232,-119.7658,0.7,3
 Harbor seal,Point Vicente,33.7448,-118.4114,-0.1,-0.7
 Harbor seal,Point Mugu,34.0856,-119.0609,-0.1,-0.7
 Common murre,Point Sal,34.9021,-120.6535,-0.1,1.5

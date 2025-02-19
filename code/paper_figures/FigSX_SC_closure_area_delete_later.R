@@ -9,6 +9,9 @@ library(tidyverse)
 state_water <- readRDS("data/gis_data/CA_state_waters_polyline.Rds")
 islands <- sf::st_read("data/gis_data/california_islands/california_islands.shp")
 bathy <- raster::raster("data/gis_data/bd200m_v2i")
+exclusion_zone <- sf::st_read("data/gis_data/island_gillnet_exclusion_areas.shp")
+
+
 # bathy_spatial <- read.csv("data/gis_data/bathy_extracted.csv")
 
 usa <- rnaturalearth::ne_states(country = "United States of America", returnclass = "sf")
@@ -60,6 +63,9 @@ sf::st_write(contour_sf, dsn="data/gis_data/70fathom_contour.shp")
 
 ggplot() +
   geom_sf(data=contour_sf, mapping=aes(fill=as.character(id)))
+
+ggplot() +
+  geom_sf(data = exclusion_zone)
 
 
 ##############################################################################
@@ -172,7 +178,7 @@ ggplot() +
 
 
 
-ggplot(data = bathy_extract_polygon_sf) +
+ggplot(exclusion_zone) +
   geom_sf()
 
 
