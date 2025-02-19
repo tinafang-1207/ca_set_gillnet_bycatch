@@ -52,6 +52,19 @@ cm_contour <- sf::st_read("data/gis_data/predict_risk_contour/common_murre_predi
 ns_contour <- sf::st_read("data/gis_data/predict_risk_contour/ne_seal_predict_risk_contour.shp")
 
 
+sl_contour <- sl_contour %>%
+  mutate(species = "California sea lion")
+
+hs_contour <- hs_contour %>%
+  mutate(species = "Harbor seal")
+
+cm_contour <- cm_contour %>%
+  mutate(species = "Common murre")
+
+ns_contour <- ns_contour %>%
+  mutate(species = "Northern elephant seal")
+
+
 
 ##################################################
 # format data (spatial risk prediction)
@@ -270,21 +283,28 @@ g4 <- ggplot() +
                                   axis.title.y = element_blank())
 
 g4
+
+
 #######################################################################
 # Plot data (fishing efforts)
 
+species <- c("California sea lion" = "#1B9E77",
+             "Harbor seal" = "#7570B3",
+             "Common murre" = "#D95F02",
+             "Northern elephant seal" = "#66A61E")
+
 g5 <- ggplot() +
-  geom_sf(data = stats_blocks_sf %>% filter(fishing_season == "Closure period (4/1-6/15)"), mapping = aes(fill = prop), alpha = 0.8) +
+  geom_sf(data = stats_blocks_sf %>% filter(fishing_season == "Closure period (4/1-6/15)"), mapping = aes(fill = prop), alpha = 0.7) +
   facet_wrap(~fishing_season, nrow = 2) +
   # Blocks
   geom_sf(color="grey50", linewidth=0.1) +
   # Land
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.01, inherit.aes = F) +
   geom_sf(data=mexico, fill="grey85", col="white", linewidth=0.01, inherit.aes = F) +
-  geom_sf(data = sl_contour, color = "#1B9E77", linewidth = 0.4, linetype = 1, inherit.aes = F) +
-  geom_sf(data = hs_contour, color = "#7570B3", linewidth = 0.4, linetype = 1, inherit.aes = F) +
-  geom_sf(data = cm_contour, color = "#D95F02", linewidth = 0.4, linetype = 1, inherit.aes = F) +
-  geom_sf(data = ns_contour, color = "#66A61E", linewidth = 0.4, linetype = 1, inherit.aes = F) +
+  geom_sf(data = sl_contour, aes(color = species), linewidth = 0.4, linetype = 1, inherit.aes = F) +
+  geom_sf(data = hs_contour, aes(color = species), linewidth = 0.4, linetype = 1, inherit.aes = F) +
+  geom_sf(data = cm_contour, aes(color = species), linewidth = 0.4, linetype = 1, inherit.aes = F) +
+  geom_sf(data = ns_contour, aes(color = species), linewidth = 0.4, linetype = 1, inherit.aes = F) +
   # Crop
   coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
   # Axes
@@ -296,29 +316,32 @@ g5 <- ggplot() +
                        trans="log10",
                        breaks=c(1, 10)/100,
                        labels = c("1%", "10%")) +
-  guides(fill = guide_colorbar(ticks.colour = "black", frame.colour = "black", frame.linewidth = 0.2)) +
+  guides(fill = "none",
+         color = guide_legend(override.aes = list(linetype = 1, size = 1))) +
+  scale_color_manual(name = "Species", values = species) +
   # Theme
   theme_bw() + base_theme +
   theme(axis.text=element_text(size=6),
         axis.title.x=element_blank(),
         legend.key.size = unit(0.25, "cm"),
-        legend.position = c(0.2, 0.25),
+        legend.key = element_rect(color = NA),
+        legend.position = c(0.4, 0.25),
         plot.subtitle=element_text(size=4, face="italic"))
 
 g5
 
 g6 <- ggplot() +
-  geom_sf(data = stats_blocks_sf %>% filter(fishing_season == "Open period (rest of the year)"), mapping = aes(fill = prop), alpha = 0.8) +
+  geom_sf(data = stats_blocks_sf %>% filter(fishing_season == "Open period (rest of the year)"), mapping = aes(fill = prop), alpha = 0.7) +
   facet_wrap(~fishing_season, nrow = 2) +
   # Blocks
   geom_sf(color="grey50", linewidth=0.1) +
   # Land
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.01, inherit.aes = F) +
   geom_sf(data=mexico, fill="grey85", col="white", linewidth=0.01, inherit.aes = F) +
-  geom_sf(data = sl_contour, color = "#1B9E77", linewidth = 0.4, linetype = 1, inherit.aes = F) +
-  geom_sf(data = hs_contour, color = "#7570B3", linewidth = 0.4, linetype = 1, inherit.aes = F) +
-  geom_sf(data = cm_contour, color = "#D95F02", linewidth = 0.4, linetype = 1, inherit.aes = F) +
-  geom_sf(data = ns_contour, color = "#66A61E", linewidth = 0.4, linetype = 1, inherit.aes = F) +
+  geom_sf(data = sl_contour, aes(color = species), linewidth = 0.4, linetype = 1, inherit.aes = F) +
+  geom_sf(data = hs_contour, aes(color = species), linewidth = 0.4, linetype = 1, inherit.aes = F) +
+  geom_sf(data = cm_contour, aes(color = species), linewidth = 0.4, linetype = 1, inherit.aes = F) +
+  geom_sf(data = ns_contour, aes(color = species), linewidth = 0.4, linetype = 1, inherit.aes = F) +
   # Crop
   coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
   # Axes
@@ -330,26 +353,42 @@ g6 <- ggplot() +
                        trans="log10",
                        breaks=c(1, 10)/100,
                        labels = c("1%", "10%")) +
-  guides(fill = guide_colorbar(ticks.colour = "black", frame.colour = "black", frame.linewidth = 0.2)) +
+  scale_color_manual(name = "Species", values = species) +
+  guides(fill = guide_colorbar(ticks.colour = "black", 
+                               frame.colour = "black", 
+                               frame.linewidth = 0.2),
+         color = "none") +
   # Theme
   theme_bw() + base_theme +
   theme(axis.text=element_text(size=6),
         axis.title.x=element_blank(),
-        legend.key.size = unit(0.25, "cm"),
+        legend.key.size = unit(0.15, "cm"),
         legend.position = c(0.2, 0.25),
         plot.subtitle=element_text(size=4, face="italic"))
 
 g6
+######################################################
+# tag_A <- grid::textGrob("A", x = unit(0.1, "npc"), y = unit(0.75, "npc"), gp = grid::gpar(fontsize = 12, fontface = "bold"))
+# tag_B <-  grid::textGrob("B", x = unit(0.1, "npc"), y = unit(0.75, "npc"), gp = grid::gpar(fontsize = 12, fontface = "bold"))
+# 
+# 
+# g_total <-
+#   # Arrange the plots with tags A and B
+#   gridExtra::grid.arrange(
+#     # First group of plots with tag "A"
+#     gridExtra::arrangeGrob(g1, g2, g3, g4, ncol = 2, top = tag_A),
+#     
+#     # Second group of plots with tag "B"
+#     gridExtra::arrangeGrob(g5, g6, ncol = 1, top = tag_B),
+#     
+#     # Combine the two groups side by side
+#     ncol = 2  # Place the two groups side by side
+#   )
+# g_total
 
-
-
-
-
-#####################################################################
 g_total <- gridExtra::grid.arrange(g1, g2, g5, g3, g4, g6, ncol = 3)
 
 g_total
-
 
 # save figures
 ################################################################################
