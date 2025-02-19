@@ -12,7 +12,7 @@ library(tidyverse)
 # prediction data
 
 # Yutian
-data <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/spatial_risk_predict_final.Rds") 
+# data <- readRDS("/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/spatial_risk_predict_final.Rds") 
 
 # Chris
 data <- readRDS("/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/model_output/spatial_risk_predict_final.Rds")
@@ -33,10 +33,12 @@ island_exclusion <- sf::st_read("data/gis_data/exclusion_zone/island_gillnet_exc
 
 # read in california marine protected area
 ca_mpa <- wcfish::mpas_ca
+
 ####################################################################
 # Fishing efforts data and risk contour
 
-datadir <- "/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/processed/"
+datadir <- "/Users/yutianfang/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/processed/" # Yutian
+datadir <- "/Users/cfree/Dropbox/ca_set_gillnet_bycatch/confidential/logbooks/processed" # Chris
 data_orig <- readRDS(file.path(datadir, "CDFW_1981_2020_gillnet_logbook_data_use.Rds"))
 
 # blocks
@@ -116,6 +118,7 @@ ca_mpa_valid <- sf::st_make_valid(ca_mpa_clean)
 ca_mpa_dissolve <- ca_mpa_valid %>%
   sf::st_buffer(dist = 50) %>%
   sf::st_union()
+
 #############################################################################
 # format data (fishing efforts)
 data_fe <- data_orig %>%
@@ -182,6 +185,8 @@ g1 <- ggplot() +
   geom_sf(data = state_water_mainland, color = "#fd5602", linewidth = 0.2, linetype = 1, inherit.aes = F ) +
   geom_sf(data = island_exclusion_crs, fill = NA, color = "#fd5602", linewidth = 0.2, linetype = 1, inherit.aes = F) +
   geom_sf(data = ca_mpa_dissolve, fill = NA, color = "gray40", linewidth = 0.2) +
+  # Label
+  labs(tag="A") +
   # plot land
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.01, inherit.aes = F) +
   geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.01, inherit.aes = F) +
@@ -209,6 +214,8 @@ g2 <- ggplot() +
   geom_sf(data = state_water_mainland, color = "#fd5602", linewidth = 0.2, linetype = 1, inherit.aes = F ) +
   geom_sf(data = island_exclusion_crs, fill = NA, color = "#fd5602", linewidth = 0.2, linetype = 1, inherit.aes = F) +
   geom_sf(data = ca_mpa_dissolve, fill = NA, color = "gray40", linewidth = 0.2) +
+  # Label
+  labs(tag="") +
   # plot land
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.01, inherit.aes = F) +
   geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.01, inherit.aes = F) +
@@ -237,6 +244,8 @@ g3 <- ggplot() +
   geom_sf(data = state_water_mainland, color = "#fd5602", linewidth = 0.2, linetype = 1, inherit.aes = F ) +
   geom_sf(data = island_exclusion_crs, fill = NA, color = "#fd5602", linewidth = 0.2, linetype = 1, inherit.aes = F) +
   geom_sf(data = ca_mpa_dissolve, fill = NA, color = "gray40", linewidth = 0.2) +
+  # Label
+  labs(tag="") +
   # plot land
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.01, inherit.aes = F) +
   geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.01, inherit.aes = F) +
@@ -264,6 +273,8 @@ g4 <- ggplot() +
   geom_sf(data = state_water_mainland, color = "#fd5602", linewidth = 0.2, linetype = 1, inherit.aes = F ) +
   geom_sf(data = island_exclusion_crs, fill = NA, color = "#fd5602", linewidth = 0.2, linetype = 1, inherit.aes = F) +
   geom_sf(data = ca_mpa_dissolve, fill = NA, color = "gray40", linewidth = 0.2) +
+  # Label
+  labs(tag="") +
   # plot land
   geom_sf(data = usa, fill = "grey85", col = "white", linewidth=0.01, inherit.aes = F) +
   geom_sf(data = mexico, fill = "grey85", col = "white", linewidth=0.01, inherit.aes = F) +
@@ -296,6 +307,8 @@ species <- c("California sea lion" = "#1B9E77",
 g5 <- ggplot() +
   geom_sf(data = stats_blocks_sf %>% filter(fishing_season == "Closure period (4/1-6/15)"), mapping = aes(fill = prop), alpha = 0.7) +
   facet_wrap(~fishing_season, nrow = 2) +
+  # Label
+  labs(tag="B") +
   # Blocks
   geom_sf(color="grey50", linewidth=0.1) +
   # Land
@@ -333,6 +346,8 @@ g5
 g6 <- ggplot() +
   geom_sf(data = stats_blocks_sf %>% filter(fishing_season == "Open period (rest of the year)"), mapping = aes(fill = prop), alpha = 0.7) +
   facet_wrap(~fishing_season, nrow = 2) +
+  # Label
+  labs(tag="") +
   # Blocks
   geom_sf(color="grey50", linewidth=0.1) +
   # Land
