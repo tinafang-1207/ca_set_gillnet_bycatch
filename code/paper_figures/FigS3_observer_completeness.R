@@ -108,9 +108,9 @@ stats <- tibble(variable=names(completeness),
   # Remove
   filter(!variable %in% c("Set id", "Date", "Target species")) %>% 
   # Factor
-  mutate(variable=factor(variable, levels=variable))
-
-
+  mutate(variable=factor(variable, levels=variable)) %>% 
+  # Add perc label
+  mutate(label=round(perc*100, 1) %>% paste0(., "%"))
 
 
 # Imputation methods
@@ -167,7 +167,8 @@ base_theme <- theme(axis.text=element_text(size=6),
 
 # Completeness
 g1 <- ggplot(stats, aes(y=variable, x=perc)) +
-  geom_point() +
+  geom_point(size=0.8) +
+  geom_text(mapping=aes(label=label), size=1.5, hjust=1.4) +
   # Labels
   labs(x="Percent incomplete", y="Data attribue", tag="A") +
   scale_x_continuous(trans="log10", 
@@ -176,7 +177,11 @@ g1 <- ggplot(stats, aes(y=variable, x=perc)) +
                      labels=c("0.1%", "1%", "10%", "100%")) +
   # Theme
   theme_bw() +
-  theme(axis.text=element_text(size=6),
+  theme(panel.grid.major.x = element_blank(), 
+        panel.grid.minor.x = element_blank(),
+        panel.background = element_blank(), 
+        axis.line = element_line(colour = "black"),
+        axis.text=element_text(size=5),
         axis.title=element_text(size=7),
         legend.text=element_text(size=5),
         legend.title=element_text(size=6),

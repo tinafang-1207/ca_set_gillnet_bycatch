@@ -96,7 +96,7 @@ g1 <- ggplot(data=effort_df, mapping=aes(x=year, y=nvesseldays)) +
   geom_text(data=effort_hist %>% filter(year==1990), mapping=aes(x=year, y=nvesseldays), 
             label="Jan-Jun\nonly", hjust=1, nudge_x=-1, size=2.1) +
   # Labels
-  labs(x="Year", y="Number of vessel days", tag="A") +
+  labs(x="Year", y="Number of trips", tag="A") +
   # Theme
   theme_bw() + base_theme
 g1
@@ -108,7 +108,7 @@ g2 <- ggplot(data=obs_trips, mapping=aes(x=year, y=nvesseldays_obs)) +
   geom_line(data=effort_hist, linewidth=0.3) +
   geom_point(data=effort_hist, size=0.6) +
   # Labels
-  labs(x="Year", y="Number of observed vessel days", tag="B") +
+  labs(x="Year", y="Number of observed trips", tag="B") +
   # Theme
   theme_bw() + base_theme
 g2

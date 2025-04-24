@@ -35,6 +35,20 @@ hist_obs_n <- readxl::read_excel("data/historical_estimates/processed/historical
 rep_orig <- read.csv("tables/TableSX_historical_report_data.csv", as.is=T)
 
 
+# Number of vessels
+################################################################################
+
+# 
+freeR::complete(data_orig)
+yrs_missing_ids <- data_orig$year[is.na(data_orig$vessel_id)] %>% unique() %>% sort()
+nvessels <- data_orig %>% 
+  group_by(year) %>% 
+  summarize(nvessels=n_distinct(vessel_id)) %>% 
+  mutate(missing_ids_yn=year %in% yrs_missing_ids)
+
+ggplot(nvessels, aes(x=year, y=nvessels, fill=missing_ids_yn)) +
+  geom_bar(stat="identity")
+
 
 # Build data
 ################################################################################

@@ -56,7 +56,9 @@ comp_df <- tibble(variable=names(comp_percs),
                          "soak_hr_num"="Soak time (hr)",          
                          "target_spp"="Target species")) %>% 
   # Order
-  arrange(desc(perc)) 
+  arrange(desc(perc)) %>% 
+  # Add perc label
+  mutate(label=round(perc*100, 1) %>% paste0(., "%"))
 
 
 # Plot data
@@ -83,15 +85,20 @@ boxplot_theme <-   theme(axis.text=element_text(size=6),
                          legend.text=element_text(size=5),
                          legend.title=element_text(size=6),
                          plot.tag=element_text(size=7),
-                         plot.title = element_blank())
+                         plot.title = element_blank(),
+                         panel.grid.major.x = element_blank(), 
+                         panel.grid.minor.x = element_blank(),
+                         panel.background = element_blank(), 
+                         axis.line = element_line(colour = "black"),)
 
 # Plot data
 g1 <- ggplot(comp_df, aes(y=reorder(variable, desc(perc)), x=perc)) +
-  geom_point() +
+  geom_point(size=0.8) +
+  geom_text(mapping=aes(label=label), size=1.5, hjust=-0.5) +
   # Labels
   labs(x="Percent incomplete", y="Data attribute", tag="A") +
   scale_x_continuous(trans="log10", 
-                     lim=c(0.001, 1), 
+                     lim=c(0.001, 2), 
                      breaks=c(0.001, 0.01, 0.1, 1),
                      labels=c("0.1%", "1%", "10%", "100%")) +
   # Theme

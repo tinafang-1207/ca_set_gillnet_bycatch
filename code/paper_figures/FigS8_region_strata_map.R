@@ -39,8 +39,10 @@ blocks <-  blocks_orig %>%
   filter(block_type!="Offshore") %>% 
   # Add strata
   left_join(block_key, by="block_id") %>% 
+  # Remove NorCal
+  filter(strata!="Northern California") %>% 
   # Order strata
-  mutate(strata=factor(strata, levels=c("Northern California", 
+  mutate(strata=factor(strata, levels=c(#"Northern California", 
                                         "San Francisco", 
                                         "Monterey Bay", 
                                         "Morro Bay", 
@@ -93,7 +95,8 @@ g <- ggplot() +
   # Labels
   labs(x="", y="") +
   # Legend
-  scale_fill_manual(name="Strata", values=RColorBrewer::brewer.pal(nlevels(blocks$strata), "Set1")) +
+  # scale_fill_manual(name="Strata", values=RColorBrewer::brewer.pal(nlevels(blocks$strata), "Set1")) +
+  scale_fill_discrete(name="Strata", direction=-1) +
   # Theme
   theme_bw() + my_theme
 g

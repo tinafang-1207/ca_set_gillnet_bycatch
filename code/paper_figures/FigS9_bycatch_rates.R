@@ -23,7 +23,7 @@ freeR::uniq(data_orig$data_type)
 ################################################################################
 
 # Strata
-stratas <- c("Northern California", "San Francisco", "Monterey Bay", "Morro Bay",
+stratas <- c("San Francisco", "Monterey Bay", "Morro Bay",
              "Ventura", 'Channel Islands', "Southern California")
 
 # Format data

@@ -154,8 +154,8 @@ ggplot(df, aes(x=year, y=nvesseldays)) +
 # Plot data
 ################################################################################
 
-# Bays
-bays_df <- matrix(c("San\nFrancisco", 37.8, -122.1,
+# Strata
+strata <- matrix(c("San\nFrancisco", 37.8, -122.1,
                     "Monterey\nBay", 36.8, -121.7,
                     "Morro\nBay", 35.4, -120.7,
                     "Ventura", 34.7, -120,
@@ -166,6 +166,17 @@ bays_df <- matrix(c("San\nFrancisco", 37.8, -122.1,
          long_dd=as.numeric(long_dd)) %>% 
   # Add period
   mutate(period="1. 1981-1986" %>% factor(levels=levels(data$period)))
+
+# Landmarks
+landmarks <- matrix(c("Point Conception", 34.7, -120.3), ncol=3, byrow = T) %>% 
+  as.data.frame() %>% setNames(c("bay", "lat_dd", "long_dd")) %>% 
+  mutate(lat_dd=as.numeric(lat_dd),
+         long_dd=as.numeric(long_dd)) %>% 
+  # Add period
+  mutate(period="2. 1987-1993" %>% factor(levels=levels(data$period)))
+
+# Merge
+bays_df <- bind_rows(strata, landmarks)
 
 # Reg data
 reg_data <- tibble(year=reg_years,
