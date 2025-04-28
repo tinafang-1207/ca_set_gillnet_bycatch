@@ -168,7 +168,10 @@ strata <- matrix(c("San\nFrancisco", 37.8, -122.1,
   mutate(period="1. 1981-1986" %>% factor(levels=levels(data$period)))
 
 # Landmarks
-landmarks <- matrix(c("Point Conception", 34.7, -120.3), ncol=3, byrow = T) %>% 
+landmarks <- matrix(c("Point Reyes", 38, -122.8, 
+                      "Point Conception", 34.57, -120.3,
+                      "Point Arguello", 34.82, -120.4, 
+                      "Pigeon Point", 37.18, -122.1), ncol=3, byrow = T) %>% 
   as.data.frame() %>% setNames(c("bay", "lat_dd", "long_dd")) %>% 
   mutate(lat_dd=as.numeric(lat_dd),
          long_dd=as.numeric(long_dd)) %>% 

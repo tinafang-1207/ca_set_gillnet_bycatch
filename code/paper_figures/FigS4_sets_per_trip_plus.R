@@ -126,7 +126,7 @@ g2a <- ggplot(logs_sets_trip,  aes(x=year, y=nsets1, group=year)) +
   # Avergae line
   # geom_hline(yintercept=obs_sets_per_trip_avg, linewidth=0.8, linetype='dashed') +
   # Labels
-  labs(x="Year", y="Number of pseudo-sets per day\n(on logged fishing trips)", tag="B") +
+  labs(x="Year", y="Number of sets per day\n(on logged fishing trips)", tag="B") +
   scale_x_continuous(breaks=seq(1980,2020,5)) +
   scale_y_continuous(breaks=seq(0,30, 2), lim=c(0,NA)) +
   # Theme

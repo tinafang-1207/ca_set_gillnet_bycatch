@@ -259,7 +259,7 @@ g1 <- ggplot(stats_tots, aes(y=reorder(comm_name, n), x=n, fill=type)) +
   # Labels
   labs(x="Number of observed bycatch", y="", tag="A") +
   # Reference line
-  geom_hline(yintercept=nrow(stats_tots)-8.5, linetype="dashed") +
+  geom_hline(yintercept=nrow(stats_tots)-6.5, linetype="dashed") +
   # Axes
   scale_x_continuous(trans="log10", lim=c(1, max(stats_tots$n)*2.5)) +
   # Legend

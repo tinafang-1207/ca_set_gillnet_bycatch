@@ -168,7 +168,7 @@ base_theme <- theme(axis.text=element_text(size=6),
 # Completeness
 g1 <- ggplot(stats, aes(y=variable, x=perc)) +
   geom_point(size=0.8) +
-  geom_text(mapping=aes(label=label), size=1.5, hjust=1.4) +
+  geom_text(mapping=aes(label=label), size=1.8, hjust=1.3) +
   # Labels
   labs(x="Percent incomplete", y="Data attribue", tag="A") +
   scale_x_continuous(trans="log10", 

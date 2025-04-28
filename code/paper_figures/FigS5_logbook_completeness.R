@@ -94,7 +94,7 @@ boxplot_theme <-   theme(axis.text=element_text(size=6),
 # Plot data
 g1 <- ggplot(comp_df, aes(y=reorder(variable, desc(perc)), x=perc)) +
   geom_point(size=0.8) +
-  geom_text(mapping=aes(label=label), size=1.5, hjust=-0.5) +
+  geom_text(mapping=aes(label=label), size=2, hjust=-0.5) +
   # Labels
   labs(x="Percent incomplete", y="Data attribute", tag="A") +
   scale_x_continuous(trans="log10", 
